@@ -319,7 +319,7 @@ export default function AgentChatPage() {
         <div className="absolute bottom-40 left-0 w-80 h-80 bg-[#E2FF6F]/3 blur-[100px] rounded-full" />
       </div>
 
-      <header className="h-auto min-h-20 border-b border-white/5 flex flex-col sm:flex-row sm:items-center gap-4 px-4 sm:px-8 py-3 glass-panel rounded-none z-10 shrink-0 bg-white/[0.02]">
+      <header className="h-auto min-h-20 border-b border-white/5 flex flex-col sm:flex-row sm:items-center gap-4 px-4 sm:px-8 py-3 glass-panel rounded-none z-50 shrink-0 bg-white/[0.02]">
         <div className="flex items-center justify-between w-full gap-4 flex-wrap">
           <div className="flex items-center gap-4 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-[#E2FF6F]/10 flex items-center justify-center border border-[#E2FF6F]/20 shrink-0">

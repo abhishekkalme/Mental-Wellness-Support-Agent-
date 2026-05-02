@@ -3,6 +3,7 @@ import { ChatMessage } from "@/lib/types";
 import { geminiChat } from "./gemini";
 import { openRouterChat } from "./openrouter";
 import { ollamaChat } from "./ollama";
+import { groqChat } from "./groq";
 
 export type LlmCallParams = {
   system: string;
@@ -41,6 +42,16 @@ export async function callLlm(params: LlmCallParams): Promise<string> {
       model,
       system: params.system,
       messages: params.messages,
+    });
+  }
+
+  if (provider === "groq" as any) {
+    return groqChat({
+      apiKey: settings.apiKey,
+      model,
+      system: params.system,
+      messages: params.messages,
+      maxOutputTokens: params.maxOutputTokens,
     });
   }
 

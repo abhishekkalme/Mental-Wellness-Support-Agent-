@@ -62,14 +62,14 @@ export function BreathingWidget() {
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className="glass-panel p-10  flex flex-col items-center gap-10 min-h-[580px] relative overflow-hidden">
+    <div className="glass-panel p-6 md:p-10 flex flex-col items-center gap-6 md:gap-10 min-h-[480px] md:min-h-[580px] relative overflow-hidden">
 
       {/* Ambient background glow */}
       <div className="absolute top-0 right-0 w-48 h-48 bg-[#E2FF6F]/5 blur-[100px] pointer-events-none" />
 
       {/* Header */}
       <div className="text-center relative z-10 ">
-        <h3 className="text-3xl font-bold tracking-tight text-white">
+        <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
           Take a deep breath
         </h3>
 
@@ -79,7 +79,7 @@ export function BreathingWidget() {
       </div>
 
       {/* Breathing Orb */}
-      <div className="relative w-72 h-72 flex items-center justify-center overflow-visible">
+      <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 flex items-center justify-center overflow-visible">
 
         {/* Progress Ring */}
         <svg
@@ -135,7 +135,7 @@ export function BreathingWidget() {
                   ? "easeIn"
                   : "linear",
           }}
-          className="relative w-56 h-56 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-xl overflow-hidden"
+          className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-xl overflow-hidden"
         >
 
           {/* Internal glow */}
@@ -169,7 +169,7 @@ export function BreathingWidget() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
-            className="text-3xl font-bold text-white h-10"
+            className="text-2xl md:text-3xl font-bold text-white h-8 md:h-10"
           >
             {isActive
               ? `${phase.name}...`

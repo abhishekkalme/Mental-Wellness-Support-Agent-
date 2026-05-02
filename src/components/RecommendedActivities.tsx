@@ -101,17 +101,17 @@ export function RecommendedActivities() {
     : allActivities.slice(0, 4);
 
   return (
-    <div className="space-y-10">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h3 className="text-3xl font-bold tracking-tight text-white">Recommended for you</h3>
+    <div className="space-y-6 md:space-y-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1 md:space-y-2">
+          <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Recommended for you</h3>
           <p className="text-white/40 font-medium tracking-wide">
             {struggles.length > 0 
               ? `Personalized for: ${struggles.join(", ")}` 
               : "General suggestions for your wellbeing"}
           </p>
         </div>
-        <button className="h-12 px-6 rounded-full border border-white/10 text-white font-bold text-sm tracking-widest uppercase hover:bg-white/10 hover:border-[#E2FF6F]/30 transition-all flex items-center gap-3 active:scale-95">
+        <button className="h-10 md:h-12 px-4 md:px-6 rounded-full border border-white/10 text-white font-bold text-xs md:text-sm tracking-widest uppercase hover:bg-white/10 hover:border-[#E2FF6F]/30 transition-all flex items-center justify-center gap-2 md:gap-3 active:scale-95 w-fit">
           View all <ArrowRight className="w-4 h-4" />
         </button>
       </div>

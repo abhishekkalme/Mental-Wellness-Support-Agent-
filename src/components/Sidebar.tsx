@@ -41,7 +41,7 @@ const baseNavItems: NavItem[] = [
   { name: "Admin", href: "/admin", icon: Settings, roles: ["admin"] },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const role = session?.user?.role ?? "user";
@@ -52,10 +52,21 @@ export function Sidebar() {
   });
 
   return (
-    <aside className="w-72 border-r border-white/5 bg-black h-screen flex flex-col fixed left-0 top-0 z-40">
-      {/* Background Glow */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-[#E2FF6F]/5 blur-[120px] -z-10" />
-      <Link href="/" className="flex items-center gap-2 pointer-events-auto group">
+    <>
+      {/* Mobile Overlay Backdrop */}
+      {isOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+          onClick={onClose}
+        />
+      )}
+      <aside className={cn(
+        "w-72 border-r border-white/5 bg-black h-screen flex flex-col fixed left-0 top-0 z-40 transition-transform duration-300 md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        {/* Background Glow */}
+        <div className="absolute top-0 left-0 w-full h-96 bg-[#E2FF6F]/5 blur-[120px] -z-10" />
+        <Link href="/" className="flex items-center gap-2 pointer-events-auto group">
 
       <div className="h-20 flex items-center px-8 gap-3">
         <div className="w-9 h-9 bg-[#E2FF6F] rounded-xl flex items-center justify-center transition-transform hover:rotate-12">
@@ -122,5 +133,6 @@ export function Sidebar() {
         </div> */}
       </div>
     </aside>
+    </>
   );
 }

@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export function NatureHeader({ name = "Alex" }: { name?: string }) {
   return (
-    <div className="relative w-full h-[500px] overflow-hidden rounded-[48px] mb-12 group">
+    <div className="relative w-full h-[300px] md:h-[500px] overflow-hidden rounded-[32px] md:rounded-[48px] mb-8 md:mb-12 group">
       {/* Background Image with Ken Burns effect */}
       <motion.div 
         animate={{ scale: [1, 1.05] }}
@@ -26,7 +26,7 @@ export function NatureHeader({ name = "Alex" }: { name?: string }) {
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
 
       {/* Overlay Content */}
-      <div className="absolute inset-0 flex flex-col justify-end p-16 text-white pb-20">
+      <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-16 text-white pb-10 md:pb-20">
         <motion.div
            initial={{ opacity: 0, x: -30 }}
            animate={{ opacity: 1, x: 0 }}
@@ -38,17 +38,17 @@ export function NatureHeader({ name = "Alex" }: { name?: string }) {
              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#E2FF6F]">MindCare AI • Secure Space</p>
           </div>
           
-          <h1 className="text-7xl font-bold tracking-tight leading-[0.95] text-white drop-shadow-2xl">
-            Focus on your <br />
+          <h1 className="text-4xl md:text-7xl font-bold tracking-tight leading-[1] md:leading-[0.95] text-white drop-shadow-2xl mt-4 md:mt-0">
+            Focus on your <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/40">inner peace.</span>
           </h1>
 
-          <div className="flex items-center gap-4 mt-8">
-            <div className="glass-panel px-6 py-3 border-[#E2FF6F]/20 flex items-center gap-3">
+          <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mt-6 md:mt-8">
+            <div className="glass-panel px-4 py-3 md:px-6 md:py-3 border-[#E2FF6F]/20 flex items-center gap-3 w-fit">
                 <div className="w-2 h-2 rounded-full bg-[#E2FF6F] animate-pulse" />
-                <span className="text-sm font-bold">Good morning, {name}</span>
+                <span className="text-xs md:text-sm font-bold">Good morning, {name}</span>
             </div>
-            <p className="text-lg text-white/50 font-medium">
+            <p className="text-sm md:text-lg text-white/50 font-medium">
               Take a deep breath and settle in.
             </p>
           </div>

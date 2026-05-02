@@ -16,20 +16,20 @@ export function MoodCheckIn() {
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h3 className="text-3xl font-bold tracking-tight text-white">How are you feeling today?</h3>
-        <p className="text-white/40 font-medium tracking-wide">Take a moment to check in with yourself.</p>
+    <div className="space-y-6 md:space-y-8">
+      <div className="space-y-1 md:space-y-2 text-center md:text-left">
+        <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white">How are you feeling today?</h3>
+        <p className="text-sm md:text-base text-white/40 font-medium tracking-wide">Take a moment to check in with yourself.</p>
       </div>
 
-      <div className="glass-panel p-6 flex flex-wrap gap-5 items-center justify-between border-white/5 shadow-2xl overflow-x-auto no-scrollbar">
+      <div className="glass-panel p-4 md:p-6 flex flex-wrap gap-3 md:gap-5 items-center justify-center md:justify-between border-white/5 shadow-2xl overflow-x-auto no-scrollbar">
         {moods.map((mood) => (
           <motion.button
             key={mood.label}
             whileHover={{ y: -2, scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setSelected(mood.label)}
-            className={`flex-1 min-w-[140px] flex flex-col items-center gap-4 p-8 rounded-[36px] border transition-all duration-500 relative overflow-hidden group ${
+            className={`flex-1 min-w-[100px] md:min-w-[140px] flex flex-col items-center gap-3 md:gap-4 p-4 md:p-8 rounded-[24px] md:rounded-[36px] border transition-all duration-500 relative overflow-hidden group ${
               selected === mood.label
                 ? `${mood.color} ${mood.border} shadow-[0_0_40px_-10px_rgba(226,255,111,0.2)]`
                 : "bg-white/5 border-transparent hover:bg-white/10 hover:border-white/10"
@@ -41,8 +41,8 @@ export function MoodCheckIn() {
                     className="absolute inset-0 bg-gradient-to-t from-[#E2FF6F]/5 to-transparent opacity-50"
                 />
             )}
-            <span className="text-5xl drop-shadow-xl group-hover:scale-105 transition-transform duration-500">{mood.emoji}</span>
-            <span className={`font-bold tracking-tight text-sm ${selected === mood.label ? mood.text : "text-white/30"}`}>
+            <span className="text-4xl md:text-5xl drop-shadow-xl group-hover:scale-105 transition-transform duration-500">{mood.emoji}</span>
+            <span className={`font-bold tracking-tight text-xs md:text-sm ${selected === mood.label ? mood.text : "text-white/30"}`}>
               {mood.label}
             </span>
           </motion.button>

@@ -26,7 +26,7 @@ export default function LandingPage() {
       <Navbar />
 
       {/* Hero Content */}
-      <main id="home" className="relative h-screen flex flex-col justify-center px-12 md:px-24">
+      <main id="home" className="relative h-[100svh] flex flex-col justify-center px-6 md:px-24 min-h-[600px]">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -58,7 +58,7 @@ export default function LandingPage() {
                   initial={{ opacity: 0, x: -100 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2, duration: 1 }}
-                  className="text-[60px] md:text-[200px] font-bold text-white leading-none tracking-tighter"
+                  className="text-[52px] sm:text-[80px] md:text-[200px] font-bold text-white leading-none tracking-tighter"
                 >
                   wellness &
                 </motion.h1>
@@ -66,7 +66,7 @@ export default function LandingPage() {
                   initial={{ opacity: 0, x: -100 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4, duration: 1 }}
-                  className="text-[60px] md:text-[200px] font-bold text-white leading-none tracking-tighter"
+                  className="text-[52px] sm:text-[80px] md:text-[200px] font-bold text-white leading-none tracking-tighter"
                 >
                   meditation
                 </motion.h1>
@@ -110,7 +110,7 @@ export default function LandingPage() {
       </main>
 
       {/* Stats Section */}
-      <section className="relative z-10 bg-black py-32 px-12 md:px-24 border-y border-white/5">
+      <section className="relative z-10 bg-black py-16 md:py-32 px-6 md:px-24 border-y border-white/5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {[
             { label: "Tranquil sessions", value: "10k+", color: "text-[#E2FF6F]" },
@@ -133,8 +133,8 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="relative z-10 bg-black pt-32 pb-48 px-12 md:px-24">
-        <div className="max-w-7xl mx-auto space-y-24">
+      <section id="features" className="relative z-10 bg-black pt-16 md:pt-32 pb-24 md:pb-48 px-6 md:px-24">
+        <div className="max-w-7xl mx-auto space-y-16 md:space-y-24">
           <div className="flex flex-col md:flex-row justify-between items-end gap-8">
             <h2 className="text-5xl md:text-8xl font-bold text-white tracking-tighter leading-none">
               Everything for your <br /> <span className="text-[#E2FF6F]">inner peace.</span>
@@ -172,7 +172,7 @@ export default function LandingPage() {
       </section>
 
       {/* Workflow Section */}
-      <section id="workflow" className="relative z-10 bg-black py-48 px-12 md:px-24 border-t border-white/5 overflow-hidden">
+      <section id="workflow" className="relative z-10 bg-black py-24 md:py-48 px-6 md:px-24 border-t border-white/5 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#E2FF6F]/5 blur-[200px] rounded-full -z-10" />
         <div className="max-w-7xl mx-auto space-y-32">
           <h2 className="text-6xl md:text-9xl font-bold text-white tracking-tighter text-center">
@@ -204,8 +204,8 @@ export default function LandingPage() {
       </section>
 
       {/* Feedback Section */}
-      <section id="feedback" className="relative z-10 bg-black py-48 px-12 md:px-24">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+      <section id="feedback" className="relative z-10 bg-black py-24 md:py-48 px-6 md:px-24">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24 items-center">
           <div className="space-y-8">
              <h2 className="text-6xl md:text-8xl font-bold text-white tracking-tighter">Your peace is our <br /> <span className="text-[#E2FF6F]">mission.</span></h2>
              <p className="text-white/60 text-xl font-medium leading-relaxed">
@@ -244,7 +244,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer id="footer" className="relative z-10 bg-black py-24 px-12 md:px-24 border-t border-white/5">
+      <footer id="footer" className="relative z-10 bg-black py-16 md:py-24 px-6 md:px-24 border-t border-white/5">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12">
            <div className="space-y-6">
               <div className="flex items-center gap-2">

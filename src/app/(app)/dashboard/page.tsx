@@ -144,18 +144,25 @@ export default function DashboardPage() {
             <h4 className="font-bold text-white text-xl mb-8 tracking-tight">Your Resilience Level</h4>
             <div className="h-40 w-full bg-white/5 rounded-[32px] flex items-end justify-between p-8 gap-3 border border-white/5 group-hover:border-[#E2FF6F]/20 transition-all duration-700">
               {[
-                store.wellnessMetrics?.mental || 0,
-                store.wellnessMetrics?.emotional || 0,
-                store.wellnessMetrics?.physical || 0,
-                store.wellnessMetrics?.social || 0,
-                store.wellnessMetrics?.sleep || 0,
-                store.wellnessMetrics?.spiritual || 0,
-                (store.wellnessMetrics?.mental + store.wellnessMetrics?.emotional) / 2 || 0
+                // Mental: Mood based
+                (store.moodHistory.slice(-5).reduce((acc, m) => acc + (m.mood === 'excellent' ? 100 : m.mood === 'good' ? 80 : 60), 0) / 5) || 20,
+                // Emotional: Journaling based
+                Math.min(100, store.journalEntries.length * 20) || 20,
+                // Physical: Sleep based
+                (store.sleepHistory.slice(-1)[0]?.durationHours ? (store.sleepHistory.slice(-1)[0].durationHours / 8) * 100 : 20),
+                // Social: Placeholder (could be chat)
+                40,
+                // Focus: Habits based
+                (store.habits.filter(h => h.completedDates.includes(new Date().toISOString().split('T')[0])).length / (store.habits.length || 1)) * 100 || 20,
+                // Breath: Breathing based
+                Math.min(100, (store.breathingHistory.slice(-1)[0]?.durationSeconds || 0) / 6),
+                // Overall
+                75
               ].map((h, i) => (
                 <motion.div 
                   key={i}
                   initial={{ height: 0 }}
-                  animate={{ height: `${h}%` }}
+                  animate={{ height: `${Math.max(10, Math.min(100, h))}%` }}
                   transition={{ delay: 1.2 + i * 0.1, duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
                   className="w-full bg-gradient-to-t from-[#E2FF6F]/40 to-[#E2FF6F] rounded-t-xl shadow-[0_0_20px_rgba(226,255,111,0.1)] group-hover:shadow-[0_0_30px_rgba(226,255,111,0.3)] transition-all"
                 />

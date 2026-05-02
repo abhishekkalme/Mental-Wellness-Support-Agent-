@@ -63,6 +63,36 @@ export interface BreathingRecord {
   pattern: string;
 }
 
+export interface Meditation {
+  id: string;
+  title: string;
+  duration: string;
+  category: string;
+  img: string;
+  desc: string;
+}
+
+export interface Therapist {
+  id: string;
+  name: string;
+  specialty: string;
+  rating: number;
+  reviews: number;
+  availability: string;
+  img: string;
+  price: string;
+  tags: string[];
+}
+
+export interface AcademicEvent {
+  id: string;
+  title: string;
+  date: string;
+  type: 'exam' | 'deadline' | 'lecture' | 'holiday';
+  course?: string;
+  location?: string;
+}
+
 export interface OnboardingData {
   stage?: string;
   stressLevel?: number;

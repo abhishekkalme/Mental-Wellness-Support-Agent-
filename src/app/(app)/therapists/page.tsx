@@ -1,8 +1,9 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Therapist } from "@/lib/types";
 import { 
   HeartPulse, 
   Search, 
@@ -13,10 +14,13 @@ import {
   ShieldCheck, 
   X,
   CheckCircle2,
-  Phone
+  Phone,
+  Loader2,
+  Database,
+  Plus
 } from "lucide-react";
 
-const therapists = [
+const initialTherapists = [
   { 
     id: "t1", 
     name: "Dr. Sarah Mitchell", 
@@ -53,8 +57,43 @@ const therapists = [
 ];
 
 export default function TherapistPage() {
-  const [selected, setSelected] = useState<any | null>(null);
+  const [therapists, setTherapists] = useState<Therapist[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Therapist | null>(null);
   const [booked, setBooked] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  useEffect(() => {
+    fetchTherapists();
+  }, []);
+
+  const fetchTherapists = async () => {
+    try {
+      const res = await fetch('/api/therapists');
+      const data = await res.json();
+      setTherapists(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSeed = async () => {
+    setIsSeeding(true);
+    try {
+      await fetch('/api/therapists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(initialTherapists)
+      });
+      fetchTherapists();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   return (
     <main className="p-8 max-w-7xl mx-auto space-y-10">
@@ -100,47 +139,75 @@ export default function TherapistPage() {
            </div>
         </div>
 
-        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-           {therapists.map(t => (
-             <motion.div 
-               key={t.id} 
-               whileHover={{ y: -5 }}
-               className="glass-panel p-8 space-y-6 group hover:border-rose-400/30 transition-all cursor-pointer"
-               onClick={() => setSelected(t)}
-             >
-                <div className="flex items-start justify-between">
-                   <div className="text-5xl w-20 h-20 glass-panel flex items-center justify-center bg-rose-400/5">{t.img}</div>
-                   <div className="text-right">
-                      <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
-                        <Star className="w-3.5 h-3.5 fill-current" /> {t.rating}
+        <div className="lg:col-span-3">
+          {loading ? (
+             <div className="h-[400px] flex flex-col items-center justify-center gap-4 text-rose-400">
+               <Loader2 className="w-12 h-12 animate-spin" />
+               <p className="font-bold tracking-widest uppercase text-xs">Connecting to Specialists...</p>
+             </div>
+          ) : therapists.length === 0 ? (
+            <div className="glass-panel p-20 text-center flex flex-col items-center justify-center border-rose-400/10 bg-rose-400/5 shadow-2xl relative overflow-hidden rounded-[40px]">
+               <div className="absolute inset-0 bg-gradient-to-b from-rose-400/5 to-transparent opacity-30" />
+               <div className="w-24 h-24 rounded-[32px] bg-rose-400/10 text-rose-400 flex items-center justify-center mb-8 shadow-xl shadow-rose-400/5 relative z-10">
+                <Database className="w-10 h-10" />
+              </div>
+              <h2 className="text-3xl font-bold mb-4 text-white relative z-10 tracking-tight">Directory Unavailable</h2>
+              <p className="text-white/40 max-w-lg mx-auto text-lg font-medium leading-relaxed relative z-10 mb-10">
+                No licensed professionals are currently listed in your region. Initialize the standard directory of university-affiliated specialists.
+              </p>
+              <Button 
+                onClick={handleSeed}
+                disabled={isSeeding}
+                className="h-16 px-12 rounded-2xl bg-rose-400 hover:bg-rose-500 text-white font-bold text-lg relative z-10 shadow-2xl shadow-rose-400/20"
+              >
+                {isSeeding ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <Plus className="w-6 h-6 mr-2" />}
+                Initialize Directory
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {therapists.map(t => (
+                <motion.div 
+                  key={t.id} 
+                  whileHover={{ y: -5 }}
+                  className="glass-panel p-8 space-y-6 group hover:border-rose-400/30 transition-all cursor-pointer"
+                  onClick={() => setSelected(t)}
+                >
+                    <div className="flex items-start justify-between">
+                      <div className="text-5xl w-20 h-20 glass-panel flex items-center justify-center bg-rose-400/5">{t.img}</div>
+                      <div className="text-right">
+                          <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
+                            <Star className="w-3.5 h-3.5 fill-current" /> {t.rating}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold">{t.reviews} reviews</p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">{t.reviews} reviews</p>
-                   </div>
-                </div>
+                    </div>
 
-                <div className="space-y-1">
-                   <h3 className="text-xl font-bold group-hover:text-rose-400 transition-colors">{t.name}</h3>
-                   <p className="text-sm text-primary font-medium">{t.specialty}</p>
-                </div>
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-bold group-hover:text-rose-400 transition-colors">{t.name}</h3>
+                      <p className="text-sm text-primary font-medium">{t.specialty}</p>
+                    </div>
 
-                <div className="flex flex-wrap gap-2">
-                   {t.tags.map(tag => (
-                     <span key={tag} className="px-2 py-1 bg-secondary rounded-md text-[10px] font-bold uppercase text-muted-foreground">#{tag}</span>
-                   ))}
-                </div>
+                    <div className="flex flex-wrap gap-2">
+                      {t.tags.map(tag => (
+                        <span key={tag} className="px-2 py-1 bg-secondary rounded-md text-[10px] font-bold uppercase text-muted-foreground">#{tag}</span>
+                      ))}
+                    </div>
 
-                <div className="pt-4 border-t border-border flex items-center justify-between">
-                   <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase">Availability</span>
-                      <span className="text-xs font-bold flex items-center gap-1"><Clock className="w-3 h-3" /> {t.availability}</span>
-                   </div>
-                   <div className="text-right">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase">Session Flat Fee</span>
-                      <p className="text-sm font-bold text-foreground">{t.price}</p>
-                   </div>
-                </div>
-             </motion.div>
-           ))}
+                    <div className="pt-4 border-t border-border flex items-center justify-between">
+                      <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase">Availability</span>
+                          <span className="text-xs font-bold flex items-center gap-1"><Clock className="w-3 h-3" /> {t.availability}</span>
+                      </div>
+                      <div className="text-right">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase">Session Flat Fee</span>
+                          <p className="text-sm font-bold text-foreground">{t.price}</p>
+                      </div>
+                    </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

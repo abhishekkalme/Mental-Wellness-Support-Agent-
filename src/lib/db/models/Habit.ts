@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 
 const HabitSchema = new Schema({
+  id: { type: String, required: true, unique: true },
   userId: { type: String, required: true },
   name: { type: String, required: true },
   frequency: { type: String, enum: ["daily", "weekly"], default: "daily" },

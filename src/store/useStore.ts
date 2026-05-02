@@ -18,11 +18,13 @@ interface MindCareStore extends UserState {
   addSleepEntry: (entry: SleepEntry) => void;
   updateWellnessMetrics: (metrics: Partial<WellnessMetrics>) => void;
   addBreathingRecord: (record: { id: string; date: string; durationSeconds: number; pattern: string }) => void;
+  safeMode: boolean;
+  setSafeMode: (status: boolean) => void;
   clearHistory: () => void;
   syncRemoteData: () => Promise<void>;
 }
 
-const initialState: UserState = {
+const initialValues: UserState & { safeMode: boolean } = {
   name: "",
   isOnboarded: false,
   onboardingData: {
@@ -44,13 +46,14 @@ const initialState: UserState = {
     sleep: 0,
     spiritual: 0
   },
-  breathingHistory: []
+  breathingHistory: [],
+  safeMode: false
 };
 
 export const useStore = create<MindCareStore>()(
   persist(
     (set) => ({
-      ...initialState,
+      ...initialValues,
       setName: (name) => set({ name }),
       setOnboarded: (status) => set({ isOnboarded: status }),
       setOnboardingData: (data) => set((state) => ({ 
@@ -105,7 +108,8 @@ export const useStore = create<MindCareStore>()(
         }));
         fetch('/api/breathing', { method: 'POST', body: JSON.stringify(record) }).catch(console.error);
       },
-      clearHistory: () => set(initialState),
+      setSafeMode: (status) => set({ safeMode: status }),
+      clearHistory: () => set(initialValues),
       syncRemoteData: async () => {
         try {
           const [moods, journals, habits, sleep, breathing] = await Promise.all([

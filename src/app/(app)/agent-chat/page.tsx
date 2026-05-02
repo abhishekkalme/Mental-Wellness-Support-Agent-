@@ -25,6 +25,7 @@ import {
   INDIAN_CHAT_LANGUAGES,
   type IndianChatLanguage,
 } from "@/lib/chat/indianLanguages";
+import { useStore } from "@/store/useStore";
 
 type ChatMode = { safeMode: boolean; liteMode: boolean; ventOrganizeAct: boolean };
 type ApiResponse = { risk: "none" | "elevated" | "crisis"; reply: string };
@@ -64,6 +65,37 @@ function VoiceWaveform({ active }: { active: boolean }) {
   );
 }
 
+function EncryptedText({ text, active }: { text: string; active: boolean }) {
+  const [display, setDisplay] = useState(text);
+  const chars = "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿@#$%^&*()_+{}[]|";
+
+  useEffect(() => {
+    if (!active) {
+      setDisplay(text);
+      return;
+    }
+
+    // Scramble effect
+    const interval = setInterval(() => {
+      setDisplay(t => t.split('').map((char) => {
+        if (char === ' ' || char === '\n') return char;
+        return chars[Math.floor(Math.random() * chars.length)];
+      }).join(''));
+    }, 150);
+
+    return () => clearInterval(interval);
+  }, [active, text]);
+
+  return (
+    <span className={cn(
+      "transition-all duration-500",
+      active ? "font-mono blur-[3px] opacity-50 select-none grayscale" : "blur-0 opacity-100"
+    )}>
+      {display}
+    </span>
+  );
+}
+
 function getInitialLanguageId(): string {
   if (typeof window === "undefined") return "hi";
   const saved = localStorage.getItem(CHAT_LANGUAGE_STORAGE_KEY);
@@ -72,6 +104,7 @@ function getInitialLanguageId(): string {
 }
 
 export default function AgentChatPage() {
+  const store = useStore();
   const [langId, setLangId] = useState("hi");
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const lang = useMemo(() => getLanguageById(langId), [langId]);
@@ -84,7 +117,7 @@ export default function AgentChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
-  const [mode, setMode] = useState<ChatMode>({ safeMode: false, liteMode: false, ventOrganizeAct: true });
+  const [mode, setMode] = useState<Omit<ChatMode, 'safeMode'>>({ liteMode: false, ventOrganizeAct: true });
   const [firstGen, setFirstGen] = useState(false);
   const [consentMemory, setConsentMemory] = useState<"session" | "weekly">("session");
 
@@ -232,21 +265,21 @@ export default function AgentChatPage() {
     () =>
       [
         lang.label,
-        mode.safeMode ? "Safe Mode" : null,
+        store.safeMode ? "Safe Mode" : null,
         mode.liteMode ? "Lite Mode" : null,
         firstGen ? "First-Gen Lens" : null,
         mode.ventOrganizeAct ? "Vent→Organize→Act" : null,
         consentMemory === "weekly" ? "Weekly Memory" : "Session Memory",
         speakReplies ? "Voice replies" : null,
       ].filter(Boolean) as string[],
-    [mode, firstGen, consentMemory, lang.label, speakReplies]
+    [mode, firstGen, consentMemory, lang.label, speakReplies, store.safeMode]
   );
 
   async function send() {
     const text = input.trim();
     if (!text || busy) return;
 
-    if (mode.safeMode && text.toLowerCase() === "exit") {
+    if (store.safeMode && text.toLowerCase() === "exit") {
       setMessages((p) => [
         ...p,
         { id: Date.now().toString(), role: "user", content: text },
@@ -272,7 +305,7 @@ export default function AgentChatPage() {
         body: JSON.stringify({
           messages: nextMessages,
           chatLanguage: langId,
-          mode,
+          mode: { ...mode, safeMode: store.safeMode },
           context: {
             firstGen,
             consentMemory,
@@ -469,8 +502,10 @@ export default function AgentChatPage() {
                         : "bg-white/5 border border-white/5 text-white/90 rounded-tl-sm"
                     )}
                   >
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                    {msg.role === "agent" && (
+                    <p className="whitespace-pre-wrap">
+                      <EncryptedText text={msg.content} active={store.safeMode} />
+                    </p>
+                    {msg.role === "agent" && !store.safeMode && (
                       <button
                         type="button"
                         onClick={() => speakText(msg.content)}
@@ -548,7 +583,7 @@ export default function AgentChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={
-                  mode.safeMode
+                  store.safeMode
                     ? "Type strictly (type 'exit' to pause)..."
                     : `Message in ${lang.label}…`
                 }
@@ -576,7 +611,7 @@ export default function AgentChatPage() {
 
           <div className="space-y-4 text-sm text-white/80 font-medium pb-6 border-b border-white/5">
             {[
-              { label: "Hostel Safe Mode", val: mode.safeMode, op: (v: boolean) => setMode({ ...mode, safeMode: v }) },
+              { label: "Hostel Safe Mode", val: store.safeMode, op: (v: boolean) => store.setSafeMode(v) },
               { label: "Lite Connection", val: mode.liteMode, op: (v: boolean) => setMode({ ...mode, liteMode: v }) },
               {
                 label: "Goal-Oriented Action",

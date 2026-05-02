@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callLlm } from "@/lib/llm";
+import { callLlm } from "@/ai/llm";
 
 type Req = {
   type: "extension" | "clarification" | "workload";
@@ -31,7 +31,14 @@ export async function POST(request: Request) {
 
   const text = await callLlm({
     system,
-    messages: [{ role: "user", content: user }],
+    messages: [
+      {
+        id: "sys-prof-1",
+        role: "user",
+        content: user,
+        timestamp: new Date().toISOString(),
+      },
+    ],
     maxOutputTokens: 220,
   });
 

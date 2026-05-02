@@ -1,8 +1,8 @@
 import { readSettings } from "@/lib/settings";
 import { ChatMessage } from "@/lib/types";
-import { geminiChat } from "@/lib/llm/gemini";
-import { openRouterChat } from "@/lib/llm/openrouter";
-import { ollamaChat } from "@/lib/llm/ollama";
+import { geminiChat } from "./gemini";
+import { openRouterChat } from "./openrouter";
+import { ollamaChat } from "./ollama";
 
 export type LlmCallParams = {
   system: string;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callLlm } from "@/lib/llm";
+import { callLlm } from "@/ai/llm";
 
 type Req = {
   bestMoment: string;
@@ -35,7 +35,14 @@ export async function POST(request: Request) {
 
   const card = await callLlm({
     system,
-    messages: [{ role: "user", content: user }],
+    messages: [
+      {
+        id: "sys-insight-1",
+        role: "user",
+        content: user,
+        timestamp: new Date().toISOString(),
+      },
+    ],
     maxOutputTokens: 250,
   });
 

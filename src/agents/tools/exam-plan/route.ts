@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callLlm } from "@/lib/llm";
+import { callLlm } from "@/ai/llm";
 
 type Req = {
   startDate?: string;
@@ -30,7 +30,14 @@ export async function POST(request: Request) {
 
   const plan = await callLlm({
     system,
-    messages: [{ role: "user", content: user }],
+    messages: [
+      {
+        id: "system-1",
+        role: "user",
+        content: user,
+        timestamp: new Date().toISOString(),
+      },
+    ],
     maxOutputTokens: 550,
   });
 

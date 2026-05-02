@@ -1,9 +1,14 @@
 import { config } from "@/config/env";
+import type { ProviderId } from "@/lib/types";
 
-export async function readSettings() {
+export async function readSettings(): Promise<{
+  provider: ProviderId;
+  apiKey: string;
+  model: string;
+}> {
   return {
-    provider: "gemini", // Default to gemini for this hackathon
-    apiKey: config.groqApiKey || "", // Reuse groq key or placeholder if needed
-    model: "gemini-1.5-flash",
+    provider: "gemini",
+    apiKey: config.geminiApiKey || config.groqApiKey || "",
+    model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
   };
 }

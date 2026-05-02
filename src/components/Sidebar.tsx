@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
+import {
   Home,
   Heart,
   BookText,
@@ -14,15 +14,18 @@ import {
   MessageSquare,
   Library,
   Settings,
-  Sparkles
+  Sparkles,
+  Users,
+  Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useStore } from "@/store/useStore";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import type { LucideIcon } from "lucide-react";
 
-const navItems = [
+type NavItem = { name: string; href: string; icon: LucideIcon; roles?: ("admin" | "mentor")[] };
+
+const baseNavItems: NavItem[] = [
   { name: "Home", href: "/dashboard", icon: Home },
   { name: "Check-in", href: "/mood", icon: Heart },
   { name: "Journal", href: "/journal", icon: BookText },
@@ -30,16 +33,23 @@ const navItems = [
   { name: "Breathing", href: "/breathing", icon: Wind },
   { name: "Sleep", href: "/sleep", icon: Moon },
   { name: "Insights", href: "/insights", icon: BarChart3 },
+  { name: "Community", href: "/community", icon: Users },
   { name: "AI Companion", href: "/agent-chat", icon: MessageSquare },
   { name: "Habits", href: "/habits", icon: Sparkles },
   { name: "Rescue", href: "/rescue", icon: Library },
-  { name: "Admin Settings", href: "/admin", icon: Settings },
+  { name: "Mentor hub", href: "/mentor", icon: Stethoscope, roles: ["mentor", "admin"] },
+  { name: "Admin", href: "/admin", icon: Settings, roles: ["admin"] },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const store = useStore();
-  const router = useRouter();
+  const { data: session } = useSession();
+  const role = session?.user?.role ?? "user";
+
+  const navItems = baseNavItems.filter((item) => {
+    if (!item.roles?.length) return true;
+    return item.roles.includes(role as "admin" | "mentor");
+  });
 
   return (
     <aside className="w-72 border-r border-white/5 bg-black h-screen flex flex-col fixed left-0 top-0 z-40">
@@ -58,8 +68,8 @@ export function Sidebar() {
 
       
       <div className="flex-1 overflow-y-auto pt-6 pb-8 px-6 space-y-2 no-scrollbar">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
+        {navItems.map((item: NavItem) => {
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
@@ -113,12 +123,4 @@ export function Sidebar() {
       </div>
     </aside>
   );
-}
-
-function LeafIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className="w-8 h-8 text-emerald-800" fill="currentColor">
-            <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1-8.313-12.454z" />
-        </svg>
-    );
 }

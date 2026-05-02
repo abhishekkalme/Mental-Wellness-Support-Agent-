@@ -26,7 +26,7 @@ export default function Navbar() {
         <div className="w-10 h-10 bg-[#E2FF6F] rounded-xl flex items-center justify-center transition-transform group-hover:scale-110">
           <Sparkles className="w-6 h-6 text-black" />
         </div>
-        <span className="text-2xl font-bold tracking-tight text-white">HealthMed</span>
+        <span className="text-2xl font-bold tracking-tight text-white">MindCare</span>
       </Link>
 
       {/* Nav Links */}
@@ -50,13 +50,18 @@ export default function Navbar() {
       </div>
 
       {/* CTA */}
-      <div className="pointer-events-auto flex items-center gap-4">
-        <Link href="/dashboard">
+      <div className="pointer-events-auto flex items-center gap-3 flex-wrap justify-end">
+        <Link href="/guest">
+          <Button variant="ghost" className="text-white/80 hover:text-[#E2FF6F] hover:bg-white/5 font-bold text-sm">
+            Try as guest
+          </Button>
+        </Link>
+        <Link href="/signin">
           <Button variant="ghost" className="text-white hover:text-[#E2FF6F] hover:bg-white/5 font-bold">
             Sign In
           </Button>
         </Link>
-        <Link href="/onboarding">
+        <Link href="/signup">
           <Button 
             className="bg-[#E2FF6F] text-black hover:bg-[#d4f056] font-bold rounded-full px-8 h-12 gap-2 transition-all active:scale-95"
           >

@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       "Raat ko sleep window fix: aaj target time choose karo.",
     ],
     overwhelmed: [
-      "List everything in 2 minutes (dump).",
+      "List everything in 2 inutes (dump).",
       "Pick 1 task only (smallest).",
       "10 min timer: start, perfect nahi.",
     ],

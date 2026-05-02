@@ -62,13 +62,13 @@ export function BreathingWidget() {
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className="glass-panel p-10 flex flex-col items-center gap-10 min-h-[580px] relative overflow-hidden">
+    <div className="glass-panel p-10  flex flex-col items-center gap-10 min-h-[580px] relative overflow-hidden">
 
       {/* Ambient background glow */}
       <div className="absolute top-0 right-0 w-48 h-48 bg-[#E2FF6F]/5 blur-[100px] pointer-events-none" />
 
       {/* Header */}
-      <div className="text-center relative z-10">
+      <div className="text-center relative z-10 ">
         <h3 className="text-3xl font-bold tracking-tight text-white">
           Take a deep breath
         </h3>
@@ -111,7 +111,7 @@ export function BreathingWidget() {
                 circumference -
                 (circumference *
                   (isActive ? phase.progress : 0)) /
-                  100,
+                100,
             }}
             transition={{
               duration: phase.duration / 1000,
@@ -132,8 +132,8 @@ export function BreathingWidget() {
               phase.name === "Inhale"
                 ? "easeOut"
                 : phase.name === "Exhale"
-                ? "easeIn"
-                : "linear",
+                  ? "easeIn"
+                  : "linear",
           }}
           className="relative w-56 h-56 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-xl overflow-hidden"
         >

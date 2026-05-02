@@ -1,4 +1,5 @@
 export const config = {
+  geminiApiKey: process.env.GEMINI_API_KEY,
   groqApiKey: process.env.GROQ_API_KEY,
   anthropicApiKey: process.env.ANTHROPIC_API_KEY,
   pineconeApiKey: process.env.PINECONE_API_KEY,

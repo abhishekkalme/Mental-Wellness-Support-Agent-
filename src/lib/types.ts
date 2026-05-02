@@ -1,4 +1,5 @@
 export type Mood = "excellent" | "good" | "okay" | "bad" | "terrible";
+export type ProviderId = "gemini" | "openrouter" | "ollama";
 
 export interface MoodEntry {
   id: string;

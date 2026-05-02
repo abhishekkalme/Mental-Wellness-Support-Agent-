@@ -143,7 +143,7 @@ export default function OnboardingPage() {
     }
     
     // Clear chat history & inject
-    store.addChatMessage({ id: `msg_init`, role: "assistant", content: firstMessage, timestamp: new Date().toISOString() });
+    store.addChatMessage({ id: `msg_init`, role: "agent", content: firstMessage, timestamp: new Date().toISOString() });
 
     store.setOnboarded(true);
     router.push("/dashboard");

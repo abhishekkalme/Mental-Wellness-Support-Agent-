@@ -8,11 +8,11 @@ import { cn } from "@/lib/utils";
 
 type ChatMode = { safeMode: boolean; liteMode: boolean; ventOrganizeAct: boolean; };
 type ApiResponse = { risk: "none" | "elevated" | "crisis"; reply: string };
-type ChatMessage = { id: string; role: "user" | "assistant"; content: string; };
+type ChatMessage = { id: string; role: "user" | "agent"; content: string; };
 
 export default function AgentChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([{
-    id: "1", role: "assistant", content: "Hi! Main tumhara student wellness companion hoon. Tum kaisa feel kar rahe ho aaj?"
+    id: "1", role: "agent", content: "Hi! Main tumhara student wellness companion hoon. Tum kaisa feel kar rahe ho aaj?"
   }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -55,7 +55,7 @@ export default function AgentChatPage() {
     if (!text || busy) return;
 
     if (mode.safeMode && text.toLowerCase() === "exit") {
-      setMessages(p => [...p, { id: Date.now().toString(), role: "user", content: text }, { id: (Date.now()+1).toString(), role: "assistant", content: "Okay. Pausing for now. Jab ready ho, bas ‘hi’ type kar dena." }]);
+      setMessages(p => [...p, { id: Date.now().toString(), role: "user", content: text }, { id: (Date.now()+1).toString(), role: "agent", content: "Okay. Pausing for now. Jab ready ho, bas ‘hi’ type kar dena." }]);
       setInput("");
       return;
     }
@@ -72,9 +72,9 @@ export default function AgentChatPage() {
       });
       const data = await res.json().catch(() => null) as ApiResponse | null;
       if (!res.ok || !data?.reply) throw new Error("API Exception");
-      setMessages(p => [...p, { id: Date.now().toString(), role: "assistant", content: data.reply }]);
+      setMessages(p => [...p, { id: Date.now().toString(), role: "agent", content: data.reply }]);
     } catch {
-      setMessages(p => [...p, { id: Date.now().toString(), role: "assistant", content: "Agent Core Disconnected. Please verify API conditions in Admin panel." }]);
+      setMessages(p => [...p, { id: Date.now().toString(), role: "agent", content: "Agent Core Disconnected. Please verify API conditions in Admin panel." }]);
     } finally { setBusy(false); }
   }
 
@@ -145,7 +145,7 @@ export default function AgentChatPage() {
                <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em]">Neural Connection Active</p>
              </div>
            </div>
-           <Button onClick={() => setMessages([{ id: "1", role: "assistant", content: "Hi! Main tumhara student wellness companion hoon." }])} variant="outline" className="bg-white/5 hover:bg-[#E2FF6F] hover:text-black border-white/10">Reset Thread</Button>
+           <Button onClick={() => setMessages([{ id: "1", role: "agent", content: "Hi! Main tumhara student wellness companion hoon." }])} variant="outline" className="bg-white/5 hover:bg-[#E2FF6F] hover:text-black border-white/10">Reset Thread</Button>
         </div>
       </header>
 

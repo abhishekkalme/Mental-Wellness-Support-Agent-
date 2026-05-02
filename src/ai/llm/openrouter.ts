@@ -21,7 +21,10 @@ export async function openRouterChat(params: OpenRouterChatParams): Promise<stri
       model,
       messages: [
         { role: "system", content: system },
-        ...messages.map((m) => ({ role: m.role, content: m.content })),
+        ...messages.map((m) => ({ 
+          role: m.role === "agent" ? "assistant" : m.role, 
+          content: m.content 
+        })),
       ],
       temperature: 0.6,
       top_p: 0.9,

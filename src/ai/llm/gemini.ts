@@ -22,7 +22,7 @@ export async function geminiChat(params: GeminiChatParams): Promise<string> {
   const contents = [
     { role: "user", parts: [{ text: system }] },
     ...messages.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
+      role: m.role === "agent" ? "model" : "user",
       parts: [{ text: m.content }],
     })),
   ];

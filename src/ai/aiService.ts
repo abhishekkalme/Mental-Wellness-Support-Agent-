@@ -1,7 +1,7 @@
 import { detectCrisis, generateCrisisResponse } from "./safetyService";
 import { memoryService } from "./memoryService";
 import { ChatGroq } from "@langchain/groq";
-import { config } from "../config/env";
+import { config } from "@/config/env";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 const model = new ChatGroq({

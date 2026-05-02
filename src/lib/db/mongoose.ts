@@ -1,12 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
-}
+import { config } from '@/config/env';
 
 // Global caching for serverless environments (Next.js)
 let cached = (global as any).mongoose;
@@ -21,6 +15,12 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
+    const MONGODB_URI = config.mongodbUri;
+    if (!MONGODB_URI) {
+      throw new Error(
+        'Please define the MONGODB_URI environment variable inside .env.local'
+      );
+    }
     const opts = {
       bufferCommands: false,
     };

@@ -1,0 +1,124 @@
+"use client";
+
+import React, { useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { 
+  Home,
+  Heart,
+  BookText,
+  Brain,
+  Wind,
+  Moon,
+  BarChart3,
+  MessageSquare,
+  Library,
+  Settings,
+  Sparkles
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useStore } from "@/store/useStore";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { motion } from "framer-motion";
+
+const navItems = [
+  { name: "Home", href: "/dashboard", icon: Home },
+  { name: "Check-in", href: "/mood", icon: Heart },
+  { name: "Journal", href: "/journal", icon: BookText },
+  { name: "Meditate", href: "/meditation", icon: Brain },
+  { name: "Breathing", href: "/breathing", icon: Wind },
+  { name: "Sleep", href: "/sleep", icon: Moon },
+  { name: "Insights", href: "/insights", icon: BarChart3 },
+  { name: "AI Companion", href: "/agent-chat", icon: MessageSquare },
+  { name: "Habits", href: "/habits", icon: Sparkles },
+  { name: "Rescue", href: "/rescue", icon: Library },
+  { name: "Admin Settings", href: "/admin", icon: Settings },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const store = useStore();
+  const router = useRouter();
+
+  return (
+    <aside className="w-72 border-r border-white/5 bg-black h-screen flex flex-col fixed left-0 top-0 z-40">
+      {/* Background Glow */}
+      <div className="absolute top-0 left-0 w-full h-96 bg-[#E2FF6F]/5 blur-[120px] -z-10" />
+      <Link href="/" className="flex items-center gap-2 pointer-events-auto group">
+
+      <div className="h-20 flex items-center px-8 gap-3">
+        <div className="w-9 h-9 bg-[#E2FF6F] rounded-xl flex items-center justify-center transition-transform hover:rotate-12">
+            <Sparkles className="w-5 h-5 text-black" />
+        </div>
+        <h2 className="font-bold tracking-tighter text-2xl text-white">MindCare</h2>
+      </div>
+      </Link>
+
+
+      
+      <div className="flex-1 overflow-y-auto pt-6 pb-8 px-6 space-y-2 no-scrollbar">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all group relative overflow-hidden",
+                isActive 
+                  ? "bg-white/10 text-[#E2FF6F] shadow-xl shadow-black/20" 
+                  : "text-white/40 hover:bg-white/5 hover:text-white"
+              )}
+            >
+              {isActive && (
+                <motion.div 
+                  layoutId="active-pill"
+                  className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-[#E2FF6F] rounded-full"
+                />
+              )}
+              <item.icon className={cn(
+                "w-5 h-5 transition-all group-active:scale-90",
+                isActive ? "text-[#E2FF6F] scale-110" : "text-white/20 group-hover:text-white"
+              )} />
+              {item.name}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Growing together widget */}
+      <div className="p-6 space-y-4">
+        <Link href="/crisis" className="block">
+          <button className="w-full h-16 rounded-[24px] bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-sm flex items-center justify-center gap-3 border border-rose-500/20 transition-all active:scale-95 group">
+             <Library className="w-5 h-5 group-hover:animate-pulse" /> Emergency Support
+          </button>
+        </Link>
+
+        {/* <div className="glass-panel p-8 flex flex-col items-center gap-4 text-center relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#E2FF6F]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative w-20 h-20 grayscale brightness-125 group-hover:grayscale-0 transition-all duration-500">
+                <Image 
+                    src="/assets/images/meditating-character.png" 
+                    alt="Plant" 
+                    fill 
+                    className="object-contain"
+                />
+            </div>
+            <div className="space-y-1 relative z-10">
+                <h4 className="font-bold text-white text-lg tracking-tight">Growing together</h4>
+                <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest leading-relaxed">Daily Resilience 🌿</p>
+            </div>
+        </div> */}
+      </div>
+    </aside>
+  );
+}
+
+function LeafIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="w-8 h-8 text-emerald-800" fill="currentColor">
+            <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1-8.313-12.454z" />
+        </svg>
+    );
+}

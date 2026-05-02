@@ -9,20 +9,99 @@ import {
   Headphones, 
   ChevronRight,
   ArrowLeft,
-  Heart
+  Heart,
+  MapPin,
+  Mail,
+  MessageCircle,
+  Database,
+  Loader2,
+  Plus
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface Helpline {
+  _id?: string;
+  country: string;
+  name: string;
+  phone?: string;
+  link?: string;
+}
+
+const seedHelplines = [
+  { country: "Global", name: "Befrienders Worldwide", link: "https://www.befrienders.org/" },
+  { country: "USA", name: "988 Suicide & Crisis Lifeline", phone: "988" },
+  { country: "UK", name: "Samaritans", phone: "116 123" },
+  { country: "India", name: "Vandrevala Foundation", phone: "9999 666 555" },
+  { country: "WhatsApp", name: "Crisis Text Line", link: "https://wa.me/1741741?text=HELLO" },
+];
 
 export default function CrisisPage() {
   const [playingId, setPlayingId] = useState<number | null>(null);
-  const helplines = [
-    { country: "Global", name: "Befrienders Worldwide", link: "https://www.befrienders.org/" },
-    { country: "USA", name: "988 Suicide & Crisis Lifeline", phone: "988" },
-    { country: "UK", name: "Samaritans", phone: "116 123" },
-    { country: "India", name: "Vandrevala Foundation", phone: "9999 666 555" },
-  ];
+  const [helplines, setHelplines] = useState<Helpline[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/crisis/helplines');
+      const data = await res.json();
+      setHelplines(data);
+    } catch (error) {
+      console.error("Failed to fetch helplines", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleCreateInitialData = async () => {
+    setLoading(true);
+    try {
+      await fetch('/api/crisis/helplines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(seedHelplines)
+      });
+      await fetchData();
+    } catch (error) {
+      console.error("Failed to seed helplines", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-10 h-10 text-rose-500 animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-medium">Loading emergency resources...</p>
+      </div>
+    );
+  }
+
+  if (helplines.length === 0) {
+    return (
+      <main className="p-8 max-w-5xl mx-auto min-h-[70vh] flex items-center justify-center">
+        <div className="glass-panel p-12 text-center flex flex-col items-center gap-6 max-w-md bg-secondary/10 border-rose-400/20">
+          <div className="w-20 h-20 rounded-full bg-rose-400/10 flex items-center justify-center">
+            <Database className="w-10 h-10 text-rose-400" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold mb-3">Crisis Resources Not Found</h2>
+            <p className="text-muted-foreground">Emergency helpline data is missing from our database. Click "Create" to initialize these life-saving resources.</p>
+          </div>
+          <Button onClick={handleCreateInitialData} size="lg" className="rounded-xl px-12 h-14 text-lg font-bold shadow-lg shadow-rose-400/20 bg-rose-500 hover:bg-rose-600">
+            <Plus className="w-5 h-5 mr-2" /> Create Resources
+          </Button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="p-8 max-w-5xl mx-auto space-y-12">
@@ -51,22 +130,44 @@ export default function CrisisPage() {
               </div>
               <div className="space-y-4">
                  {helplines.map((h, i) => (
-                   <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white border border-rose-100 shadow-sm">
+                   <div key={h._id || i} className="flex items-center justify-between p-4 rounded-2xl bg-white border border-rose-100 shadow-sm">
                       <div>
                         <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">{h.country}</p>
-                        <h4 className="font-bold">{h.name}</h4>
+                        <h4 className="font-bold text-sm md:text-base">{h.name}</h4>
                       </div>
                       {h.phone ? (
-                        <a href={`tel:${h.phone}`} className="h-10 px-4 flex items-center bg-rose-500 text-white rounded-xl font-bold text-sm hover:bg-rose-600 transition-colors">
+                        <a href={`tel:${h.phone}`} className="h-10 px-4 flex items-center bg-rose-500 text-white rounded-xl font-bold text-xs md:text-sm hover:bg-rose-600 transition-colors whitespace-nowrap">
                           Call {h.phone}
                         </a>
                       ) : (
-                        <a href={h.link} target="_blank" className="h-10 px-4 flex items-center border border-rose-500 text-rose-500 rounded-xl font-bold text-sm hover:bg-rose-50 transition-colors">
-                          Visit Site
+                        <a href={h.link} target="_blank" className="h-10 px-4 flex items-center border border-rose-500 text-rose-500 rounded-xl font-bold text-xs md:text-sm hover:bg-rose-50 transition-colors whitespace-nowrap">
+                          {h.country === "WhatsApp" ? (
+                            <span className="flex items-center gap-2"><MessageCircle className="w-4 h-4" /> Message</span>
+                          ) : (
+                            "Visit Site"
+                          )}
                         </a>
                       )}
                    </div>
                  ))}
+                 
+                 <div className="grid grid-cols-2 gap-4 mt-6">
+                   <a 
+                     href="https://www.google.com/maps/search/nearest+hospital" 
+                     target="_blank" 
+                     className="flex flex-col items-center justify-center p-4 rounded-xl bg-orange-50 border border-orange-100 text-orange-600 hover:bg-orange-100 transition-colors text-center shadow-sm"
+                   >
+                     <MapPin className="w-6 h-6 mb-2" />
+                     <span className="font-bold text-sm">Nearest Hospital</span>
+                   </a>
+                   <a 
+                     href="mailto:support@mindcare.ai" 
+                     className="flex flex-col items-center justify-center p-4 rounded-xl bg-sky-50 border border-sky-100 text-sky-600 hover:bg-sky-100 transition-colors text-center shadow-sm"
+                   >
+                     <Mail className="w-6 h-6 mb-2" />
+                     <span className="font-bold text-sm">Email Support</span>
+                   </a>
+                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center">
                  If you are in immediate physical danger, please call your local emergency services (e.g., 911, 999).
@@ -123,7 +224,8 @@ export default function CrisisPage() {
                  {[
                    "White Noise Stream",
                    "Soft Rain Backdrop",
-                   "Guided Reassurance"
+                   "Guided Reassurance",
+                   "Deep Ocean Echoes"
                  ].map((track, i) => (
                    <button 
                      key={i} 

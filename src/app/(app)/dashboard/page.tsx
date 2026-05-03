@@ -24,13 +24,6 @@ export default function DashboardPage() {
   });
 
   const scrollProgress = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-  const [hasHydrated, setHasHydrated] = useState(false);
-
-  useEffect(() => {
-    setHasHydrated(true);
-  }, []);
-
-  if (!hasHydrated) return <div className="flex h-screen bg-[#0A0C0B]" />;
 
   return (
     <div className="flex h-screen bg-transparent">
@@ -152,17 +145,17 @@ export default function DashboardPage() {
             <div className="h-40 w-full bg-white/5 rounded-[32px] flex items-end justify-between p-8 gap-3 border border-white/5 group-hover:border-[#E2FF6F]/20 transition-all duration-700">
               {[
                 // Mental: Mood based
-                (store.moodHistory?.slice(-5).reduce((acc, m) => acc + (m.mood === 'excellent' ? 100 : m.mood === 'good' ? 80 : 60), 0) / (store.moodHistory?.length || 1)) || 20,
+                ((store.moodHistory || []).slice(-5).reduce((acc, m) => acc + (m.mood === 'excellent' ? 100 : m.mood === 'good' ? 80 : 60), 0) / (store.moodHistory?.length || 1)) || 20,
                 // Emotional: Journaling based
                 Math.min(100, (store.journalEntries?.length || 0) * 20) || 20,
                 // Physical: Sleep based
-                (store.sleepHistory?.slice(-1)[0]?.durationHours ? (store.sleepHistory.slice(-1)[0].durationHours / 8) * 100 : 20),
+                ((store.sleepHistory || []).slice(-1)[0]?.durationHours ? (store.sleepHistory![store.sleepHistory!.length - 1].durationHours / 8) * 100 : 20),
                 // Social: Placeholder (could be chat)
                 40,
                 // Focus: Habits based
-                (store.habits?.filter(h => h.completedDates?.includes(new Date().toISOString().split('T')[0])).length / (store.habits?.length || 1)) * 100 || 20,
+                ((store.habits || []).filter(h => h.completedDates?.includes(new Date().toISOString().split('T')[0])).length / (store.habits?.length || 1)) * 100 || 20,
                 // Breath: Breathing based
-                Math.min(100, (store.breathingHistory?.slice(-1)[0]?.durationSeconds || 0) / 6),
+                Math.min(100, ((store.breathingHistory || []).slice(-1)[0]?.durationSeconds || 0) / 6),
                 // Overall
                 75
               ].map((h, i) => (

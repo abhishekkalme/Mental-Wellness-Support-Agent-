@@ -16,6 +16,11 @@ export default function AppLayout({
   const isOnboarding = pathname === "/onboarding";
   const syncRemoteData = useStore((state) => state.syncRemoteData);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   useEffect(() => {
     syncRemoteData();
@@ -59,7 +64,7 @@ export default function AppLayout({
       {!isOnboarding && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
       <div className={`flex-1 ${!isOnboarding ? 'md:pl-72' : ''} pt-16 md:pt-0 relative z-10 transition-all duration-500`}>
         <div className="min-h-screen">
-          {children}
+          {hasHydrated ? children : <div className="flex h-screen bg-[#0A0C0B]" />}
         </div>
       </div>
     </div>

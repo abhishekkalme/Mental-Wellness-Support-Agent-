@@ -119,13 +119,14 @@ export const useStore = create<MindCareStore>()(
             fetch('/api/sleep').then(r => r.ok ? r.json() : []),
             fetch('/api/breathing').then(r => r.ok ? r.json() : [])
           ]);
+          
           set((state) => ({
             ...state,
-            moodHistory: moods.length ? moods : state.moodHistory,
-            journalEntries: journals.length ? journals : state.journalEntries,
-            habits: habits.length ? habits : state.habits,
-            sleepHistory: sleep.length ? sleep : state.sleepHistory,
-            breathingHistory: breathing.length ? breathing : state.breathingHistory,
+            moodHistory: Array.isArray(moods) && moods.length ? moods : state.moodHistory,
+            journalEntries: Array.isArray(journals) && journals.length ? journals : state.journalEntries,
+            habits: Array.isArray(habits) && habits.length ? habits : state.habits,
+            sleepHistory: Array.isArray(sleep) && sleep.length ? sleep : state.sleepHistory,
+            breathingHistory: Array.isArray(breathing) && breathing.length ? breathing : state.breathingHistory,
           }));
         } catch (error) {
           console.error("Failed to sync remote generic metrics", error);

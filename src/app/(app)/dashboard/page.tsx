@@ -8,7 +8,7 @@ import { AIChatBar } from "@/components/AIChatBar";
 import { BreathingWidget } from "@/components/BreathingWidget";
 import { QuoteCard } from "@/components/QuoteCard";
 import { useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ShieldAlert, Bell, User, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/store/useStore";
@@ -24,6 +24,13 @@ export default function DashboardPage() {
   });
 
   const scrollProgress = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
+  if (!hasHydrated) return <div className="flex h-screen bg-[#0A0C0B]" />;
 
   return (
     <div className="flex h-screen bg-transparent">
@@ -145,24 +152,24 @@ export default function DashboardPage() {
             <div className="h-40 w-full bg-white/5 rounded-[32px] flex items-end justify-between p-8 gap-3 border border-white/5 group-hover:border-[#E2FF6F]/20 transition-all duration-700">
               {[
                 // Mental: Mood based
-                (store.moodHistory.slice(-5).reduce((acc, m) => acc + (m.mood === 'excellent' ? 100 : m.mood === 'good' ? 80 : 60), 0) / 5) || 20,
+                (store.moodHistory?.slice(-5).reduce((acc, m) => acc + (m.mood === 'excellent' ? 100 : m.mood === 'good' ? 80 : 60), 0) / (store.moodHistory?.length || 1)) || 20,
                 // Emotional: Journaling based
-                Math.min(100, store.journalEntries.length * 20) || 20,
+                Math.min(100, (store.journalEntries?.length || 0) * 20) || 20,
                 // Physical: Sleep based
-                (store.sleepHistory.slice(-1)[0]?.durationHours ? (store.sleepHistory.slice(-1)[0].durationHours / 8) * 100 : 20),
+                (store.sleepHistory?.slice(-1)[0]?.durationHours ? (store.sleepHistory.slice(-1)[0].durationHours / 8) * 100 : 20),
                 // Social: Placeholder (could be chat)
                 40,
                 // Focus: Habits based
-                (store.habits.filter(h => h.completedDates.includes(new Date().toISOString().split('T')[0])).length / (store.habits.length || 1)) * 100 || 20,
+                (store.habits?.filter(h => h.completedDates?.includes(new Date().toISOString().split('T')[0])).length / (store.habits?.length || 1)) * 100 || 20,
                 // Breath: Breathing based
-                Math.min(100, (store.breathingHistory.slice(-1)[0]?.durationSeconds || 0) / 6),
+                Math.min(100, (store.breathingHistory?.slice(-1)[0]?.durationSeconds || 0) / 6),
                 // Overall
                 75
               ].map((h, i) => (
                 <motion.div 
                   key={i}
                   initial={{ height: 0 }}
-                  animate={{ height: `${Math.max(10, Math.min(100, h))}%` }}
+                  animate={{ height: `${Math.max(10, Math.min(100, Number(h) || 0))}%` }}
                   transition={{ delay: 1.2 + i * 0.1, duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
                   className="w-full bg-gradient-to-t from-[#E2FF6F]/40 to-[#E2FF6F] rounded-t-xl shadow-[0_0_20px_rgba(226,255,111,0.1)] group-hover:shadow-[0_0_30px_rgba(226,255,111,0.3)] transition-all"
                 />

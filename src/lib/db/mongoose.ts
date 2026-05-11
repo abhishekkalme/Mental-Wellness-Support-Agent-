@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 
 import { config } from '@/config/env';
 
-// Global caching for serverless environments (Next.js)
 let cached = (global as any).mongoose;
 
 if (!cached) {
@@ -17,12 +16,14 @@ export async function connectDB() {
   if (!cached.promise) {
     const MONGODB_URI = config.mongodbUri;
     if (!MONGODB_URI) {
-      throw new Error(
-        'Please define the MONGODB_URI environment variable inside .env.local'
-      );
+      throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
     }
     const opts = {
       bufferCommands: false,
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
@@ -30,7 +31,7 @@ export async function connectDB() {
       return mongoose;
     });
   }
-  
+
   try {
     cached.conn = await cached.promise;
   } catch (e) {

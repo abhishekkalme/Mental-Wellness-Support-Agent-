@@ -1,7 +1,7 @@
-import bcrypt from "bcryptjs";
-import User from "@/lib/db/models/User";
-import { connectDB } from "@/lib/db/mongoose";
-import type { UserRole } from "@/lib/db/models/User";
+import bcrypt from 'bcryptjs';
+import User from '@/lib/db/models/User';
+import { connectDB } from '@/lib/db/mongoose';
+import type { UserRole } from '@/lib/db/models/User';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -16,12 +16,12 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 export async function authenticateEmailPassword(
   email: string,
   password: string
-): Promise<{ id: string; name: string; email: string; role: UserRole; isGuest: boolean } | null> {
+): Promise<{ id: string; name: string; email: string; role: UserRole } | null> {
   const normalized = email.trim().toLowerCase();
   if (!normalized || !password) return null;
 
   await connectDB();
-  const user = await User.findOne({ email: normalized }).select("+passwordHash");
+  const user = await User.findOne({ email: normalized }).select('+passwordHash');
   if (!user?.passwordHash) return null;
 
   const ok = await verifyPassword(password, user.passwordHash);
@@ -31,7 +31,6 @@ export async function authenticateEmailPassword(
     id: String(user._id),
     name: user.name,
     email: user.email ?? normalized,
-    role: user.role ?? "user",
-    isGuest: false,
+    role: user.role ?? 'user',
   };
 }

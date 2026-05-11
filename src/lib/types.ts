@@ -1,5 +1,5 @@
-export type Mood = "excellent" | "good" | "okay" | "bad" | "terrible";
-export type ProviderId = "gemini" | "openrouter" | "ollama";
+export type Mood = 'excellent' | 'good' | 'okay' | 'bad' | 'terrible';
+export type ProviderId = 'gemini' | 'openrouter' | 'ollama' | 'groq';
 
 export interface MoodEntry {
   id: string;
@@ -20,7 +20,7 @@ export interface JournalEntry {
 
 export interface ChatMessage {
   id: string;
-  role: "user" | "agent";
+  role: 'user' | 'agent';
   content: string;
   timestamp: string;
 }
@@ -28,7 +28,7 @@ export interface ChatMessage {
 export interface Habit {
   id: string;
   name: string;
-  frequency: "daily" | "weekly";
+  frequency: 'daily' | 'weekly';
   streak: number;
   completedDates: string[];
 }
@@ -36,7 +36,7 @@ export interface Habit {
 export interface Goal {
   id: string;
   title: string;
-  category: "wellness" | "exercise" | "meditation";
+  category: 'wellness' | 'exercise' | 'meditation';
   completed: boolean;
 }
 
@@ -95,6 +95,9 @@ export interface AcademicEvent {
 
 export interface OnboardingData {
   stage?: string;
+  feeling?: string;
+  priorities?: string[];
+  aiStyle?: string;
   stressLevel?: number;
   energyLevel?: number;
   sleepQuality?: number;
@@ -108,6 +111,7 @@ export interface OnboardingData {
 
 export interface UserState {
   name: string;
+  username: string;
   isOnboarded: boolean;
   onboardingData?: OnboardingData;
   moodHistory: MoodEntry[];
@@ -120,4 +124,5 @@ export interface UserState {
   sleepHistory: SleepEntry[];
   wellnessMetrics: WellnessMetrics;
   breathingHistory: BreathingRecord[];
+  safeMode: boolean;
 }

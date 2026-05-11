@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useMemo, useRef, useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send,
   Bot,
@@ -16,20 +16,21 @@ import {
   Volume2,
   VolumeX,
   Languages,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+  X,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   CHAT_LANGUAGE_STORAGE_KEY,
   getLanguageById,
   INDIAN_CHAT_LANGUAGES,
   type IndianChatLanguage,
-} from "@/lib/chat/indianLanguages";
-import { useStore } from "@/store/useStore";
+} from '@/lib/chat/indianLanguages';
+import { useStore } from '@/store/useStore';
 
 type ChatMode = { safeMode: boolean; liteMode: boolean; ventOrganizeAct: boolean };
-type ApiResponse = { risk: "none" | "elevated" | "crisis"; reply: string };
-type ChatMessage = { id: string; role: "user" | "agent"; content: string };
+type ApiResponse = { risk: 'none' | 'elevated' | 'crisis'; reply: string };
+type ChatMessage = { id: string; role: 'user' | 'agent'; content: string };
 
 type SpeechRec = {
   lang: string;
@@ -37,7 +38,9 @@ type SpeechRec = {
   interimResults: boolean;
   start: () => void;
   stop: () => void;
-  onresult: ((ev: { results: { length: number; [i: number]: { 0: { transcript: string } } } }) => void) | null;
+  onresult:
+    | ((ev: { results: { length: number; [i: number]: { 0: { transcript: string } } } }) => void)
+    | null;
   onerror: (() => void) | null;
   onend: (() => void) | null;
 };
@@ -57,7 +60,7 @@ function VoiceWaveform({ active }: { active: boolean }) {
             duration: 0.9,
             repeat: active ? Infinity : 0,
             delay: i * 0.12,
-            ease: "easeInOut",
+            ease: 'easeInOut',
           }}
         />
       ))}
@@ -67,7 +70,7 @@ function VoiceWaveform({ active }: { active: boolean }) {
 
 function EncryptedText({ text, active }: { text: string; active: boolean }) {
   const [display, setDisplay] = useState(text);
-  const chars = "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿@#$%^&*()_+{}[]|";
+  const chars = '¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿@#$%^&*()_+{}[]|';
 
   useEffect(() => {
     if (!active) {
@@ -77,76 +80,91 @@ function EncryptedText({ text, active }: { text: string; active: boolean }) {
 
     // Scramble effect
     const interval = setInterval(() => {
-      setDisplay(t => t.split('').map((char) => {
-        if (char === ' ' || char === '\n') return char;
-        return chars[Math.floor(Math.random() * chars.length)];
-      }).join(''));
+      setDisplay((t) =>
+        t
+          .split('')
+          .map((char) => {
+            if (char === ' ' || char === '\n') return char;
+            return chars[Math.floor(Math.random() * chars.length)];
+          })
+          .join('')
+      );
     }, 150);
 
     return () => clearInterval(interval);
   }, [active, text]);
 
   return (
-    <span className={cn(
-      "transition-all duration-500",
-      active ? "font-mono blur-[3px] opacity-50 select-none grayscale" : "blur-0 opacity-100"
-    )}>
+    <span
+      className={cn(
+        'transition-all duration-500',
+        active ? 'font-mono blur-[3px] opacity-50 select-none grayscale' : 'blur-0 opacity-100'
+      )}
+    >
       {display}
     </span>
   );
 }
 
 function getInitialLanguageId(): string {
-  if (typeof window === "undefined") return "hi";
+  if (typeof window === 'undefined') return 'hi';
   const saved = localStorage.getItem(CHAT_LANGUAGE_STORAGE_KEY);
   if (saved && INDIAN_CHAT_LANGUAGES.some((l) => l.id === saved)) return saved;
-  return "hi";
+  return 'hi';
 }
 
 export default function AgentChatPage() {
   const store = useStore();
-  const [langId, setLangId] = useState("hi");
+  const [langId, setLangId] = useState('hi');
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const lang = useMemo(() => getLanguageById(langId), [langId]);
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    { id: "welcome", role: "agent", content: getLanguageById("hi").welcomeLine },
+    { id: 'welcome', role: 'agent', content: getLanguageById('hi').welcomeLine },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
-  const [mode, setMode] = useState<Omit<ChatMode, 'safeMode'>>({ liteMode: false, ventOrganizeAct: true });
+  const [mode, setMode] = useState<Omit<ChatMode, 'safeMode'>>({
+    liteMode: false,
+    ventOrganizeAct: true,
+  });
   const [firstGen, setFirstGen] = useState(false);
-  const [consentMemory, setConsentMemory] = useState<"session" | "weekly">("session");
+  const [showModules, setShowModules] = useState(false); // Mobile toggle
+  const [consentMemory, setConsentMemory] = useState<'session' | 'weekly'>('session');
 
   const [speakReplies, setSpeakReplies] = useState(false);
   const [sttSupported, setSttSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const recRef = useRef<SpeechRec | null>(null);
 
-  const [examStartDate, setExamStartDate] = useState("");
-  const [examSubjects, setExamSubjects] = useState("Maths, Physics");
+  const [examStartDate, setExamStartDate] = useState('');
+  const [examSubjects, setExamSubjects] = useState('Maths, Physics');
   const [examPlan, setExamPlan] = useState<string | null>(null);
 
-  const [insightInputs, setInsightInputs] = useState({ bestMoment: "", worstMoment: "", oneImprovement: "" });
+  const [insightInputs, setInsightInputs] = useState({
+    bestMoment: '',
+    worstMoment: '',
+    oneImprovement: '',
+  });
   const [insightCard, setInsightCard] = useState<string | null>(null);
 
-  const [guiltAnswer, setGuiltAnswer] = useState("");
+  const [guiltAnswer, setGuiltAnswer] = useState('');
   const [guiltResult, setGuiltResult] = useState<{ state: string; steps: string[] } | null>(null);
 
-  const [profType, setProfType] = useState<"extension" | "clarification" | "workload">("extension");
-  const [profCourse, setProfCourse] = useState("CS101");
-  const [profDeadline, setProfDeadline] = useState("Tomorrow 5pm");
+  const [profType, setProfType] = useState<'extension' | 'clarification' | 'workload'>('extension');
+  const [profCourse, setProfCourse] = useState('CS101');
+  const [profDeadline, setProfDeadline] = useState('Tomorrow 5pm');
   const [profScript, setProfScript] = useState<string | null>(null);
 
   useEffect(() => {
     const id = getInitialLanguageId();
     setLangId(id);
     setMessages((prev) =>
-      prev.length === 1 && prev[0].id === "welcome"
-        ? [{ id: "welcome", role: "agent", content: getLanguageById(id).welcomeLine }]
+      prev.length === 1 && prev[0].id === 'welcome'
+        ? [{ id: 'welcome', role: 'agent', content: getLanguageById(id).welcomeLine }]
         : prev
     );
   }, []);
@@ -160,7 +178,7 @@ export default function AgentChatPage() {
   }, [messages, busy]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     const w = window as Window & {
       SpeechRecognition?: new () => SpeechRec;
       webkitSpeechRecognition?: new () => SpeechRec;
@@ -172,27 +190,24 @@ export default function AgentChatPage() {
     const onDoc = (e: MouseEvent) => {
       if (!langMenuRef.current?.contains(e.target as Node)) setLangMenuOpen(false);
     };
-    document.addEventListener("click", onDoc);
-    return () => document.removeEventListener("click", onDoc);
+    document.addEventListener('click', onDoc);
+    return () => document.removeEventListener('click', onDoc);
   }, []);
 
-  const pickVoice = useCallback(
-    (speechLang: string) => {
-      if (typeof window === "undefined") return null;
-      const voices = window.speechSynthesis.getVoices();
-      const [base] = speechLang.split("-");
-      return (
-        voices.find((v) => v.lang === speechLang) ||
-        voices.find((v) => v.lang.startsWith(base + "-")) ||
-        voices.find((v) => v.lang.startsWith(base)) ||
-        null
-      );
-    },
-    []
-  );
+  const pickVoice = useCallback((speechLang: string) => {
+    if (typeof window === 'undefined') return null;
+    const voices = window.speechSynthesis.getVoices();
+    const [base] = speechLang.split('-');
+    return (
+      voices.find((v) => v.lang === speechLang) ||
+      voices.find((v) => v.lang.startsWith(base + '-')) ||
+      voices.find((v) => v.lang.startsWith(base)) ||
+      null
+    );
+  }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     const load = () => pickVoice(lang.speechLang);
     load();
     window.speechSynthesis.onvoiceschanged = load;
@@ -203,7 +218,7 @@ export default function AgentChatPage() {
 
   const speakText = useCallback(
     (text: string) => {
-      if (typeof window === "undefined" || !text.trim()) return;
+      if (typeof window === 'undefined' || !text.trim()) return;
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang.speechLang;
@@ -226,7 +241,7 @@ export default function AgentChatPage() {
   }, []);
 
   const startListening = useCallback(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     const w = window as Window & {
       SpeechRecognition?: new () => SpeechRec;
       webkitSpeechRecognition?: new () => SpeechRec;
@@ -240,7 +255,7 @@ export default function AgentChatPage() {
     rec.interimResults = true;
     rec.continuous = true;
     rec.onresult = (e) => {
-      let text = "";
+      let text = '';
       for (let i = 0; i < e.results.length; i++) {
         text += e.results[i][0].transcript;
       }
@@ -265,12 +280,12 @@ export default function AgentChatPage() {
     () =>
       [
         lang.label,
-        store.safeMode ? "Safe Mode" : null,
-        mode.liteMode ? "Lite Mode" : null,
-        firstGen ? "First-Gen Lens" : null,
-        mode.ventOrganizeAct ? "Vent→Organize→Act" : null,
-        consentMemory === "weekly" ? "Weekly Memory" : "Session Memory",
-        speakReplies ? "Voice replies" : null,
+        store.safeMode ? 'Safe Mode' : null,
+        mode.liteMode ? 'Lite Mode' : null,
+        firstGen ? 'First-Gen Lens' : null,
+        mode.ventOrganizeAct ? 'Vent→Organize→Act' : null,
+        consentMemory === 'weekly' ? 'Weekly Memory' : 'Session Memory',
+        speakReplies ? 'Voice replies' : null,
       ].filter(Boolean) as string[],
     [mode, firstGen, consentMemory, lang.label, speakReplies, store.safeMode]
   );
@@ -279,29 +294,32 @@ export default function AgentChatPage() {
     const text = input.trim();
     if (!text || busy) return;
 
-    if (store.safeMode && text.toLowerCase() === "exit") {
+    if (store.safeMode && text.toLowerCase() === 'exit') {
       setMessages((p) => [
         ...p,
-        { id: Date.now().toString(), role: "user", content: text },
+        { id: Date.now().toString(), role: 'user', content: text },
         {
           id: (Date.now() + 1).toString(),
-          role: "agent",
-          content: "Okay. Pausing for now. Jab ready ho, bas ‘hi’ type kar dena.",
+          role: 'agent',
+          content: 'Okay. Pausing for now. Jab ready ho, bas ‘hi’ type kar dena.',
         },
       ]);
-      setInput("");
+      setInput('');
       return;
     }
 
-    const nextMessages = [...messages, { id: Date.now().toString(), role: "user" as const, content: text }];
+    const nextMessages = [
+      ...messages,
+      { id: Date.now().toString(), role: 'user' as const, content: text },
+    ];
     setMessages(nextMessages);
-    setInput("");
+    setInput('');
     setBusy(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           messages: nextMessages,
           chatLanguage: langId,
@@ -311,23 +329,26 @@ export default function AgentChatPage() {
             consentMemory,
             examWeek: {
               startDate: examStartDate || undefined,
-              subjects: examSubjects.split(",").map((s) => s.trim()).filter(Boolean),
+              subjects: examSubjects
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean),
             },
           },
         }),
       });
       const data = (await res.json().catch(() => null)) as ApiResponse | null;
-      if (!res.ok || !data?.reply) throw new Error("API Exception");
+      if (!res.ok || !data?.reply) throw new Error('API Exception');
       const reply = data.reply;
-      setMessages((p) => [...p, { id: Date.now().toString(), role: "agent", content: reply }]);
+      setMessages((p) => [...p, { id: Date.now().toString(), role: 'agent', content: reply }]);
       if (speakReplies) speakText(reply);
     } catch {
       setMessages((p) => [
         ...p,
         {
           id: Date.now().toString(),
-          role: "agent",
-          content: "Agent Core Disconnected. Please verify API conditions in Admin panel.",
+          role: 'agent',
+          content: 'Agent Core Disconnected. Please verify API conditions in Admin panel.',
         },
       ]);
     } finally {
@@ -337,7 +358,7 @@ export default function AgentChatPage() {
 
   function resetThread() {
     stopListening();
-    setMessages([{ id: "welcome", role: "agent", content: lang.welcomeLine }]);
+    setMessages([{ id: 'welcome', role: 'agent', content: lang.welcomeLine }]);
   }
 
   function onLanguageSelect(next: IndianChatLanguage) {
@@ -359,14 +380,17 @@ export default function AgentChatPage() {
               <Bot className="w-6 h-6 text-[#E2FF6F]" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-bold text-lg sm:text-xl text-white tracking-tight flex items-center gap-2 flex-wrap">
+              <h1 className="font-bold text-base sm:text-xl text-white tracking-tight flex items-center gap-2">
                 Wellness Agent
-                <span className="text-[10px] bg-[#E2FF6F] text-black px-2 py-0.5 rounded-full font-black tracking-widest uppercase">
-                  Multilingual
+                <span className="text-[9px] sm:text-[10px] bg-[#E2FF6F] text-black px-2 py-0.5 rounded-full font-black tracking-widest uppercase shrink-0">
+                  ML
                 </span>
               </h1>
-              <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em] truncate">
+              <p className="hidden sm:block text-[10px] text-white/40 font-bold uppercase tracking-[0.2em] truncate">
                 Neural Connection · {lang.nativeLabel}
+              </p>
+              <p className="sm:hidden text-[9px] text-white/40 font-bold uppercase tracking-[0.1em] truncate">
+                {lang.nativeLabel}
               </p>
             </div>
           </div>
@@ -380,9 +404,9 @@ export default function AgentChatPage() {
                   setLangMenuOpen((o) => !o);
                 }}
                 className={cn(
-                  "flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-bold transition-colors",
-                  "bg-white/5 border-white/15 text-white hover:bg-white/10 hover:border-[#E2FF6F]/40",
-                  lang.rtl && "flex-row-reverse"
+                  'flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-bold transition-colors',
+                  'bg-white/5 border-white/15 text-white hover:bg-white/10 hover:border-[#E2FF6F]/40',
+                  lang.rtl && 'flex-row-reverse'
                 )}
                 aria-haspopup="listbox"
                 aria-expanded={langMenuOpen}
@@ -391,10 +415,13 @@ export default function AgentChatPage() {
                   {lang.flag}
                 </span>
                 <Languages className="w-4 h-4 text-[#E2FF6F] shrink-0" />
-                <span className="max-w-[120px] sm:max-w-[160px] truncate">
-                  {lang.label}
-                </span>
-                <ChevronDown className={cn("w-4 h-4 opacity-60 transition-transform", langMenuOpen && "rotate-180")} />
+                <span className="max-w-[120px] sm:max-w-[160px] truncate">{lang.label}</span>
+                <ChevronDown
+                  className={cn(
+                    'w-4 h-4 opacity-60 transition-transform',
+                    langMenuOpen && 'rotate-180'
+                  )}
+                />
               </button>
 
               <AnimatePresence>
@@ -414,15 +441,17 @@ export default function AgentChatPage() {
                         aria-selected={l.id === langId}
                         onClick={() => onLanguageSelect(l)}
                         className={cn(
-                          "w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors",
-                          l.id === langId && "bg-[#E2FF6F]/15 text-[#E2FF6F]",
-                          l.rtl && "flex-row-reverse text-right"
+                          'w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors',
+                          l.id === langId && 'bg-[#E2FF6F]/15 text-[#E2FF6F]',
+                          l.rtl && 'flex-row-reverse text-right'
                         )}
                       >
                         <span className="text-lg">{l.flag}</span>
                         <span className="flex-1 min-w-0">
                           <span className="font-bold block truncate">{l.label}</span>
-                          <span className="text-xs text-white/45 block truncate">{l.nativeLabel}</span>
+                          <span className="text-xs text-white/45 block truncate">
+                            {l.nativeLabel}
+                          </span>
                         </span>
                       </button>
                     ))}
@@ -436,12 +465,16 @@ export default function AgentChatPage() {
               variant="outline"
               onClick={() => setSpeakReplies((v) => !v)}
               className={cn(
-                "rounded-2xl border-white/15 bg-white/5 gap-2",
-                speakReplies && "border-[#E2FF6F]/50 bg-[#E2FF6F]/10 text-[#E2FF6F]"
+                'rounded-2xl border-white/15 bg-white/5 gap-2',
+                speakReplies && 'border-[#E2FF6F]/50 bg-[#E2FF6F]/10 text-[#E2FF6F]'
               )}
-              title={speakReplies ? "Turn off spoken replies" : "Read agent replies aloud"}
+              title={speakReplies ? 'Turn off spoken replies' : 'Read agent replies aloud'}
             >
-              {speakReplies ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 opacity-60" />}
+              {speakReplies ? (
+                <Volume2 className="w-4 h-4" />
+              ) : (
+                <VolumeX className="w-4 h-4 opacity-60" />
+              )}
               <span className="hidden sm:inline text-xs font-bold">Voice</span>
             </Button>
 
@@ -459,20 +492,31 @@ export default function AgentChatPage() {
       <section className="flex-1 p-4 sm:p-8 relative z-10 grid gap-6 lg:grid-cols-12 overflow-hidden h-full min-h-0">
         <div
           className="flex flex-col rounded-[32px] border border-white/5 bg-white/5 shadow-2xl lg:col-span-8 overflow-hidden backdrop-blur-md min-h-0"
-          dir={lang.rtl ? "rtl" : "ltr"}
+          dir={lang.rtl ? 'rtl' : 'ltr'}
         >
-          <div className="border-b border-white/5 p-4 flex gap-2 overflow-x-auto custom-scroll flex-wrap">
+          <div className="border-b border-white/5 p-3 flex gap-2 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap">
+            <button
+              onClick={() => setShowModules(!showModules)}
+              className="lg:hidden rounded-full border border-[#E2FF6F]/40 bg-[#E2FF6F]/10 px-3 py-1 text-[10px] text-[#E2FF6F] font-bold tracking-wider uppercase flex items-center gap-1.5 shrink-0"
+            >
+              <Settings className="w-3 h-3" />
+              Modules
+            </button>
+            <div className="h-4 w-[1px] bg-white/10 mx-1 lg:hidden shrink-0" />
             {uiHints.map((h) => (
               <span
                 key={h}
-                className="rounded-full border border-[#E2FF6F]/20 bg-[#E2FF6F]/10 px-3 py-1 text-xs text-[#E2FF6F] whitespace-nowrap font-medium tracking-wide"
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/60 whitespace-nowrap font-medium tracking-wide shrink-0"
               >
                 {h}
               </span>
             ))}
           </div>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll min-h-0">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll min-h-0"
+          >
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
                 <motion.div
@@ -480,32 +524,36 @@ export default function AgentChatPage() {
                   initial={{ opacity: 0, y: 10, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   className={cn(
-                    "flex max-w-[85%] gap-4",
-                    msg.role === "user" ? "ml-auto flex-row-reverse" : ""
+                    'flex max-w-[85%] gap-4',
+                    msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''
                   )}
                 >
                   <div
                     className={cn(
-                      "w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border transition-all duration-500",
-                      msg.role === "user"
-                        ? "bg-white/5 border-white/10 text-white/40"
-                        : "bg-[#E2FF6F]/10 border-[#E2FF6F]/20 text-[#E2FF6F]"
+                      'w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border transition-all duration-500',
+                      msg.role === 'user'
+                        ? 'bg-white/5 border-white/10 text-white/40'
+                        : 'bg-[#E2FF6F]/10 border-[#E2FF6F]/20 text-[#E2FF6F]'
                     )}
                   >
-                    {msg.role === "user" ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
+                    {msg.role === 'user' ? (
+                      <User className="w-5 h-5" />
+                    ) : (
+                      <Bot className="w-5 h-5" />
+                    )}
                   </div>
                   <div
                     className={cn(
-                      "px-6 py-4 rounded-[28px] text-[15px] font-medium leading-relaxed shadow-xl",
-                      msg.role === "user"
-                        ? "bg-[#E2FF6F] text-black rounded-tr-sm shadow-[#E2FF6F]/5"
-                        : "bg-white/5 border border-white/5 text-white/90 rounded-tl-sm"
+                      'px-6 py-4 rounded-[28px] text-[15px] font-medium leading-relaxed shadow-xl',
+                      msg.role === 'user'
+                        ? 'bg-[#E2FF6F] text-black rounded-tr-sm shadow-[#E2FF6F]/5'
+                        : 'bg-white/5 border border-white/5 text-white/90 rounded-tl-sm'
                     )}
                   >
                     <p className="whitespace-pre-wrap">
                       <EncryptedText text={msg.content} active={store.safeMode} />
                     </p>
-                    {msg.role === "agent" && !store.safeMode && (
+                    {msg.role === 'agent' && !store.safeMode && (
                       <button
                         type="button"
                         onClick={() => speakText(msg.content)}
@@ -539,14 +587,18 @@ export default function AgentChatPage() {
             <div className="flex items-center gap-2 mb-3 min-h-8">
               <VoiceWaveform active={listening} />
               {listening && (
-                <span className="text-xs font-bold text-[#E2FF6F] uppercase tracking-wide">Listening…</span>
+                <span className="text-xs font-bold text-[#E2FF6F] uppercase tracking-wide">
+                  Listening…
+                </span>
               )}
               {!sttSupported && (
-                <span className="text-[10px] text-white/35">Speech input not supported in this browser.</span>
+                <span className="text-[10px] text-white/35">
+                  Speech input not supported in this browser.
+                </span>
               )}
             </div>
             <form
-              className="flex gap-2 sm:gap-4 p-2 rounded-[24px] bg-white/5 border border-white/10 focus-within:border-[#E2FF6F]/30 transition-all duration-500 items-center"
+              className="flex gap-2 sm:gap-4 p-1.5 sm:p-2 rounded-[24px] bg-white/5 border border-white/10 focus-within:border-[#E2FF6F]/30 transition-all duration-500 items-center"
               onSubmit={(e) => {
                 e.preventDefault();
                 send();
@@ -567,58 +619,79 @@ export default function AgentChatPage() {
                 }}
                 onTouchEnd={stopListening}
                 className={cn(
-                  "w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-full flex items-center justify-center border transition-all",
+                  'w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full flex items-center justify-center border transition-all',
                   listening
-                    ? "bg-rose-500/30 border-rose-400 text-rose-200"
-                    : "bg-white/10 border-white/15 text-white hover:bg-[#E2FF6F]/20 hover:border-[#E2FF6F]/40",
-                  (!sttSupported || busy) && "opacity-40 pointer-events-none"
+                    ? 'bg-rose-500/30 border-rose-400 text-rose-200'
+                    : 'bg-white/10 border-white/15 text-white hover:bg-[#E2FF6F]/20 hover:border-[#E2FF6F]/40',
+                  (!sttSupported || busy) && 'opacity-40 pointer-events-none'
                 )}
                 title="Hold to speak (browser speech recognition)"
                 aria-pressed={listening}
               >
-                <Mic className="w-5 h-5" />
+                <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <input
-                className="flex-1 min-w-0 bg-transparent border-none outline-none px-2 sm:px-4 text-base text-white placeholder-white/30"
+                className="flex-1 min-w-0 bg-transparent border-none outline-none px-1 sm:px-4 text-sm sm:text-base text-white placeholder-white/30"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={
-                  store.safeMode
-                    ? "Type strictly (type 'exit' to pause)..."
-                    : `Message in ${lang.label}…`
+                  store.safeMode ? "Type strictly (type 'exit' to pause)..." : `Message…`
                 }
-                dir={lang.rtl ? "rtl" : "ltr"}
+                dir={lang.rtl ? 'rtl' : 'ltr'}
               />
               <Button
                 type="submit"
                 disabled={!input.trim() || busy}
-                className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#E2FF6F] hover:bg-[#d4f056] text-black shadow-xl disabled:bg-white/10 disabled:text-white/20 shrink-0 p-0"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#E2FF6F] hover:bg-[#d4f056] text-black shadow-xl disabled:bg-white/10 disabled:text-white/20 shrink-0 p-0"
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </form>
             <p className="text-[10px] text-white/30 mt-2 px-1">
-              Hold the mic to dictate in <strong className="text-white/50">{lang.label}</strong>. Replies follow your
-              selected language.
+              Hold the mic to dictate in <strong className="text-white/50">{lang.label}</strong>.
+              Replies follow your selected language.
             </p>
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-white/5 bg-white/5 p-6 shadow-2xl lg:col-span-4 overflow-y-auto max-h-[calc(100vh-140px)] custom-scroll backdrop-blur-md">
-          <h2 className="text-xl font-bold flex items-center gap-2 text-white mb-6">
-            <Settings className="w-5 h-5 text-[#E2FF6F]" /> Agent Modules
-          </h2>
+        <div
+          className={cn(
+            'rounded-[32px] border border-white/5 bg-white/5 p-6 shadow-2xl lg:col-span-4 overflow-y-auto custom-scroll backdrop-blur-md transition-all duration-300',
+            !showModules && 'hidden lg:block',
+            showModules &&
+              'block fixed inset-4 top-20 bottom-24 z-[60] bg-[#0A0D08]/95 overflow-y-auto lg:relative lg:inset-auto lg:top-auto lg:bottom-auto'
+          )}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+              <Settings className="w-5 h-5 text-[#E2FF6F]" /> Agent Modules
+            </h2>
+            <button
+              onClick={() => setShowModules(false)}
+              className="lg:hidden p-2 text-white/40 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
           <div className="space-y-4 text-sm text-white/80 font-medium pb-6 border-b border-white/5">
             {[
-              { label: "Hostel Safe Mode", val: store.safeMode, op: (v: boolean) => store.setSafeMode(v) },
-              { label: "Lite Connection", val: mode.liteMode, op: (v: boolean) => setMode({ ...mode, liteMode: v }) },
               {
-                label: "Goal-Oriented Action",
+                label: 'Hostel Safe Mode',
+                val: store.safeMode,
+                op: (v: boolean) => store.setSafeMode(v),
+              },
+              {
+                label: 'Lite Connection',
+                val: mode.liteMode,
+                op: (v: boolean) => setMode({ ...mode, liteMode: v }),
+              },
+              {
+                label: 'Goal-Oriented Action',
                 val: mode.ventOrganizeAct,
                 op: (v: boolean) => setMode({ ...mode, ventOrganizeAct: v }),
               },
-              { label: "First-Gen Empathetic", val: firstGen, op: (v: boolean) => setFirstGen(v) },
+              { label: 'First-Gen Empathetic', val: firstGen, op: (v: boolean) => setFirstGen(v) },
             ].map((toggle) => (
               <label
                 key={toggle.label}
@@ -640,18 +713,18 @@ export default function AgentChatPage() {
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  ["session", "Volatile"],
-                  ["weekly", "Persistent"],
+                  ['session', 'Volatile'],
+                  ['weekly', 'Persistent'],
                 ].map(([k, label]) => (
                   <button
                     key={k}
                     type="button"
-                    onClick={() => setConsentMemory(k as "session" | "weekly")}
+                    onClick={() => setConsentMemory(k as 'session' | 'weekly')}
                     className={cn(
-                      "rounded-xl border py-2 text-xs font-bold transition-all",
+                      'rounded-xl border py-2 text-xs font-bold transition-all',
                       consentMemory === k
-                        ? "bg-[#E2FF6F] text-black border-[#E2FF6F]"
-                        : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"
+                        ? 'bg-[#E2FF6F] text-black border-[#E2FF6F]'
+                        : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'
                     )}
                   >
                     {label}
@@ -685,21 +758,24 @@ export default function AgentChatPage() {
                     setExamPlan(null);
                     setBusy(true);
                     try {
-                      const res = await fetch("/api/tools/exam-plan", {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
+                      const res = await fetch('/api/tools/exam-plan', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
                         body: JSON.stringify({
                           startDate: examStartDate || undefined,
-                          subjects: examSubjects.split(",").map((s) => s.trim()).filter(Boolean),
+                          subjects: examSubjects
+                            .split(',')
+                            .map((s) => s.trim())
+                            .filter(Boolean),
                           hoursPerDay: 3,
-                          sleepWindow: "11pm–7am",
+                          sleepWindow: '11pm–7am',
                         }),
                       });
                       const data = await res.json().catch(() => null);
-                      if (!res.ok || !data?.plan) throw new Error("Failed");
+                      if (!res.ok || !data?.plan) throw new Error('Failed');
                       setExamPlan(data.plan);
                     } catch {
-                      setExamPlan("Core Error: Check external provider integration.");
+                      setExamPlan('Core Error: Check external provider integration.');
                     } finally {
                       setBusy(false);
                     }
@@ -737,7 +813,9 @@ export default function AgentChatPage() {
                   className="w-full text-xs p-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-[#E2FF6F]/50 text-white placeholder-white/30"
                   placeholder="Improvement metric..."
                   value={insightInputs.oneImprovement}
-                  onChange={(e) => setInsightInputs((s) => ({ ...s, oneImprovement: e.target.value }))}
+                  onChange={(e) =>
+                    setInsightInputs((s) => ({ ...s, oneImprovement: e.target.value }))
+                  }
                 />
                 <Button
                   disabled={busy}
@@ -745,16 +823,16 @@ export default function AgentChatPage() {
                     setInsightCard(null);
                     setBusy(true);
                     try {
-                      const res = await fetch("/api/tools/insight-card", {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
-                        body: JSON.stringify({ ...insightInputs, tone: "hinglish" }),
+                      const res = await fetch('/api/tools/insight-card', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({ ...insightInputs, tone: 'hinglish' }),
                       });
                       const data = await res.json().catch(() => null);
-                      if (!res.ok || !data?.card) throw new Error("Failed");
+                      if (!res.ok || !data?.card) throw new Error('Failed');
                       setInsightCard(data.card);
                     } catch {
-                      setInsightCard("Core Error: Provider unavailable.");
+                      setInsightCard('Core Error: Provider unavailable.');
                     } finally {
                       setBusy(false);
                     }
@@ -788,16 +866,16 @@ export default function AgentChatPage() {
                     setGuiltResult(null);
                     setBusy(true);
                     try {
-                      const res = await fetch("/api/tools/study-guilt", {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
+                      const res = await fetch('/api/tools/study-guilt', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
                         body: JSON.stringify({ answer: guiltAnswer }),
                       });
                       const data = await res.json().catch(() => null);
                       if (!res.ok || !data?.state) throw new Error();
                       setGuiltResult({ state: data.state, steps: data.steps });
                     } catch {
-                      setGuiltResult({ state: "error", steps: ["Core Error: Decoder offline."] });
+                      setGuiltResult({ state: 'error', steps: ['Core Error: Decoder offline.'] });
                     } finally {
                       setBusy(false);
                     }
@@ -808,7 +886,9 @@ export default function AgentChatPage() {
                 </Button>
                 {guiltResult && (
                   <div className="mt-2 p-3 text-xs bg-amber-900/20 text-amber-200 border border-amber-500/20 rounded-xl leading-relaxed space-y-2">
-                    <div className="font-bold border-b border-amber-500/10 pb-2">Status: {guiltResult.state}</div>
+                    <div className="font-bold border-b border-amber-500/10 pb-2">
+                      Status: {guiltResult.state}
+                    </div>
                     <ul className="list-disc pl-4 opacity-80">
                       {guiltResult.steps.map((s, i) => (
                         <li key={i}>{s}</li>
@@ -851,21 +931,21 @@ export default function AgentChatPage() {
                     setProfScript(null);
                     setBusy(true);
                     try {
-                      const res = await fetch("/api/tools/professor-script", {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
+                      const res = await fetch('/api/tools/professor-script', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
                         body: JSON.stringify({
                           type: profType,
                           course: profCourse,
                           deadline: profDeadline,
-                          tone: "very polite",
+                          tone: 'very polite',
                         }),
                       });
                       const data = await res.json().catch(() => null);
                       if (!res.ok || !data?.text) throw new Error();
                       setProfScript(data.text);
                     } catch {
-                      setProfScript("Core Error: Text assembly failed.");
+                      setProfScript('Core Error: Text assembly failed.');
                     } finally {
                       setBusy(false);
                     }

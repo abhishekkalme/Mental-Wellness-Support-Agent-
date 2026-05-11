@@ -1,56 +1,77 @@
-import { NextResponse } from "next/server";
-import type { ChatMessage } from "@/lib/types";
-import { callLlm } from "@/ai/llm";
-import { buildMultilingualSystemPrompt, getLanguageById } from "@/lib/chat/indianLanguages";
+import { NextResponse } from 'next/server';
+import type { ChatMessage } from '@/lib/types';
+import { agenticReply } from '@/ai/aiService';
+import { chatRateLimit, getClientIdentifier } from '@/lib/rateLimit';
+import { sanitizeAndTrim } from '@/lib/utils';
+import { auth } from '@/auth';
+import { llmResponseCache } from '@/lib/cache';
 
-type IncomingMsg = { id: string; role: "user" | "agent"; content: string; timestamp?: string };
+type IncomingMsg = { id: string; role: 'user' | 'agent'; content: string; timestamp?: string };
 
 export async function POST(req: Request) {
+  const ip = getClientIdentifier(req);
+  const { success, remaining, resetIn } = await chatRateLimit(ip);
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait.', retryAfter: resetIn },
+      { status: 429, headers: { 'Retry-After': String(resetIn), 'X-RateLimit-Remaining': '0' } }
+    );
+  }
+
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const rawMessages = body.messages as IncomingMsg[] | undefined;
-    const chatLanguageId = typeof body.chatLanguage === "string" ? body.chatLanguage : "en";
-    const mode = body.mode as { safeMode?: boolean; liteMode?: boolean } | undefined;
-    const context = body.context as { firstGen?: boolean } | undefined;
+    const userId = session.user.id;
 
     if (!rawMessages?.length) {
-      return NextResponse.json({ error: "No messages" }, { status: 400 });
+      return NextResponse.json({ error: 'No messages' }, { status: 400 });
     }
 
-    const lang = getLanguageById(chatLanguageId);
-    const system = buildMultilingualSystemPrompt(lang, {
-      safeMode: Boolean(mode?.safeMode),
-      liteMode: Boolean(mode?.liteMode),
-      firstGen: Boolean(context?.firstGen),
-    });
+    const lastUserMessage = rawMessages[rawMessages.length - 1];
+    const sanitized = sanitizeAndTrim(lastUserMessage.content);
 
-    const messages: ChatMessage[] = rawMessages.map((m) => ({
+    if (!sanitized) {
+      return NextResponse.json({ error: 'Empty message' }, { status: 400 });
+    }
+
+    if (!llmResponseCache.tryAcquireDedup(userId, sanitized)) {
+      return NextResponse.json({
+        risk: 'none' as const,
+        reply: 'Please wait a moment before sending another message.',
+        languageId: 'en',
+        remaining,
+        dedup: true,
+      });
+    }
+
+    const history: ChatMessage[] = rawMessages.slice(-10).map((m) => ({
       id: m.id,
       role: m.role,
-      content: m.content,
+      content: sanitizeAndTrim(m.content),
       timestamp: m.timestamp ?? new Date().toISOString(),
     }));
 
-    const reply = await callLlm({
-      system,
-      messages,
-      maxOutputTokens: mode?.liteMode ? 256 : 768,
-    });
+    const reply = await agenticReply(userId, sanitized, history);
 
     return NextResponse.json({
-      risk: "none" as const,
+      risk: 'none' as const,
       reply,
-      languageId: lang.id,
+      languageId: 'en',
+      remaining,
     });
   } catch (error) {
-    console.error("[api/chat]", error);
+    console.error('[api/chat]', error);
     return NextResponse.json(
       {
-        risk: "none" as const,
-        reply:
-          "I’m having trouble reaching the AI service right now. Please check your API key in Admin settings (Gemini) and try again.",
+        risk: 'none' as const,
+        reply: "I'm having trouble reaching the AI service right now. Please try again shortly.",
       },
-      { status: 200 }
+      { status: 503 }
     );
   }
 }

@@ -1,330 +1,679 @@
-"use client";
+'use client';
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useStore } from "@/store/useStore";
-import { Button } from "@/components/ui/button";
-import { 
-  Sparkles, 
-  CheckCircle2, 
-  Brain, 
-  Moon, 
+import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useStore } from '@/store/useStore';
+import { useSession } from 'next-auth/react';
+import { Button } from '@/components/ui/button';
+import {
+  Sparkles,
+  CheckCircle2,
+  Brain,
+  Moon,
   Zap,
   Target,
   Heart,
   Activity,
-  User,
-  Coffee,
-  Briefcase,
-  GraduationCap
-} from "lucide-react";
-import { subDays } from "date-fns";
+  TrendingUp,
+  Battery,
+  CloudRain,
+  Smile,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const steps = [
-  { id: "identity", title: "Identity" },
-  { id: "baseline", title: "Baseline" },
-  { id: "support", title: "Focus" },
-  { id: "agent", title: "Agent" },
-  { id: "generation", title: "Profile Generation" },
+type FeelingState = 'stressed' | 'low' | 'tired' | 'anxious' | 'stable' | 'energized';
+type Priority = 'sleep' | 'focus' | 'emotional' | 'anxiety' | 'habits' | 'clarity' | 'energy';
+type AIStyle = 'listen' | 'practical' | 'organize' | 'motivate';
+
+interface OnboardingData {
+  feeling: FeelingState | '';
+  priorities: Priority[];
+  aiStyle: AIStyle;
+}
+
+const feelingOptions = [
+  {
+    id: 'stressed' as FeelingState,
+    label: 'Stressed / Overwhelmed',
+    icon: Zap,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/10',
+    description: 'Too much on your plate',
+  },
+  {
+    id: 'low' as FeelingState,
+    label: 'Low / Down',
+    icon: CloudRain,
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/10',
+    description: 'Feeling down or sad',
+  },
+  {
+    id: 'tired' as FeelingState,
+    label: 'Tired / Exhausted',
+    icon: Battery,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/10',
+    description: 'Low energy, drained',
+  },
+  {
+    id: 'anxious' as FeelingState,
+    label: 'Anxious / Worried',
+    icon: Activity,
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/10',
+    description: 'Racing thoughts, unease',
+  },
+  {
+    id: 'stable' as FeelingState,
+    label: 'Pretty Good / Stable',
+    icon: Smile,
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    description: 'Doing okay, nothing major',
+  },
+  {
+    id: 'energized' as FeelingState,
+    label: 'Motivated / Energized',
+    icon: TrendingUp,
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10',
+    description: 'Feeling good, ready to go',
+  },
 ];
+
+const priorityOptions = [
+  { id: 'sleep' as Priority, label: 'Better sleep', icon: Moon },
+  { id: 'focus' as Priority, label: 'More focus', icon: Brain },
+  { id: 'emotional' as Priority, label: 'Emotional balance', icon: Heart },
+  { id: 'anxiety' as Priority, label: 'Less anxiety', icon: Activity },
+  { id: 'habits' as Priority, label: 'Build better habits', icon: Target },
+  { id: 'clarity' as Priority, label: 'Mental clarity', icon: Sparkles },
+  { id: 'energy' as Priority, label: 'More energy', icon: Zap },
+];
+
+const aiStyleOptions = [
+  {
+    id: 'listen' as AIStyle,
+    label: 'Listen and ask questions',
+    description: 'Empathetic and curious',
+  },
+  {
+    id: 'practical' as AIStyle,
+    label: 'Give practical suggestions',
+    description: 'Action-oriented',
+  },
+  {
+    id: 'organize' as AIStyle,
+    label: 'Help me think clearly',
+    description: 'Analytical and organizing',
+  },
+  {
+    id: 'motivate' as AIStyle,
+    label: 'Motivate and encourage',
+    description: 'Energetic and supportive',
+  },
+];
+
+const ONBOARDING_STORAGE_KEY = 'mindcare-onboarding-progress';
+
+function getStoredProgress(): { step: number; formData: OnboardingData } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    if (!parsed.step || !parsed.formData) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveProgress(step: number, formData: OnboardingData) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify({ step, formData }));
+  } catch {}
+}
+
+function clearProgress() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const store = useStore();
-  const [currentStep, setCurrentStep] = useState(0);
+  const { data: session } = useSession();
+
+  const storedProgress = getStoredProgress();
+  const [currentStep, setCurrentStep] = useState(storedProgress?.step ?? 0);
   const [generationPhase, setGenerationPhase] = useState(0);
-  
-  const [formData, setFormData] = useState({
-    name: store.name || "",
-    stage: "",
-    stressLevel: 3,
-    energyLevel: 3,
-    sleepQuality: 3,
-    focusLevel: 3,
-    overthinkingFrequency: "Sometimes",
-    struggles: [] as string[],
-    agentBehavior: "Listen first",
-    checkInFrequency: "Daily",
-  });
+  const [formData, setFormData] = useState<OnboardingData>(
+    storedProgress?.formData ?? { feeling: '', priorities: [], aiStyle: 'listen' }
+  );
+
+  useEffect(() => {
+    saveProgress(currentStep, formData);
+  }, [currentStep, formData]);
+
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const checkOnboardingStatus = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.onboarded) {
+            clearProgress();
+            router.replace('/dashboard');
+          }
+        } else if (res.status === 401) {
+          router.replace('/signin?callbackUrl=/onboarding');
+        }
+      } catch {
+        router.replace('/signin?callbackUrl=/onboarding');
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [session, router]);
+
+  const username = session?.user?.username || '';
+  const steps = ['Feeling', 'Priorities', 'AI Style', 'Setup'];
+
+  const generateHabitsFromOnboarding = () => {
+    const habits: {
+      id: string;
+      name: string;
+      frequency: 'daily' | 'weekly';
+      streak: number;
+      completedDates: string[];
+    }[] = [];
+
+    if (
+      formData.feeling === 'stressed' ||
+      formData.feeling === 'anxious' ||
+      formData.priorities.includes('anxiety')
+    ) {
+      habits.push({
+        id: 'h_breathing',
+        name: 'Box Breathing',
+        frequency: 'daily',
+        streak: 0,
+        completedDates: [],
+      });
+    }
+
+    if (formData.feeling === 'tired' || formData.priorities.includes('sleep')) {
+      habits.push({
+        id: 'h_winddown',
+        name: 'Wind Down Routine',
+        frequency: 'daily',
+        streak: 0,
+        completedDates: [],
+      });
+    }
+
+    if (formData.feeling === 'low' || formData.priorities.includes('emotional')) {
+      habits.push({
+        id: 'h_journal',
+        name: 'Gratitude Journal',
+        frequency: 'daily',
+        streak: 0,
+        completedDates: [],
+      });
+    }
+
+    if (formData.priorities.includes('focus')) {
+      habits.push({
+        id: 'h_deepwork',
+        name: 'Deep Work Session',
+        frequency: 'daily',
+        streak: 0,
+        completedDates: [],
+      });
+    }
+
+    if (formData.priorities.includes('habits')) {
+      habits.push({
+        id: 'h_morning',
+        name: 'Morning Routine',
+        frequency: 'daily',
+        streak: 0,
+        completedDates: [],
+      });
+    }
+
+    if (habits.length === 0) {
+      habits.push({
+        id: 'h_hydration',
+        name: 'Daily Hydration',
+        frequency: 'daily',
+        streak: 0,
+        completedDates: [],
+      });
+    }
+
+    return habits;
+  };
+
+  const getWellnessMetricsFromFeeling = (): {
+    mental: number;
+    emotional: number;
+    physical: number;
+    sleep: number;
+    social: number;
+    spiritual: number;
+  } => {
+    const base = {
+      mental: 70,
+      emotional: 70,
+      physical: 70,
+      sleep: 70,
+      social: 70,
+      spiritual: 70,
+    };
+
+    switch (formData.feeling) {
+      case 'stressed':
+        return { ...base, mental: 40, emotional: 50 };
+      case 'low':
+        return { ...base, emotional: 35, mental: 50 };
+      case 'tired':
+        return { ...base, physical: 40, sleep: 45 };
+      case 'anxious':
+        return { ...base, mental: 45, emotional: 55 };
+      case 'stable':
+        return { ...base, mental: 75, emotional: 75 };
+      case 'energized':
+        return { ...base, mental: 85, emotional: 85, physical: 80 };
+      default:
+        return base;
+    }
+  };
+
+  const getInitialAIContext = (): string => {
+    const name = username || 'there';
+
+    switch (formData.feeling) {
+      case 'stressed':
+        return `Hi ${name}, I understand things feel overwhelming right now. I'm here to help you find calm. What's been most stressful lately?`;
+      case 'low':
+        return `Hi ${name}, I'm here for you. It takes courage to seek support. How have you been feeling recently?`;
+      case 'tired':
+        return `Hi ${name}, it sounds like you're running on empty. Let's find ways to restore your energy. What's been draining you most?`;
+      case 'anxious':
+        return `Hi ${name}, I notice you mentioned anxiety. Let's work through it together. What kind of thoughts or feelings come up for you?`;
+      case 'stable':
+        return `Hi ${name}, it's great that you're feeling stable. Let's keep that momentum going. What would you like to focus on?`;
+      case 'energized':
+        return `Hi ${name}, I love your energy! Let's channel that into building good habits. What goals are you excited about?`;
+      default:
+        return `Hi ${name}, I'm here to support your wellness journey. What brings you here today?`;
+    }
+  };
+
+  const completeOnboarding = async () => {
+    const onboardingData = {
+      feeling: formData.feeling,
+      priorities: formData.priorities,
+      aiStyle: formData.aiStyle,
+      lastAssessmentDate: new Date().toISOString(),
+    };
+
+    store.setUsername(username);
+    store.setOnboardingData(onboardingData);
+
+    const metrics = getWellnessMetricsFromFeeling();
+    store.updateWellnessMetrics(metrics);
+
+    const habits = generateHabitsFromOnboarding();
+    habits.forEach((h) => store.addHabit(h));
+
+    store.addChatMessage({
+      id: `msg_init_${Date.now()}`,
+      role: 'agent',
+      content: getInitialAIContext(),
+      timestamp: new Date().toISOString(),
+    });
+
+    store.setOnboarded(true);
+    clearProgress();
+
+    try {
+      await fetch('/api/auth/complete-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboardingData, wellnessMetrics: metrics }),
+      });
+    } catch {}
+
+    router.push('/dashboard');
+  };
 
   const nextStep = () => {
-    if (currentStep === 4) return;
-    setCurrentStep(prev => prev + 1);
+    if (currentStep === steps.length - 1) return;
+    setCurrentStep((prev) => prev + 1);
   };
 
   const prevStep = () => {
-    if (currentStep > 0) setCurrentStep(prev => prev - 1);
+    if (currentStep > 0) setCurrentStep((prev) => prev - 1);
   };
 
-  const toggleStruggle = (s: string) => {
-    setFormData(prev => ({
-      ...prev,
-      struggles: prev.struggles.includes(s) 
-        ? prev.struggles.filter(x => x !== s) 
-        : [...prev.struggles, s]
-    }));
-  };
-
+  const completeOnboardingRef = useRef(completeOnboarding);
   useEffect(() => {
-    if (currentStep === 4) {
-      let phase = 0;
+    completeOnboardingRef.current = completeOnboarding;
+    if (currentStep === steps.length - 1) {
       const interval = setInterval(() => {
-        phase++;
-        setGenerationPhase(phase);
-        if (phase >= 6) {
-          clearInterval(interval);
-          completeOnboarding();
-        }
-      }, 700);
+        setGenerationPhase((p) => {
+          const next = p + 1;
+          if (next >= 5) {
+            clearInterval(interval);
+            completeOnboardingRef.current();
+            return next;
+          }
+          return next;
+        });
+      }, 600);
       return () => clearInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep]);
-
-  const completeOnboarding = () => {
-    // 1. Core Profile
-    store.setName(formData.name);
-    store.setOnboardingData({
-      stage: formData.stage,
-      stressLevel: formData.stressLevel,
-      energyLevel: formData.energyLevel,
-      sleepQuality: formData.sleepQuality,
-      focusLevel: formData.focusLevel,
-      overthinkingFrequency: formData.overthinkingFrequency,
-      struggles: formData.struggles,
-      agentBehavior: formData.agentBehavior,
-      checkInFrequency: formData.checkInFrequency,
-      lastAssessmentDate: new Date().toISOString(),
-    });
-
-    // 2. Metrics Baseline
-    const baseMental = 100 - (formData.stressLevel * 10) + (formData.focusLevel * 5);
-    const basePhysical = formData.sleepQuality * 15 + formData.energyLevel * 5;
-    const baseEmotional = formData.struggles.includes("Anxiety") ? 40 : 70;
-    const baseSleep = formData.sleepQuality * 20;
-    
-    store.updateWellnessMetrics({
-      mental: Math.max(30, Math.min(100, baseMental)),
-      physical: Math.max(30, Math.min(100, basePhysical)),
-      emotional: Math.max(30, Math.min(100, baseEmotional)),
-      sleep: Math.max(30, Math.min(100, baseSleep)),
-      social: formData.struggles.includes("Loneliness") ? 35 : 65,
-      spiritual: 60
-    });
-
-    // 3. Habit Generation
-    if (formData.struggles.includes("Sleep")) store.addHabit({ id: "h_sleep", name: "Wind Down Routine", frequency: "daily", streak: 0, completedDates: [] });
-    if (formData.struggles.includes("Focus")) store.addHabit({ id: "h_focus", name: "Deep Work Session", frequency: "daily", streak: 0, completedDates: [] });
-    if (formData.struggles.includes("Anxiety") || formData.overthinkingFrequency === "Often") store.addHabit({ id: "h_anx", name: "Box Breathing", frequency: "daily", streak: 0, completedDates: [] });
-    if (store.habits.length === 0) store.addHabit({ id: "h_def", name: "Daily Hydration", frequency: "daily", streak: 0, completedDates: [] });
-
-    // 4. Pre-populate Data (Simulated Historical Sleep Data)
-    const baseHours = formData.sleepQuality <= 2 ? 5 : (formData.sleepQuality === 5 ? 8 : 6.5);
-    for(let i = 1; i <= 3; i++) {
-        store.addSleepEntry({
-            id: `init_sleep_${i}`,
-            date: subDays(new Date(), i).toISOString(),
-            quality: formData.sleepQuality as 1|2|3|4|5,
-            durationHours: baseHours + (Math.random() * 2 - 1)
-        });
-    }
-
-    // 5. Intelligent First Chat Message
-    let firstMessage = `Hi ${formData.name}, I'm here to support you. Let's get started.`;
-    if (formData.struggles.includes("Sleep")) {
-       firstMessage = `I noticed sleep is one of your priorities, ${formData.name}. How has your rest been lately?`;
-    } else if (formData.struggles.includes("Anxiety")) {
-       firstMessage = `When anxiety shows up for you, ${formData.name}, is it more physical, racing thoughts, or both?`;
-    } else if (formData.struggles.includes("Focus")) {
-       firstMessage = `What usually breaks your focus—phone, stress, or mental fatigue?`;
-    } else if (formData.struggles.includes("Burnout")) {
-       firstMessage = `Burnout can feel extremely heavy. Are you finding any moments to recharge, or does it feel endless?`;
-    }
-    
-    // Clear chat history & inject
-    store.addChatMessage({ id: `msg_init`, role: "agent", content: firstMessage, timestamp: new Date().toISOString() });
-
-    store.setOnboarded(true);
-    router.push("/dashboard");
-  };
+  }, [currentStep, steps.length]);
 
   return (
-    <div className="min-h-screen bg-[#0A0D08] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Immersive Background */}
+    <div className="min-h-screen bg-[#0A0D08] flex flex-col items-center justify-center p-4 md:p-6 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#E2FF6F]/5 blur-[120px] rounded-full" />
-          <div className="absolute bottom-40 left-0 w-[500px] h-[500px] bg-[#E2FF6F]/5 blur-[120px] rounded-full" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#E2FF6F]/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-40 left-0 w-[500px] h-[500px] bg-[#E2FF6F]/5 blur-[120px] rounded-full" />
       </div>
 
-      <div className="max-w-2xl w-full space-y-12 relative z-10">
+      <div className="max-w-xl w-full space-y-8 relative z-10">
         <div className="flex justify-between items-center gap-2">
           {steps.map((s, i) => (
-            <div key={s.id} className={`h-2 rounded-full transition-all duration-700 flex-1 ${i <= currentStep ? "bg-[#E2FF6F] shadow-[0_0_10px_rgba(226,255,111,0.5)]" : "bg-white/10"}`} />
+            <div
+              key={s}
+              className={cn(
+                'h-2 rounded-full transition-all duration-500 flex-1',
+                i <= currentStep
+                  ? 'bg-[#E2FF6F] shadow-[0_0_10px_rgba(226,255,111,0.5)]'
+                  : 'bg-white/10'
+              )}
+            />
           ))}
         </div>
 
         <AnimatePresence mode="wait">
           {currentStep === 0 && (
-            <motion.div key="step0" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="glass-panel p-12 rounded-[40px] bg-white/5 border border-white/5 shadow-2xl backdrop-blur-2xl space-y-10">
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
+            >
               <div>
-                 <h2 className="text-4xl font-bold text-white mb-3">Operator Identity</h2>
-                 <p className="text-white/40 font-medium text-lg">Define your signature in the system.</p>
+                <h2 className="text-3xl font-bold text-white mb-2">How have you been feeling?</h2>
+                <p className="text-white/40 font-medium">
+                  This shapes your personalized experience
+                </p>
               </div>
-              <div className="space-y-4">
-                 <label className="text-[10px] font-bold text-[#E2FF6F] uppercase tracking-[0.3em] pl-1">What should I call you?</label>
-                 <input autoFocus type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full h-16 rounded-2xl bg-black/40 border border-white/10 px-6 text-xl text-white font-bold outline-none focus:border-[#E2FF6F] placeholder:text-white/20 transition-all" placeholder="Enter your name..." />
+
+              <div className="grid grid-cols-2 gap-3">
+                {feelingOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setFormData({ ...formData, feeling: option.id })}
+                    className={cn(
+                      'p-4 rounded-2xl border text-left transition-all',
+                      formData.feeling === option.id
+                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                        : 'bg-black/20 border-white/5 hover:bg-white/5'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-xl flex items-center justify-center mb-3',
+                        option.bgColor
+                      )}
+                    >
+                      <option.icon className={cn('w-5 h-5', option.color)} />
+                    </div>
+                    <p
+                      className={cn(
+                        'font-bold text-sm',
+                        formData.feeling === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
+                      )}
+                    >
+                      {option.label}
+                    </p>
+                    <p className="text-xs text-white/40 mt-1">{option.description}</p>
+                  </button>
+                ))}
               </div>
-              <div className="space-y-4">
-                 <label className="text-[10px] font-bold text-[#E2FF6F] uppercase tracking-[0.3em] pl-1">What stage are you in? (Optional)</label>
-                 <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { l: "Student", i: GraduationCap },
-                      { l: "Working professional", i: Briefcase },
-                      { l: "Founder", i: Zap },
-                      { l: "Parent", i: Heart },
-                      { l: "Other", i: User }
-                    ].map(st => (
-                      <button key={st.l} onClick={() => setFormData({...formData, stage: st.l})} className={`p-4 rounded-2xl border text-sm font-bold flex items-center justify-center gap-2 transition-all ${formData.stage === st.l ? "bg-[#E2FF6F] border-[#E2FF6F] text-black" : "bg-white/5 border-white/5 text-white/50 hover:bg-white/10"}`}>
-                        <st.i className="w-4 h-4" /> {st.l}
-                      </button>
-                    ))}
-                 </div>
-              </div>
-              <div className="pt-4 flex justify-end">
-                <Button className="h-16 px-10 bg-[#E2FF6F] text-black font-bold uppercase tracking-widest rounded-2xl shadow-xl hover:bg-[#d4f056] disabled:opacity-50" disabled={!formData.name.trim()} onClick={nextStep}>Continue</Button>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                  onClick={prevStep}
+                >
+                  Back
+                </Button>
+                <Button
+                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
+                  onClick={nextStep}
+                  disabled={!formData.feeling}
+                >
+                  Continue
+                </Button>
               </div>
             </motion.div>
           )}
 
           {currentStep === 1 && (
-            <motion.div key="step1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="glass-panel p-12 rounded-[40px] bg-white/5 border border-white/5 shadow-2xl backdrop-blur-2xl space-y-8">
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
+            >
               <div>
-                <h2 className="text-4xl font-bold text-white mb-2">Emotional Baseline</h2>
-                <p className="text-white/40 font-medium">How have you felt lately?</p>
+                <h2 className="text-3xl font-bold text-white mb-2">What matters most to you?</h2>
+                <p className="text-white/40 font-medium">Select up to 3 priorities</p>
               </div>
-              <div className="space-y-8 py-2">
-                 {[
-                   { label: "Stress", key: "stressLevel" },
-                   { label: "Energy", key: "energyLevel" },
-                   { label: "Sleep", key: "sleepQuality" },
-                   { label: "Focus", key: "focusLevel" },
-                 ].map(metric => (
-                   <div key={metric.key} className="space-y-3">
-                      <div className="flex justify-between items-center px-1">
-                         <label className="text-xs font-bold uppercase tracking-widest text-white/60">{metric.label}</label>
-                         <span className="text-[#E2FF6F] font-bold text-lg">{(formData as any)[metric.key]}<span className="text-xs text-white/40">/5</span></span>
+
+              <div className="grid grid-cols-2 gap-3">
+                {priorityOptions.map((option) => {
+                  const isSelected = formData.priorities.includes(option.id);
+                  const isDisabled = !isSelected && formData.priorities.length >= 3;
+
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        if (isSelected) {
+                          setFormData({
+                            ...formData,
+                            priorities: formData.priorities.filter((p) => p !== option.id),
+                          });
+                        } else if (formData.priorities.length < 3) {
+                          setFormData({
+                            ...formData,
+                            priorities: [...formData.priorities, option.id],
+                          });
+                        }
+                      }}
+                      disabled={isDisabled}
+                      className={cn(
+                        'p-4 rounded-2xl border text-left transition-all flex items-center gap-3',
+                        isSelected
+                          ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                          : isDisabled
+                            ? 'opacity-30 cursor-not-allowed'
+                            : 'bg-black/20 border-white/5 hover:bg-white/5'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'w-8 h-8 rounded-lg flex items-center justify-center',
+                          isSelected ? 'bg-[#E2FF6F]' : 'bg-white/10'
+                        )}
+                      >
+                        {isSelected ? (
+                          <CheckCircle2 className="w-4 h-4 text-black" />
+                        ) : (
+                          <option.icon className="w-4 h-4 text-white/40" />
+                        )}
                       </div>
-                      <input type="range" min="1" max="5" value={(formData as any)[metric.key]} onChange={e => setFormData({...formData, [metric.key]: parseInt(e.target.value)})} className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#E2FF6F]" />
-                   </div>
-                 ))}
-                 <div className="space-y-4 pt-4">
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 px-1 mb-2 block">Do you often overthink?</label>
-                    <div className="grid grid-cols-3 gap-2">
-                       {["Rarely", "Sometimes", "Often"].map(f => (
-                         <button key={f} onClick={() => setFormData({...formData, overthinkingFrequency: f})} className={`p-4 rounded-xl text-sm font-bold border transition-all ${formData.overthinkingFrequency === f ? "bg-[#E2FF6F] border-[#E2FF6F] text-black" : "bg-black/30 border-white/5 text-white/50 hover:bg-white/10 hover:text-white"}`}>
-                           {f}
-                         </button>
-                       ))}
-                    </div>
-                 </div>
+                      <span
+                        className={cn(
+                          'font-bold text-sm',
+                          isSelected ? 'text-[#E2FF6F]' : 'text-white/80'
+                        )}
+                      >
+                        {option.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="pt-2 flex gap-4">
-                <Button variant="ghost" className="flex-1 h-16 text-white/40 font-bold uppercase tracking-widest bg-white/5 rounded-2xl hover:text-white" onClick={prevStep}>Back</Button>
-                <Button className="flex-[2] h-16 bg-[#E2FF6F] text-black font-bold uppercase tracking-widest rounded-2xl hover:bg-[#d4f056]" onClick={nextStep}>Next</Button>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                  onClick={prevStep}
+                >
+                  Back
+                </Button>
+                <Button
+                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
+                  onClick={nextStep}
+                  disabled={formData.priorities.length === 0}
+                >
+                  Continue
+                </Button>
               </div>
             </motion.div>
           )}
 
           {currentStep === 2 && (
-            <motion.div key="step2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="glass-panel p-10 rounded-[40px] bg-white/5 border border-white/5 shadow-2xl backdrop-blur-2xl space-y-8">
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
+            >
               <div>
-                <h2 className="text-4xl font-bold text-white mb-2">Main Support Areas</h2>
-                <p className="text-white/40 font-medium">What do you want help with most?</p>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  How should your AI companion help?
+                </h2>
+                <p className="text-white/40 font-medium">
+                  Optional - you can always change this later
+                </p>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                 {[
-                   { label: "Anxiety", icon: Heart },
-                   { label: "Sleep", icon: Moon },
-                   { label: "Focus", icon: Brain },
-                   { label: "Motivation", icon: Target },
-                   { label: "Loneliness", icon: User },
-                   { label: "Burnout", icon: Zap },
-                   { label: "Overthinking", icon: Activity },
-                   { label: "Emotional balance", icon: Sparkles }
-                 ].map(s => (
-                   <button key={s.label} onClick={() => toggleStruggle(s.label)} className={`p-4 rounded-[20px] border transition-all flex flex-col items-center text-center gap-2 group ${formData.struggles.includes(s.label) ? "bg-[#E2FF6F]/10 border-[#E2FF6F]/50 shadow-[0_0_15px_rgba(226,255,111,0.1)]" : "bg-black/30 border-white/5 hover:bg-white/5"}`}>
-                     <s.icon className={`w-5 h-5 ${formData.struggles.includes(s.label) ? "text-[#E2FF6F]" : "text-white/40"} mb-1 group-hover:scale-110 transition-transform`} />
-                     <span className={`font-bold text-xs ${formData.struggles.includes(s.label) ? "text-[#E2FF6F]" : "text-white/60"}`}>{s.label}</span>
-                   </button>
-                 ))}
+
+              <div className="space-y-3">
+                {aiStyleOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setFormData({ ...formData, aiStyle: option.id })}
+                    className={cn(
+                      'w-full p-4 rounded-2xl border text-left transition-all',
+                      formData.aiStyle === option.id
+                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                        : 'bg-black/20 border-white/5 hover:bg-white/5'
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className={cn(
+                            'font-bold',
+                            formData.aiStyle === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
+                          )}
+                        >
+                          {option.label}
+                        </p>
+                        <p className="text-xs text-white/40 mt-1">{option.description}</p>
+                      </div>
+                      {formData.aiStyle === option.id && (
+                        <CheckCircle2 className="w-5 h-5 text-[#E2FF6F]" />
+                      )}
+                    </div>
+                  </button>
+                ))}
               </div>
-              <div className="pt-4 flex gap-4">
-                <Button variant="ghost" className="flex-1 h-16 text-white/40 font-bold uppercase tracking-widest bg-white/5 rounded-2xl hover:text-white" onClick={prevStep}>Back</Button>
-                <Button className="flex-[2] h-16 bg-[#E2FF6F] text-black font-bold uppercase tracking-widest rounded-2xl hover:bg-[#d4f056]" onClick={nextStep}>Next</Button>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                  onClick={prevStep}
+                >
+                  Back
+                </Button>
+                <Button
+                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
+                  onClick={nextStep}
+                >
+                  Finish Setup
+                </Button>
               </div>
             </motion.div>
           )}
 
           {currentStep === 3 && (
-            <motion.div key="step3" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="glass-panel p-10 rounded-[40px] bg-white/5 border border-white/5 shadow-2xl backdrop-blur-2xl space-y-8">
-              <div>
-                <h2 className="text-4xl font-bold text-white mb-2">Agent Behavior</h2>
-                <p className="text-white/40 font-medium">How should your AI companion support you?</p>
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-panel p-10 rounded-3xl bg-[#E2FF6F]/5 border border-[#E2FF6F]/20 shadow-2xl text-center space-y-8"
+            >
+              <div className="w-20 h-20 bg-[#E2FF6F]/10 rounded-full flex items-center justify-center text-[#E2FF6F] mx-auto">
+                <CheckCircle2 className="w-10 h-10" />
               </div>
-              <div className="space-y-4">
-                 <div className="grid grid-cols-1 gap-2">
-                    {[
-                      "Listen first", "Give practical advice", "Help organize thoughts", "Motivate me", "Challenge negative thinking"
-                    ].map(bh => (
-                      <button key={bh} onClick={() => setFormData({...formData, agentBehavior: bh})} className={`p-4 rounded-2xl text-sm font-bold border flex items-center justify-between transition-all ${formData.agentBehavior === bh ? "bg-[#E2FF6F]/10 border-[#E2FF6F]/50 text-[#E2FF6F]" : "bg-black/30 border-white/5 text-white/50 hover:bg-white/5 hover:text-white"}`}>
-                        {bh} {formData.agentBehavior === bh && <CheckCircle2 className="w-5 h-5" />}
-                      </button>
-                    ))}
-                 </div>
-              </div>
-              <div className="space-y-4 pt-4">
-                 <label className="text-xs font-bold uppercase tracking-widest text-white/60 px-1 mb-2 block">How often should I check in?</label>
-                 <div className="grid grid-cols-3 gap-2">
-                    {["Daily", "Twice a day", "Only when open"].map(f => (
-                      <button key={f} onClick={() => setFormData({...formData, checkInFrequency: f})} className={`p-3 rounded-xl text-xs font-bold border transition-all ${formData.checkInFrequency === f ? "bg-[#E2FF6F] border-[#E2FF6F] text-black" : "bg-black/30 border-white/5 text-white/50 hover:bg-white/10 hover:text-white"}`}>
-                        {f}
-                      </button>
-                    ))}
-                 </div>
-              </div>
-              <div className="pt-4 flex gap-4">
-                <Button variant="ghost" className="flex-1 h-16 text-white/40 font-bold uppercase tracking-widest bg-white/5 rounded-2xl hover:text-white" onClick={prevStep}>Back</Button>
-                <Button className="flex-[2] h-16 bg-[#E2FF6F] text-black font-bold uppercase tracking-widest rounded-2xl hover:bg-[#d4f056]" onClick={nextStep}>Finalize</Button>
-              </div>
-            </motion.div>
-          )}
 
-          {currentStep === 4 && (
-            <motion.div key="step4" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel p-12 rounded-[40px] bg-[#E2FF6F]/5 border border-[#E2FF6F]/20 shadow-2xl backdrop-blur-2xl text-center space-y-10">
-              <div className="w-24 h-24 bg-[#E2FF6F]/10 rounded-full flex items-center justify-center text-[#E2FF6F] mx-auto shadow-[0_0_30px_rgba(226,255,111,0.2)]">
-                <CheckCircle2 className="w-12 h-12" />
-              </div>
               <div>
-                 <h2 className="text-4xl font-black text-white tracking-tight mb-2">Profile Activated</h2>
-                 <p className="text-white/50 text-lg font-medium">Generating your custom ecosystem...</p>
+                <h2 className="text-3xl font-black text-white tracking-tight">
+                  Setting up your space
+                </h2>
+                <p className="text-white/50 mt-2">Personalizing your wellness experience...</p>
               </div>
-              <div className="space-y-4 max-w-sm mx-auto text-left py-4">
+
+              <div className="space-y-3 text-left max-w-xs mx-auto">
                 {[
-                  { p: 1, t: "Mood Check-ins initialized" },
-                  { p: 2, t: "Personalized rituals created" },
-                  { p: 3, t: "AI companion calibrated" },
-                  { p: 4, t: "Emergency support enabled" },
-                  { p: 5, t: "Insight engine connected" },
-                ].map(item => (
-                   <div key={item.p} className={`flex items-center gap-3 transition-all duration-500 ${generationPhase >= item.p ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}>
-                      <CheckCircle2 className="w-5 h-5 text-[#E2FF6F]" />
-                      <span className="font-bold text-white/80">{item.t}</span>
-                   </div>
+                  { p: 1, t: 'Creating your habits' },
+                  { p: 2, t: 'Setting up wellness metrics' },
+                  { p: 3, t: 'Configuring AI companion' },
+                  { p: 4, t: 'Preparing dashboard' },
+                ].map((item) => (
+                  <div
+                    key={item.p}
+                    className={cn(
+                      'flex items-center gap-3 transition-all duration-300',
+                      generationPhase >= item.p ? 'opacity-100' : 'opacity-30'
+                    )}
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-[#E2FF6F]" />
+                    <span className="text-sm font-medium text-white/80">{item.t}</span>
+                  </div>
                 ))}
               </div>
-              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mt-8">
-                 <motion.div className="h-full bg-[#E2FF6F] shadow-[0_0_10px_rgba(226,255,111,0.5)]" initial={{ width: "0%" }} animate={{ width: `${(generationPhase / 5) * 100}%` }} transition={{ duration: 0.5 }} />
+
+              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-[#E2FF6F]"
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${(generationPhase / 4) * 100}%` }}
+                  transition={{ duration: 0.3 }}
+                />
               </div>
             </motion.div>
           )}

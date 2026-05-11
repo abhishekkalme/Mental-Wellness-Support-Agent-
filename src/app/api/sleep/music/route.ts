@@ -1,14 +1,67 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/mongoose';
 import SleepMusic from '@/lib/db/models/SleepMusic';
+import { z } from 'zod';
+
+const MusicSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  category: z.string().min(1, 'Category is required'),
+  bpm: z.string().min(1, 'BPM is required'),
+  audioUrl: z.string().optional(),
+});
+
+const BulkMusicSchema = z.array(MusicSchema);
 
 export async function GET() {
   try {
     await connectDB();
     const music = await SleepMusic.find({});
     return NextResponse.json(music);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    await connectDB();
+    const data = await req.json();
+    const { _id, ...update } = data;
+    if (!_id) return NextResponse.json({ error: 'Missing _id' }, { status: 400 });
+
+    const parsed = MusicSchema.partial().safeParse(update);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
+    }
+    const updated = await SleepMusic.findByIdAndUpdate(_id, parsed.data, { new: true });
+    return NextResponse.json(updated);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    await connectDB();
+    const { searchParams } = new URL(req.url);
+    const _id = searchParams.get('_id');
+    if (_id) {
+      await SleepMusic.findByIdAndDelete(_id);
+    } else {
+      await SleepMusic.deleteMany({});
+    }
+    return NextResponse.json({ message: 'Deleted' });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -16,15 +69,26 @@ export async function POST(req: Request) {
   try {
     await connectDB();
     const data = await req.json();
-    
+
     if (Array.isArray(data)) {
-      const music = await SleepMusic.insertMany(data);
+      const parsed = BulkMusicSchema.safeParse(data);
+      if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
+      }
+      const music = await SleepMusic.insertMany(parsed.data);
       return NextResponse.json(music);
     } else {
-      const track = await SleepMusic.create(data);
+      const parsed = MusicSchema.safeParse(data);
+      if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
+      }
+      const track = await SleepMusic.create(parsed.data);
       return NextResponse.json(track);
     }
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }

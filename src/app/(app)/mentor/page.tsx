@@ -1,34 +1,34 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { Calendar, Inbox, MessageSquare, Star, Wallet } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { motion } from 'framer-motion';
+import { Calendar, Inbox, MessageSquare, Star, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 const sections = [
   {
-    title: "Session requests",
-    desc: "Incoming bookings and context packages will appear here.",
+    title: 'Session requests',
+    desc: 'Incoming bookings and context packages will appear here.',
     icon: Inbox,
   },
   {
-    title: "Upcoming sessions",
-    desc: "Calendar, join links, and pre-session notes.",
+    title: 'Upcoming sessions',
+    desc: 'Calendar, join links, and pre-session notes.',
     icon: Calendar,
   },
   {
-    title: "Messages",
-    desc: "Secure chat with booked clients (pre/post session).",
+    title: 'Messages',
+    desc: 'Secure chat with booked clients (pre/post session).',
     icon: MessageSquare,
   },
   {
-    title: "Earnings & payouts",
-    desc: "Completed sessions, revenue, and payout history.",
+    title: 'Earnings & payouts',
+    desc: 'Completed sessions, revenue, and payout history.',
     icon: Wallet,
   },
   {
-    title: "Ratings & reviews",
-    desc: "Client feedback aggregated on your public profile.",
+    title: 'Ratings & reviews',
+    desc: 'Client feedback aggregated on your public profile.',
     icon: Star,
   },
 ];
@@ -41,14 +41,16 @@ export default function MentorDashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-3"
       >
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#E2FF6F]/80">Mentor / therapist</p>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#E2FF6F]/80">
+          Mentor / therapist
+        </p>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Your practice hub</h1>
         <p className="text-white/50 max-w-2xl text-lg">
-          Verified mentors manage bookings, sessions, and client context from here. Full booking flows and
-          payouts connect to the premium directory at{" "}
+          Verified mentors manage bookings, sessions, and client context from here. Full booking
+          flows and payouts connect to the premium directory at{' '}
           <Link href="/therapists" className="text-[#E2FF6F] underline-offset-4 hover:underline">
             /therapists
-          </Link>{" "}
+          </Link>{' '}
           as the product grows.
         </p>
       </motion.div>
@@ -80,7 +82,9 @@ export default function MentorDashboardPage() {
           </Button>
         </Link>
         <Link href="/therapists">
-          <Button className="bg-[#E2FF6F] text-black hover:bg-[#d4f056]">Browse directory (user view)</Button>
+          <Button className="bg-[#E2FF6F] text-black hover:bg-[#d4f056]">
+            Browse directory (user view)
+          </Button>
         </Link>
       </div>
     </div>

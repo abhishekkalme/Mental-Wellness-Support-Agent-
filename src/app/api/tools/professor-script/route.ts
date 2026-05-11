@@ -1,40 +1,50 @@
-import { NextResponse } from "next/server";
-import { callLlm } from "@/ai/llm";
+import { NextResponse } from 'next/server';
+import { callLlm } from '@/ai/llm';
+import { dataRateLimit, getClientIdentifier } from '@/lib/rateLimit';
 
 type Req = {
-  type: "extension" | "clarification" | "workload";
+  type: 'extension' | 'clarification' | 'workload';
   course?: string;
   deadline?: string;
-  tone?: "very polite" | "neutral";
+  tone?: 'very polite' | 'neutral';
 };
 
 export async function POST(request: Request) {
+  const ip = getClientIdentifier(request);
+  const { success, resetIn } = await dataRateLimit(ip);
+  if (!success) {
+    return new NextResponse('Rate limited', {
+      status: 429,
+      headers: { 'Retry-After': String(resetIn) },
+    });
+  }
+
   const body = (await request.json().catch(() => null)) as Req | null;
   if (!body?.type) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
   const system = [
-    "You write a short, polite message to a professor/teacher.",
-    "Keep it professional, concise, and not overly detailed about health.",
-    "Output should be copy-paste ready.",
-    "No emojis.",
-  ].join("\n");
+    'You write a short, polite message to a professor/teacher.',
+    'Keep it professional, concise, and not overly detailed about health.',
+    'Output should be copy-paste ready.',
+    'No emojis.',
+  ].join('\n');
 
   const user = [
     `Type: ${body.type}`,
-    `Course: ${body.course ?? "unknown"}`,
-    `Deadline: ${body.deadline ?? "unknown"}`,
-    `Tone: ${body.tone ?? "very polite"}`,
-    "Context: Student feels stressed and wants a respectful message.",
-  ].join("\n");
+    `Course: ${body.course ?? 'unknown'}`,
+    `Deadline: ${body.deadline ?? 'unknown'}`,
+    `Tone: ${body.tone ?? 'very polite'}`,
+    'Context: Student feels stressed and wants a respectful message.',
+  ].join('\n');
 
   const text = await callLlm({
     system,
     messages: [
       {
-        id: "sys-prof-1",
-        role: "user",
+        id: 'sys-prof-1',
+        role: 'user',
         content: user,
         timestamp: new Date().toISOString(),
       },
@@ -44,4 +54,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ text });
 }
-

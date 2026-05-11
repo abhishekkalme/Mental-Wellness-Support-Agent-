@@ -1,20 +1,10 @@
-"use client";
+'use client';
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Zap, 
-  Wind, 
-  ShieldCheck, 
-  ArrowLeft, 
-  Flame, 
-  Infinity, 
-  Scale,
-  Frown,
-  Heart
-} from "lucide-react";
-import Link from "next/link";
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Zap, Wind, ShieldCheck, ArrowLeft, Flame, Infinity, Scale } from 'lucide-react';
+import Link from 'next/link';
 
 type RescueModule = {
   id: string;
@@ -28,61 +18,100 @@ type RescueModule = {
 
 const rescueModules: RescueModule[] = [
   {
-    id: "anxiety",
-    title: "Panic & Anxiety",
-    description: "Centering yourself when things feel out of control.",
+    id: 'anxiety',
+    title: 'Panic & Anxiety',
+    description: 'Centering yourself when things feel out of control.',
     icon: Wind,
-    color: "text-blue-500",
-    gradient: "from-blue-500/20 to-cyan-500/20",
+    color: 'text-blue-500',
+    gradient: 'from-blue-500/20 to-cyan-500/20',
     steps: [
-      { text: "Acknowledge the feeling", sub: "Say to yourself: 'I am feeling anxious, and that's okay. It will pass.'" },
-      { text: "The 3-3-3 Rule", sub: "Name 3 things you see, 3 things you hear, and move 3 parts of your body." },
-      { text: "Rooting", sub: "Feel your feet pressing into the floor. Imagine roots growing into the earth." },
-      { text: "Gentle Breath", sub: "Take a slow breath in for 4, hold for 1, and exhale for 8." }
-    ]
+      {
+        text: 'Acknowledge the feeling',
+        sub: "Say to yourself: 'I am feeling anxious, and that's okay. It will pass.'",
+      },
+      {
+        text: 'The 3-3-3 Rule',
+        sub: 'Name 3 things you see, 3 things you hear, and move 3 parts of your body.',
+      },
+      {
+        text: 'Rooting',
+        sub: 'Feel your feet pressing into the floor. Imagine roots growing into the earth.',
+      },
+      { text: 'Gentle Breath', sub: 'Take a slow breath in for 4, hold for 1, and exhale for 8.' },
+    ],
   },
   {
-    id: "anger",
-    title: "Anger & Frustration",
-    description: "Cooling down the heat of the moment.",
+    id: 'anger',
+    title: 'Anger & Frustration',
+    description: 'Cooling down the heat of the moment.',
     icon: Flame,
-    color: "text-rose-500",
-    gradient: "from-rose-500/20 to-orange-500/20",
+    color: 'text-rose-500',
+    gradient: 'from-rose-500/20 to-orange-500/20',
     steps: [
-      { text: "Pause", sub: "Take your hands off whatever you're doing. Close your eyes for 5 seconds." },
-      { text: "Scan the heat", sub: "Where is the anger in your body? Jaw? Chest? Hands? Soften that area." },
-      { text: "The Perspective Shift", sub: "Will this matter in 5 days? 5 months? 5 years?" },
-      { text: "Release", sub: "Exhale sharply, like you're blowing out a candle from across the room." }
-    ]
+      {
+        text: 'Pause',
+        sub: "Take your hands off whatever you're doing. Close your eyes for 5 seconds.",
+      },
+      {
+        text: 'Scan the heat',
+        sub: 'Where is the anger in your body? Jaw? Chest? Hands? Soften that area.',
+      },
+      { text: 'The Perspective Shift', sub: 'Will this matter in 5 days? 5 months? 5 years?' },
+      {
+        text: 'Release',
+        sub: "Exhale sharply, like you're blowing out a candle from across the room.",
+      },
+    ],
   },
   {
-    id: "burnout",
-    title: "Emotional Burnout",
-    description: "When you feel like you have nothing left to give.",
+    id: 'burnout',
+    title: 'Emotional Burnout',
+    description: 'When you feel like you have nothing left to give.',
     icon: Infinity,
-    color: "text-amber-500",
-    gradient: "from-amber-500/20 to-yellow-500/20",
+    color: 'text-amber-500',
+    gradient: 'from-amber-500/20 to-yellow-500/20',
     steps: [
-      { text: "Total Permission", sub: "Give yourself permission to do absolutely nothing for the next 5 minutes." },
-      { text: "Lower the Bar", sub: "Internalize this: 'I am enough, even if I accomplish nothing more today.'" },
-      { text: "Sensory Comfort", sub: "Touch something soft or drink a sip of water. Reconnect with your basic needs." },
-      { text: "Micro-rest", sub: "Lean back, let your shoulders drop, and just exist in this space." }
-    ]
+      {
+        text: 'Total Permission',
+        sub: 'Give yourself permission to do absolutely nothing for the next 5 minutes.',
+      },
+      {
+        text: 'Lower the Bar',
+        sub: "Internalize this: 'I am enough, even if I accomplish nothing more today.'",
+      },
+      {
+        text: 'Sensory Comfort',
+        sub: 'Touch something soft or drink a sip of water. Reconnect with your basic needs.',
+      },
+      {
+        text: 'Micro-rest',
+        sub: 'Lean back, let your shoulders drop, and just exist in this space.',
+      },
+    ],
   },
   {
-    id: "regret",
-    title: "Regret & Guilt",
-    description: "Releasing the weight of the past.",
+    id: 'regret',
+    title: 'Regret & Guilt',
+    description: 'Releasing the weight of the past.',
     icon: Scale,
-    color: "text-indigo-500",
-    gradient: "from-indigo-500/20 to-purple-500/20",
+    color: 'text-indigo-500',
+    gradient: 'from-indigo-500/20 to-purple-500/20',
     steps: [
-      { text: "Acknowledge the Lesson", sub: "What did this situation teach you? Take the lesson, leave the weight." },
-      { text: "Compassion Check", sub: "Would you judge a friend this harshly? Offer yourself the same grace." },
-      { text: "The Now", sub: "The past is a memory. Your only power is in this exact moment." },
-      { text: "Forgiveness Affirmation", sub: "Quietly say: 'I did the best I could with what I knew then. I release this now.'" }
-    ]
-  }
+      {
+        text: 'Acknowledge the Lesson',
+        sub: 'What did this situation teach you? Take the lesson, leave the weight.',
+      },
+      {
+        text: 'Compassion Check',
+        sub: 'Would you judge a friend this harshly? Offer yourself the same grace.',
+      },
+      { text: 'The Now', sub: 'The past is a memory. Your only power is in this exact moment.' },
+      {
+        text: 'Forgiveness Affirmation',
+        sub: "Quietly say: 'I did the best I could with what I knew then. I release this now.'",
+      },
+    ],
+  },
 ];
 
 export default function RescuePage() {
@@ -104,37 +133,60 @@ export default function RescuePage() {
   };
 
   return (
-    <main className="p-8 max-w-6xl mx-auto space-y-12">
+    <main
+      id="main-content"
+      className="p-8 max-w-6xl mx-auto space-y-12"
+      role="main"
+      aria-label="Rescue sessions for emotional relief"
+    >
       <AnimatePresence mode="wait">
         {!activeModule ? (
           <motion.div
             key="grid"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="space-y-10"
           >
             <header className="text-center max-w-2xl mx-auto space-y-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-6">
+              <div
+                className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-6"
+                aria-hidden="true"
+              >
                 <Zap className="w-8 h-8" />
               </div>
               <h1 className="text-4xl font-bold tracking-tight">Rescue Sessions</h1>
               <p className="text-muted-foreground text-lg italic">
-                "In the middle of difficulty lies opportunity." — Choose a session for immediate relief.
+                &quot;In the middle of difficulty lies opportunity.&quot; — Choose a session for
+                immediate relief.
               </p>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              role="list"
+              aria-label="Available rescue modules"
+            >
               {rescueModules.map((m) => (
                 <motion.button
                   key={m.id}
-                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => startModule(m)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      startModule(m);
+                    }
+                  }}
+                  role="listitem"
+                  aria-label={`${m.title}: ${m.description}`}
                   className={`glass-panel p-8 text-left border-2 border-transparent hover:border-primary/20 transition-all flex flex-col gap-6 group relative overflow-hidden`}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${m.gradient} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                  
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${m.gradient} opacity-0 group-hover:opacity-100 transition-opacity`}
+                  />
+
                   <div className="flex items-start justify-between relative z-10">
                     <div className={`p-4 rounded-2xl bg-background shadow-sm ${m.color}`}>
                       <m.icon className="w-6 h-6" />
@@ -154,67 +206,106 @@ export default function RescuePage() {
             </div>
 
             <div className="text-center">
-               <Link href="/crisis">
-                 <Button variant="outline" className="gap-2">
-                   <ShieldCheck className="w-4 h-4" /> Need Professional Help?
-                 </Button>
-               </Link>
+              <Link href="/crisis">
+                <Button variant="outline" className="gap-2">
+                  <ShieldCheck className="w-4 h-4" /> Need Professional Help?
+                </Button>
+              </Link>
             </div>
           </motion.div>
         ) : (
           <motion.div
             key="module"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${activeModule?.title} rescue session`}
             className={`min-h-[60vh] glass-panel p-8 md:p-16 flex flex-col items-center justify-center text-center relative overflow-hidden`}
           >
-             <div className={`absolute inset-0 bg-gradient-to-br ${activeModule.gradient} opacity-40`} />
-             
-             <button 
-               onClick={() => setActiveModule(null)}
-               className="absolute top-8 left-8 p-2 hover:bg-background/50 rounded-full transition-colors z-20"
-             >
-               <ArrowLeft className="w-6 h-6" />
-             </button>
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${activeModule?.gradient} opacity-40`}
+            />
 
-             <motion.div 
-               className="relative z-10 w-full max-w-2xl space-y-12"
-             >
-                <div className="space-y-4">
-                  <div className="flex justify-center gap-2">
-                    {activeModule.steps.map((_, i) => (
-                      <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i <= currentStep ? "bg-primary w-8" : "bg-primary/10 w-4"}`} />
-                    ))}
-                  </div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary">Step {currentStep + 1} of {activeModule.steps.length}</p>
+            <button
+              onClick={() => setActiveModule(null)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveModule(null);
+                }
+              }}
+              aria-label="Exit rescue session and return to menu"
+              className="absolute top-8 left-8 p-2 hover:bg-background/50 rounded-full transition-colors z-20"
+            >
+              <ArrowLeft className="w-6 h-6" aria-hidden="true" />
+            </button>
+
+            <motion.div className="relative z-10 w-full max-w-2xl space-y-12">
+              <div className="space-y-4">
+                <div
+                  className="flex justify-center gap-2"
+                  role="progressbar"
+                  aria-valuenow={currentStep + 1}
+                  aria-valuemin={1}
+                  aria-valuemax={activeModule?.steps.length || 4}
+                  aria-label={`Step ${currentStep + 1} of ${activeModule?.steps.length}`}
+                >
+                  {activeModule?.steps.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${i <= currentStep ? 'bg-primary w-8' : 'bg-primary/10 w-4'}`}
+                    />
+                  ))}
                 </div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                  Step {currentStep + 1} of {activeModule?.steps.length}
+                </p>
+              </div>
 
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentStep}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-6"
-                  >
-                    <h2 className="text-4xl md:text-5xl font-bold tracking-tight">{activeModule.steps[currentStep].text}</h2>
-                    <p className="text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed">
-                      {activeModule.steps[currentStep].sub}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-6"
+                >
+                  <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+                    {activeModule?.steps[currentStep].text}
+                  </h2>
+                  <p className="text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed">
+                    {activeModule?.steps[currentStep].sub}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
 
-                <div className="pt-8">
-                  <Button 
-                    size="lg" 
-                    className="h-16 px-12 text-lg rounded-2xl shadow-xl shadow-primary/20"
-                    onClick={nextStep}
-                  >
-                    {currentStep === activeModule.steps.length - 1 ? "Complete Session" : "Continue"}
-                  </Button>
-                </div>
-             </motion.div>
+              <div className="pt-8">
+                <Button
+                  size="lg"
+                  className="h-16 px-12 text-lg rounded-2xl shadow-xl shadow-primary/20"
+                  onClick={nextStep}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                      e.preventDefault();
+                      nextStep();
+                    }
+                  }}
+                  aria-label={
+                    currentStep === (activeModule?.steps.length || 4) - 1
+                      ? 'Complete rescue session'
+                      : 'Continue to next step'
+                  }
+                >
+                  {currentStep === (activeModule?.steps.length || 4) - 1
+                    ? 'Complete Session'
+                    : 'Continue'}
+                </Button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

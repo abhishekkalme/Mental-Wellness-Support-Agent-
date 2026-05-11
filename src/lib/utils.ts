@@ -1,16 +1,29 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import DOMPurify from 'isomorphic-dompurify';
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Strips all HTML tags and basic entities for safe AI processing.
+ * Replaces isomorphic-dompurify which causes ESM/jsdom issues in production.
+ */
 export function sanitize(dirty: string): string {
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
-  });
+  if (!dirty) return '';
+
+  // Basic HTML tag removal
+  let clean = dirty.replace(/<[^>]*>?/gm, '');
+
+  // Basic entity decoding (optional but helpful for AI)
+  clean = clean
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  return clean;
 }
 
 export function sanitizeAndTrim(dirty: string): string {

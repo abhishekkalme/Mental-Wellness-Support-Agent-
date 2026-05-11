@@ -65,7 +65,10 @@ export async function POST(req: Request) {
       remaining,
     });
   } catch (error) {
-    console.error('[api/chat]', error);
+    console.error('[api/chat] Critical Failure:', error);
+    if (error instanceof Error) {
+      console.error('[api/chat] Error Stack:', error.stack);
+    }
     return NextResponse.json(
       {
         risk: 'none' as const,

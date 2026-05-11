@@ -43,7 +43,8 @@ async function tryProvider(
       const { ollamaChat } = await import('./ollama');
       return await ollamaChat({ model, system, messages });
     }
-  } catch {
+  } catch (err) {
+    console.error(`[LLM] tryProvider failed for ${provider}:`, err);
     return null;
   }
   return null;
@@ -80,8 +81,12 @@ export async function callLlm(params: LlmCallParams): Promise<string> {
           ? settings.geminiApiKey
           : settings.apiKey;
 
-    if (!apiKey) continue;
+    if (!apiKey) {
+      console.warn(`[LLM] Missing API key for provider: ${p.provider}`);
+      continue;
+    }
 
+    console.log(`[LLM] Attempting provider: ${p.provider} with model: ${p.model}`);
     const reply = await tryProvider(
       p.provider,
       apiKey,
@@ -92,12 +97,15 @@ export async function callLlm(params: LlmCallParams): Promise<string> {
     );
 
     if (reply) {
+      console.log(`[LLM] Provider ${p.provider} succeeded.`);
       if (params.userId) {
         llmResponseCache.set(params.userId, messages.at(-1)?.content ?? '', system, reply);
       }
       return reply;
     }
+    console.warn(`[LLM] Provider ${p.provider} returned null or failed.`);
   }
 
+  console.error('[LLM] All providers in priority list failed.');
   throw new Error('All LLM providers failed');
 }

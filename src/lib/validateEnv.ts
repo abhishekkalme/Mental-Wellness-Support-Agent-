@@ -63,6 +63,14 @@ export function logEnvIssues(): void {
     console.log('✅ All required environment variables are configured.');
   }
 
+  // Trace key AI variables (sanitized)
+  console.log('[Env] Environment variable audit:');
+  console.log(`  • GROQ_API_KEY: ${process.env.GROQ_API_KEY ? 'Present' : 'MISSING'}`);
+  console.log(`  • GEMINI_API_KEY: ${process.env.GEMINI_API_KEY ? 'Present' : 'MISSING'}`);
+  console.log(`  • MONGODB_URI: ${process.env.MONGODB_URI ? 'Present' : 'MISSING'}`);
+  console.log(`  • AUTH_SECRET: ${process.env.AUTH_SECRET ? 'Present' : 'MISSING'}`);
+  console.log(`  • AUTH_TRUST_HOST: ${process.env.AUTH_TRUST_HOST || 'Unset'}`);
+
   const isProduction = process.env.NODE_ENV === 'production';
   const hasTrustHost = process.env.AUTH_TRUST_HOST === 'true';
   if (isProduction && !hasTrustHost) {

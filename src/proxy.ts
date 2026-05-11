@@ -1,40 +1,94 @@
 import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
 
-const publicPaths = [
+const PUBLIC_ROUTES = [
   '/',
   '/signin',
   '/signup',
   '/forgot-password',
   '/reset-password',
   '/verify-email',
-  '/api/auth',
-  '/api/auth/register',
-  '/api/auth/forgot-password',
-  '/api/auth/reset-password',
-  '/api/auth/verify-email',
-  '/api/auth/resend-verification',
+];
+
+const PUBLIC_PREFIXES = [
+  '/api/auth/',
+  '/api/tools/',
+  '/assets/',
+  '/_next/',
+  '/favicon.ico',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/og-image.png',
 ];
 
 export default auth((req) => {
   const { pathname, search } = req.nextUrl;
   const session = req.auth;
-  const isLoggedIn = !!session;
-  const isPublicPath = publicPaths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
+
+  const isLoggedIn = !!session?.user;
+
+  const isPublicRoute = PUBLIC_ROUTES.some(
+    (route) => pathname === route
   );
 
-  if (isPublicPath) {
-    if (isLoggedIn && (pathname === '/signin' || pathname === '/signup' || pathname === '/')) {
-      return NextResponse.redirect(new URL('/onboarding', req.url));
+  const isPublicPrefix = PUBLIC_PREFIXES.some(
+    (prefix) => pathname.startsWith(prefix)
+  );
+
+  const isApiRoute = pathname.startsWith('/api/');
+
+  // Allow public routes/assets/apis
+  if (isPublicRoute || isPublicPrefix) {
+    // Redirect signed-in users away from auth pages/home
+    if (
+      isLoggedIn &&
+      (pathname === '/' ||
+        pathname === '/signin' ||
+        pathname === '/signup')
+    ) {
+      return NextResponse.redirect(
+        new URL('/onboarding', req.url)
+      );
     }
+
     return NextResponse.next();
   }
 
+  // Allow API routes (except auth already handled above)
+  if (isApiRoute && !pathname.startsWith('/api/auth/')) {
+    return NextResponse.next();
+  }
+
+  // Require auth
   if (!isLoggedIn) {
-    const loginUrl = new URL('/signin', req.url);
-    loginUrl.searchParams.set('callbackUrl', pathname + search);
-    return NextResponse.redirect(loginUrl);
+    const signInUrl = new URL('/signin', req.url);
+    signInUrl.searchParams.set(
+      'callbackUrl',
+      pathname + search
+    );
+
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Admin protection
+  if (
+    pathname.startsWith('/admin') &&
+    session.user?.role !== 'admin'
+  ) {
+    return NextResponse.redirect(
+      new URL('/dashboard', req.url)
+    );
+  }
+
+  // Mentor protection
+  if (
+    pathname.startsWith('/mentor') &&
+    session.user?.role !== 'mentor' &&
+    session.user?.role !== 'admin'
+  ) {
+    return NextResponse.redirect(
+      new URL('/dashboard', req.url)
+    );
   }
 
   return NextResponse.next();
@@ -42,6 +96,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/chat|api/tools|api/sleep|api/mood|api/journal|api/habits|api/breathing|api/community|api/academic-calendar|api/therapists|api/crisis|api/meditation|api/admin).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2)).*)',
   ],
 };

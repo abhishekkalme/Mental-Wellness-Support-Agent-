@@ -12,11 +12,11 @@ function cleanup() {
   const now = Date.now();
   if (now - lastCleanup < CLEANUP_INTERVAL) return;
   lastCleanup = now;
-  for (const [key, entry] of inMemoryStore.entries()) {
+  inMemoryStore.forEach((entry, key) => {
     if (entry.resetAt < now) {
       inMemoryStore.delete(key);
     }
-  }
+  });
 }
 
 setInterval(cleanup, CLEANUP_INTERVAL);
@@ -43,60 +43,94 @@ function inMemoryRateLimit(
   return { success: entry.count <= max, remaining, resetIn };
 }
 
-// Redis-backed rate limiter — used when REDIS_URL is set
+// Redis-backed rate limiter — supports Upstash REST and standard Redis
 async function redisRateLimit(
   key: string,
   interval: number,
   max: number
 ): Promise<{ success: boolean; remaining: number; resetIn: number }> {
-  const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const redisUrl = process.env.REDIS_URL;
 
-  // In production, Redis is required. Fail loudly if not configured or points to localhost.
-  const isLocalhost = redisUrl?.includes('localhost') || redisUrl?.includes('127.0.0.1');
-
-  if (process.env.NODE_ENV === 'production' && (!redisUrl || isLocalhost)) {
+  // In production, Redis/Upstash is required.
+  if (process.env.NODE_ENV === 'production' && !redisUrl && (!upstashUrl || !upstashToken)) {
     console.error(
-      '[RateLimit] REDIS_URL is required in production and cannot be localhost. ' +
+      '[RateLimit] REDIS_URL or UPSTASH_REDIS_REST_URL/TOKEN is required in production. ' +
         'Falling back to in-memory store.'
     );
     return inMemoryRateLimit(key, interval, max);
   }
 
-  if (!redisUrl) {
-    return inMemoryRateLimit(key, interval, max);
+  // Case 1: Upstash REST (Preferred)
+  if (upstashUrl && upstashToken) {
+    try {
+      const { Redis } = await import('@upstash/redis');
+      const redis = new Redis({
+        url: upstashUrl,
+        token: upstashToken,
+      });
+
+      const now = Date.now();
+      const resetAt = now + interval;
+
+      // Simple INCR + EXPIRE via REST
+      const count = await redis.incr(key);
+      await redis.expireat(key, Math.ceil(resetAt / 1000));
+
+      const remaining = Math.max(0, max - count);
+      const resetIn = Math.ceil((resetAt - now) / 1000);
+
+      return { success: count <= max, remaining, resetIn };
+    } catch (error) {
+      console.error('[RateLimit] Upstash REST error:', error);
+      return inMemoryRateLimit(key, interval, max);
+    }
   }
 
-  try {
-    const { default: Redis } = await import('ioredis');
-    const redis = new Redis(redisUrl, {
-      maxRetriesPerRequest: 1,
-      lazyConnect: true,
-      retryStrategy: () => null,
-    });
-
-    await redis.connect().catch(() => {});
-
-    const now = Date.now();
-    const resetAt = now + interval;
-    const multi = redis.multi();
-    multi.incr(key);
-    multi.expireat(key, Math.ceil(resetAt / 1000));
-    const results = await multi.exec();
-
-    await redis.quit().catch(() => {});
-
-    if (!results) {
+  // Case 2: Standard Redis (ioredis)
+  if (redisUrl) {
+    const isLocalhost = redisUrl.includes('localhost') || redisUrl.includes('127.0.0.1');
+    if (process.env.NODE_ENV === 'production' && isLocalhost) {
+      console.error('[RateLimit] REDIS_URL cannot be localhost in production.');
       return inMemoryRateLimit(key, interval, max);
     }
 
-    const count = results[0][1] as number;
-    const remaining = Math.max(0, max - count);
-    const resetIn = Math.ceil((resetAt - now) / 1000);
+    try {
+      const { default: Redis } = await import('ioredis');
+      const redis = new Redis(redisUrl, {
+        maxRetriesPerRequest: 1,
+        lazyConnect: true,
+        retryStrategy: () => null,
+      });
 
-    return { success: count <= max, remaining, resetIn };
-  } catch {
-    return inMemoryRateLimit(key, interval, max);
+      await redis.connect().catch(() => {});
+
+      const now = Date.now();
+      const resetAt = now + interval;
+      const multi = redis.multi();
+      multi.incr(key);
+      multi.expireat(key, Math.ceil(resetAt / 1000));
+      const results = await multi.exec();
+
+      await redis.quit().catch(() => {});
+
+      if (!results) {
+        return inMemoryRateLimit(key, interval, max);
+      }
+
+      const count = results[0][1] as number;
+      const remaining = Math.max(0, count <= max ? max - count : 0);
+      const resetIn = Math.ceil((resetAt - now) / 1000);
+
+      return { success: count <= max, remaining, resetIn };
+    } catch {
+      return inMemoryRateLimit(key, interval, max);
+    }
   }
+
+  // Fallback to in-memory
+  return inMemoryRateLimit(key, interval, max);
 }
 
 export function rateLimit(options: { interval: number; max: number; keyPrefix?: string }) {

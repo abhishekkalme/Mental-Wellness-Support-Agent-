@@ -1,27 +1,27 @@
-import type { DefaultSession } from "next-auth";
+import type { DefaultSession } from 'next-auth';
 
-export type MindCareRole = "user" | "admin" | "mentor";
+export type MindCareRole = 'user' | 'admin' | 'mentor';
 
-declare module "next-auth" {
+declare module 'next-auth' {
   interface Session {
     user: {
       id: string;
+      username: string;
       role: MindCareRole;
-      isGuest: boolean;
-    } & DefaultSession["user"];
+    } & DefaultSession['user'];
   }
 
   interface User {
+    username?: string;
     role?: MindCareRole;
-    isGuest?: boolean;
   }
 }
 
-declare module "@auth/core/jwt" {
+declare module '@auth/core/jwt' {
   interface JWT {
     id?: string;
+    username?: string;
     role?: MindCareRole;
-    isGuest?: boolean;
   }
 }
 

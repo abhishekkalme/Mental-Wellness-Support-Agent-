@@ -7,4 +7,8 @@ export const config = {
   pineconeIndex: process.env.PINECONE_INDEX,
   mongodbUri: process.env.MONGODB_URI,
   authSecret: process.env.AUTH_SECRET,
+  qdrantUrl: process.env.QDRANT_URL,
+  qdrantApiKey: process.env.QDRANT_API_KEY,
+  qdrantCollection: process.env.QDRANT_COLLECTION,
+  vectorDb: process.env.VECTOR_DB || 'pinecone',
 };

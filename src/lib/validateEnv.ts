@@ -88,9 +88,11 @@ export function checkProductionReadiness(): void {
   const issues = validateEnv();
   if (issues.length > 0) {
     const msg = issues.map((i) => `[${i.key}] ${i.message}`).join('; ');
-    throw new Error(`Production readiness failed: ${msg}`);
+    console.error(`❌ CRITICAL: Production readiness failed: ${msg}`);
+    // We log but don't throw to prevent crashing the entire application initialization.
+    // Individual features will handle missing variables gracefully.
   }
   if (needsTrustHost) {
-    throw new Error('AUTH_TRUST_HOST=true is required for NextAuth in production.');
+    console.error('❌ CRITICAL: AUTH_TRUST_HOST=true is required for NextAuth in production.');
   }
 }

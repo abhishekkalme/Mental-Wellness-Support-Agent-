@@ -7,22 +7,26 @@ MindCare AI is a state-of-the-art mental wellness platform designed to provide a
 ## ✨ Core Features
 
 ### 🤖 AI-Guided Emotional Support
+
 - **Wellness Support Agent**: Real-time conversations with specialized AI personas (powered by LangChain, OpenAI, Groq, and Anthropic).
 - **Personalized Onboarding**: A data-driven flow that adapts the dashboard to your unique needs.
 - **Crisis Support (Rescue)**: Instant access to emergency resources and calming techniques.
 
 ### 📊 Holistic Health Tracking
+
 - **Mood Tracking & Journaling**: Log your daily emotional state and reflect through secure journal entries.
 - **Habit & Goal Monitoring**: Build resilience by tracking consistent wellness routines.
 - **Sleep & Breathing Analytics**: Monitor your rest and practice guided breathing exercises for stress relief.
 - **Wellness Insights**: Data-driven visualizations of your progress using Recharts.
 
 ### 🧘 Resource Hub
+
 - **Meditation & Sound Therapy**: Curated audio and sessions for focus, relaxation, and sleep.
 - **Physical Exercises**: Guided routines specifically for mental well-being.
 - **Academic Calendar Integration**: Specialized support for students to manage academic stress.
 
 ### 🛡️ Privacy & Security
+
 - **Hostel Safe Mode**: A unique visual encryption layer for chat privacy in shared environments.
 - **Secure Authentication**: Robust session management via Auth.js (NextAuth) and MongoDB.
 - **Role-Based Access**: Dedicated dashboards for **Users**, **Mentors**, and **Admins**.
@@ -53,18 +57,21 @@ MindCare AI is a state-of-the-art mental wellness platform designed to provide a
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/your-username/MindCare.git
    cd MindCare
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Configure Environment Variables:**
    Create a `.env.local` file in the root directory and add the following:
+
    ```env
    # Auth configuration
    AUTH_SECRET=your_auth_secret

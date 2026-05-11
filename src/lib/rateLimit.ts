@@ -51,11 +51,13 @@ async function redisRateLimit(
 ): Promise<{ success: boolean; remaining: number; resetIn: number }> {
   const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
 
-  // In production, Redis is required. Fail loudly if not configured.
-  if (process.env.NODE_ENV === 'production' && !redisUrl) {
+  // In production, Redis is required. Fail loudly if not configured or points to localhost.
+  const isLocalhost = redisUrl?.includes('localhost') || redisUrl?.includes('127.0.0.1');
+
+  if (process.env.NODE_ENV === 'production' && (!redisUrl || isLocalhost)) {
     console.error(
-      '[RateLimit] REDIS_URL or UPSTASH_REDIS_REST_URL is required in production. ' +
-        'Falling back to in-memory store which does not work across multiple instances.'
+      '[RateLimit] REDIS_URL is required in production and cannot be localhost. ' +
+        'Falling back to in-memory store.'
     );
     return inMemoryRateLimit(key, interval, max);
   }

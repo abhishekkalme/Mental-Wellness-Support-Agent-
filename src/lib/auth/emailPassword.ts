@@ -16,7 +16,7 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 export async function authenticateEmailPassword(
   email: string,
   password: string
-): Promise<{ id: string; name: string; email: string; role: UserRole } | null> {
+): Promise<{ id: string; name: string; email: string; role: UserRole; onboarded: boolean } | null> {
   const normalized = email.trim().toLowerCase();
   if (!normalized || !password) return null;
 
@@ -32,5 +32,6 @@ export async function authenticateEmailPassword(
     name: user.name,
     email: user.email ?? normalized,
     role: user.role ?? 'user',
+    onboarded: user.onboarded ?? false,
   };
 }

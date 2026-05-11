@@ -63,6 +63,7 @@ export const authConfig = {
         token.id = user.id;
         token.username = user.username ?? '';
         token.role = (user.role as MindCareRole) ?? 'user';
+        token.onboarded = user.onboarded ?? false;
       }
       return token;
     },
@@ -71,6 +72,7 @@ export const authConfig = {
         session.user.id = (token.id as string) ?? session.user.id ?? '';
         session.user.username = (token.username as string) ?? '';
         session.user.role = (token.role as MindCareRole) ?? 'user';
+        session.user.onboarded = (token.onboarded as boolean) ?? false;
       }
       return session;
     },

@@ -42,13 +42,10 @@ export default auth((req) => {
     // Redirect signed-in users away from auth pages/home
     if (
       isLoggedIn &&
-      (pathname === '/' ||
-        pathname === '/signin' ||
-        pathname === '/signup')
+      (pathname === '/signin' || pathname === '/signup')
     ) {
-      return NextResponse.redirect(
-        new URL('/onboarding', req.url)
-      );
+      const targetUrl = session?.user?.onboarded ? '/dashboard' : '/onboarding';
+      return NextResponse.redirect(new URL(targetUrl, req.url));
     }
 
     return NextResponse.next();

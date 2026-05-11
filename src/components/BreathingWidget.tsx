@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { Wind, Pause } from "lucide-react";
-import { Button } from "./ui/button";
+import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { Wind, Pause } from 'lucide-react';
+import { Button } from './ui/button';
 
 const phases = [
   {
-    name: "Inhale",
+    name: 'Inhale',
     duration: 4000,
     scale: 1.15,
     progress: 33,
   },
   {
-    name: "Hold",
+    name: 'Hold',
     duration: 4000,
     scale: 1.15,
     progress: 66,
   },
   {
-    name: "Exhale",
+    name: 'Exhale',
     duration: 4000,
     scale: 1,
     progress: 100,
@@ -63,7 +63,6 @@ export function BreathingWidget() {
 
   return (
     <div className="glass-panel p-6 md:p-10 flex flex-col items-center gap-6 md:gap-10 min-h-[480px] md:min-h-[580px] relative overflow-hidden">
-
       {/* Ambient background glow */}
       <div className="absolute top-0 right-0 w-48 h-48 bg-[#E2FF6F]/5 blur-[100px] pointer-events-none" />
 
@@ -73,19 +72,13 @@ export function BreathingWidget() {
           Take a deep breath
         </h3>
 
-        <p className="text-white/40 mt-2 font-medium">
-          Calm your nervous system
-        </p>
+        <p className="text-white/40 mt-2 font-medium">Calm your nervous system</p>
       </div>
 
       {/* Breathing Orb */}
       <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 flex items-center justify-center overflow-visible">
-
         {/* Progress Ring */}
-        <svg
-          viewBox={`0 0 ${size} ${size}`}
-          className="absolute inset-0 w-full h-full -rotate-90"
-        >
+        <svg viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 w-full h-full -rotate-90">
           {/* Background ring */}
           <circle
             cx={center}
@@ -108,14 +101,11 @@ export function BreathingWidget() {
             strokeDasharray={circumference}
             animate={{
               strokeDashoffset:
-                circumference -
-                (circumference *
-                  (isActive ? phase.progress : 0)) /
-                100,
+                circumference - (circumference * (isActive ? phase.progress : 0)) / 100,
             }}
             transition={{
               duration: phase.duration / 1000,
-              ease: "linear",
+              ease: 'linear',
             }}
             className="drop-shadow-[0_0_14px_rgba(226,255,111,0.45)]"
           />
@@ -129,15 +119,10 @@ export function BreathingWidget() {
           transition={{
             duration: phase.duration / 1000,
             ease:
-              phase.name === "Inhale"
-                ? "easeOut"
-                : phase.name === "Exhale"
-                  ? "easeIn"
-                  : "linear",
+              phase.name === 'Inhale' ? 'easeOut' : phase.name === 'Exhale' ? 'easeIn' : 'linear',
           }}
           className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-xl overflow-hidden"
         >
-
           {/* Internal glow */}
           <motion.div
             animate={{
@@ -164,16 +149,14 @@ export function BreathingWidget() {
       <div className="text-center relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
-            key={isActive ? phase.name : "idle"}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
+            key={isActive ? phase.name : 'idle'}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="text-2xl md:text-3xl font-bold text-white h-8 md:h-10"
           >
-            {isActive
-              ? `${phase.name}...`
-              : "Ready to focus?"}
+            {isActive ? `${phase.name}...` : 'Ready to focus?'}
           </motion.div>
         </AnimatePresence>
 
@@ -187,15 +170,9 @@ export function BreathingWidget() {
         onClick={toggleSession}
         className="w-full h-16 rounded-[24px] bg-[#E2FF6F] hover:bg-[#d8f55b] text-black font-bold text-lg gap-3 shadow-xl shadow-[#E2FF6F]/10 active:scale-[0.98]"
       >
-        {isActive ? (
-          <Pause className="w-5 h-5" />
-        ) : (
-          <Wind className="w-5 h-5" />
-        )}
+        {isActive ? <Pause className="w-5 h-5" /> : <Wind className="w-5 h-5" />}
 
-        {isActive
-          ? "Pause Session"
-          : "Start Breathing"}
+        {isActive ? 'Pause Session' : 'Start Breathing'}
       </Button>
     </div>
   );

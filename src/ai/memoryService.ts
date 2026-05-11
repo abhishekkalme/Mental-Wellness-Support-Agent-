@@ -1,80 +1,161 @@
-import { Pinecone } from "@pinecone-database/pinecone";
-import { config } from "@/config/env";
+import { Pinecone } from '@pinecone-database/pinecone';
+import { QdrantClient } from '@qdrant/js-client-rest';
+import { config } from '@/config/env';
+import { HfInference } from '@huggingface/inference';
+import { embeddingCache, retrievalCache } from '@/lib/cache';
 
-import { HfInference } from "@huggingface/inference";
+type VectorDbProvider = 'pinecone' | 'qdrant';
+
+const VECTOR_DIM = 384;
+const MIN_SIMILARITY = 0.6;
+const MAX_CONTEXT_ITEMS = 3;
 
 export class MemoryService {
-  private pc: Pinecone;
+  private pc: Pinecone | null = null;
+  private qc: QdrantClient | null = null;
   private hf: HfInference;
   private indexName: string;
+  private provider: VectorDbProvider;
 
   constructor() {
-    this.pc = new Pinecone({ apiKey: config.pineconeApiKey || "mock-key" });
     this.hf = new HfInference(config.huggingfaceApiKey);
-    this.indexName = config.pineconeIndex || "mindcare-memory";
+    this.provider = (config.vectorDb as VectorDbProvider) || 'pinecone';
+    this.indexName =
+      this.provider === 'qdrant'
+        ? config.qdrantCollection || 'my_collection'
+        : config.pineconeIndex || 'mindcare-memory';
+
+    if (this.provider === 'pinecone' && config.pineconeApiKey) {
+      this.pc = new Pinecone({ apiKey: config.pineconeApiKey });
+    } else if (this.provider === 'qdrant' && config.qdrantUrl) {
+      this.qc = new QdrantClient({
+        url: config.qdrantUrl,
+        apiKey: config.qdrantApiKey,
+      });
+    }
   }
 
   private async generateEmbedding(text: string): Promise<number[]> {
+    const cached = embeddingCache.get(text);
+    if (cached) return cached;
+
+    if (!config.huggingfaceApiKey) {
+      const fallback = Array(VECTOR_DIM)
+        .fill(0)
+        .map(() => Math.random());
+      return fallback;
+    }
     try {
-      if (!config.huggingfaceApiKey) {
-        return Array(384).fill(0).map(() => Math.random());
-      }
-      const output = await this.hf.featureExtraction({
-        model: "sentence-transformers/all-MiniLM-L6-v2",
+      const output = (await this.hf.featureExtraction({
+        model: 'sentence-transformers/all-MiniLM-L6-v2',
         inputs: text,
-      });
-      return output as number[];
-    } catch (e) {
-      console.error("[Memory] Embedding generation failed:", e);
-      return Array(384).fill(0).map(() => Math.random());
+      })) as number[];
+      embeddingCache.set(text, output);
+      return output;
+    } catch (err) {
+      console.error('[Memory] Embedding generation failed:', err);
+      return Array(VECTOR_DIM)
+        .fill(0)
+        .map(() => Math.random());
     }
   }
 
-  async storeInteraction(userId: string, text: string, type: "user" | "agent", metadata: any = {}) {
+  async storeInteraction(userId: string, text: string, type: 'user' | 'agent', metadata: any = {}) {
+    if (!text.trim()) return;
+
     try {
-      if (!config.pineconeApiKey) {
-        console.warn("[Memory] Pinecone API key missing, running in dry mode.");
+      const vector = await this.generateEmbedding(text);
+      const timestamp = new Date().toISOString();
+
+      if (this.provider === 'qdrant' && this.qc) {
+        await this.qc.upsert(this.indexName, {
+          wait: false,
+          points: {
+            points: [
+              {
+                id: `${userId}-${Date.now()}`,
+                vector,
+                payload: { userId, text, type, timestamp, ...metadata },
+              },
+            ],
+          },
+        } as any);
         return;
       }
-      
-      const index = this.pc.Index(this.indexName);
-      const vector = await this.generateEmbedding(text);
-      
-      await index.upsert([{
-        id: `${userId}-${Date.now()}`,
-        values: vector,
-        metadata: {
-          userId,
-          text,
-          type,
-          timestamp: new Date().toISOString(),
-          ...metadata
-        }
-      }] as any);
-    } catch (e) {
-      console.error("[Memory] Failed to store interaction: ", e);
+
+      if (this.provider === 'pinecone' && this.pc && config.pineconeApiKey) {
+        const index = this.pc.Index(this.indexName);
+        await index.upsert([
+          {
+            id: `${userId}-${Date.now()}`,
+            values: vector,
+            metadata: { userId, text, type, timestamp, ...metadata },
+          },
+        ] as any);
+        return;
+      }
+
+      console.warn('[Memory] No vector DB configured, running in dry mode.');
+    } catch (err) {
+      console.error('[Memory] Failed to store interaction: ', err);
     }
   }
 
-  async fetchRelevantContext(userId: string, queryText: string, topK = 5): Promise<string[]> {
+  async fetchRelevantContext(userId: string, queryText: string, topK = 3): Promise<string[]> {
+    const cached = retrievalCache.get(userId, queryText);
+    if (cached) return cached;
+
     try {
-      if (!config.pineconeApiKey) return [];
-      
-      const index = this.pc.Index(this.indexName);
       const vector = await this.generateEmbedding(queryText);
 
-      const results = await index.query({
-        vector: vector,
-        topK,
-        filter: { userId: { $eq: userId } },
-        includeMetadata: true
-      });
+      if (this.provider === 'qdrant' && this.qc) {
+        const results = await this.qc.search(this.indexName, {
+          vector,
+          limit: topK,
+          filter: {
+            must: [{ key: 'userId', match: { value: userId } }],
+          },
+          with_payload: true,
+        });
 
-      return results.matches
-        .filter(m => m.metadata && typeof m.metadata.text === 'string')
-        .map(m => m.metadata?.text as string);
-    } catch (e) {
-      console.error("[Memory] Failed to fetch context:", e);
+        const texts = results
+          .filter(
+            (m) => m.score > MIN_SIMILARITY && m.payload && typeof m.payload.text === 'string'
+          )
+          .slice(0, MAX_CONTEXT_ITEMS)
+          .map((m) => m.payload?.text as string);
+
+        retrievalCache.set(userId, queryText, texts);
+        return texts;
+      }
+
+      if (this.provider === 'pinecone' && this.pc && config.pineconeApiKey) {
+        const index = this.pc.Index(this.indexName);
+        const results = await index.query({
+          vector,
+          topK,
+          filter: { userId: { $eq: userId } },
+          includeMetadata: true,
+        });
+
+        const texts = results.matches
+          .filter(
+            (m) =>
+              m.score &&
+              m.score > MIN_SIMILARITY &&
+              m.metadata &&
+              typeof m.metadata.text === 'string'
+          )
+          .slice(0, MAX_CONTEXT_ITEMS)
+          .map((m) => m.metadata?.text as string);
+
+        retrievalCache.set(userId, queryText, texts);
+        return texts;
+      }
+
+      return [];
+    } catch (err) {
+      console.error('[Memory] Failed to fetch context:', err);
       return [];
     }
   }

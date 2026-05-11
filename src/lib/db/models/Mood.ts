@@ -2,12 +2,12 @@ import mongoose, { Schema } from 'mongoose';
 
 const MoodEntrySchema = new Schema({
   id: { type: String, required: true, unique: true },
-  userId: { type: String, required: true },
+  userId: { type: String, required: true, index: true },
   mood: { type: String, required: true },
   intensity: { type: Number, min: 1, max: 10 },
-  notes: { type: String, default: "" },
+  notes: { type: String, default: '' },
   activities: { type: [String], default: [] },
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now, index: true },
 });
 
 export default mongoose.models.MoodEntry || mongoose.model('MoodEntry', MoodEntrySchema);

@@ -9,7 +9,9 @@ const TherapistSchema = new Schema({
   availability: { type: String, required: true },
   img: { type: String, required: true },
   price: { type: String, required: true },
-  tags: { type: [String], default: [] }
+  tags: { type: [String], default: [] },
 });
+
+TherapistSchema.index({ specialty: 1 });
 
 export default mongoose.models.Therapist || mongoose.model('Therapist', TherapistSchema);

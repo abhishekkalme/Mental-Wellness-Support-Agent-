@@ -1,4 +1,4 @@
-import { ChatMessage } from "@/lib/types";
+import { ChatMessage } from '@/lib/types';
 
 export type GroqChatParams = {
   apiKey: string;
@@ -10,20 +10,20 @@ export type GroqChatParams = {
 
 export async function groqChat(params: GroqChatParams): Promise<string> {
   const { apiKey, model, system, messages, maxOutputTokens } = params;
-  if (!apiKey) throw new Error("Missing Groq API key");
+  if (!apiKey) throw new Error('Missing Groq API key');
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
     headers: {
-      "content-type": "application/json",
+      'content-type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: model || "llama-3.1-8b-instant",
+      model: model || 'llama-3.1-8b-instant',
       messages: [
-        { role: "system", content: system },
+        { role: 'system', content: system },
         ...messages.map((m) => ({
-          role: m.role === "agent" ? "assistant" : m.role,
+          role: m.role === 'agent' ? 'assistant' : m.role,
           content: m.content,
         })),
       ],
@@ -34,11 +34,11 @@ export async function groqChat(params: GroqChatParams): Promise<string> {
   });
 
   if (!res.ok) {
-    const txt = await res.text().catch(() => "");
+    const txt = await res.text().catch(() => '');
     throw new Error(`Groq error (${res.status}): ${txt || res.statusText}`);
   }
   const json = (await res.json().catch(() => null)) as any;
-  const text = json?.choices?.[0]?.message?.content ?? "";
-  if (!text) throw new Error("Empty model response");
+  const text = json?.choices?.[0]?.message?.content ?? '';
+  if (!text) throw new Error('Empty model response');
   return String(text).trim();
 }

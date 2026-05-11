@@ -1,4 +1,4 @@
-import { ChatMessage } from "@/lib/types";
+import { ChatMessage } from '@/lib/types';
 
 export type GeminiChatParams = {
   apiKey: string;
@@ -10,7 +10,7 @@ export type GeminiChatParams = {
 
 export async function geminiChat(params: GeminiChatParams): Promise<string> {
   const { apiKey, model, system, messages, maxOutputTokens } = params;
-  if (!apiKey) throw new Error("Missing Gemini API key");
+  if (!apiKey) throw new Error('Missing Gemini API key');
 
   // Gemini REST: generateContent
   const url =
@@ -20,16 +20,16 @@ export async function geminiChat(params: GeminiChatParams): Promise<string> {
     encodeURIComponent(apiKey);
 
   const contents = [
-    { role: "user", parts: [{ text: system }] },
+    { role: 'user', parts: [{ text: system }] },
     ...messages.map((m) => ({
-      role: m.role === "agent" ? "model" : "user",
+      role: m.role === 'agent' ? 'model' : 'user',
       parts: [{ text: m.content }],
     })),
   ];
 
   const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       contents,
       generationConfig: {
@@ -41,15 +41,12 @@ export async function geminiChat(params: GeminiChatParams): Promise<string> {
   });
 
   if (!res.ok) {
-    const txt = await res.text().catch(() => "");
+    const txt = await res.text().catch(() => '');
     throw new Error(`Gemini error (${res.status}): ${txt || res.statusText}`);
   }
 
   const json = (await res.json().catch(() => null)) as any;
-  const text =
-    json?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).join("") ??
-    "";
-  if (!text) throw new Error("Empty model response");
+  const text = json?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).join('') ?? '';
+  if (!text) throw new Error('Empty model response');
   return String(text).trim();
 }
-

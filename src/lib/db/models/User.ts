@@ -1,20 +1,24 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
-export type UserRole = "user" | "admin" | "mentor";
+export type UserRole = 'user' | 'admin' | 'mentor';
 
 export interface IUser extends Document {
   name: string;
+  username: string;
   email?: string;
   passwordHash?: string;
   emailVerified: boolean;
   image?: string;
   role: UserRole;
   preferredLanguage: string;
-  agentGender: "male" | "female" | "neutral";
+  agentGender: 'male' | 'female' | 'neutral';
   isPremium: boolean;
   onboarded: boolean;
   onboardingData: any;
   wellnessMetrics: any;
+  passwordResetToken?: string;
+  passwordResetExpiry?: Date;
+  emailVerificationToken?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,24 +26,28 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
+    username: { type: String, unique: true, required: true, sparse: true },
     email: { type: String, unique: true, sparse: true },
     passwordHash: { type: String, select: false },
     emailVerified: { type: Boolean, default: false },
     image: { type: String },
     role: {
       type: String,
-      enum: ["user", "admin", "mentor"],
-      default: "user",
+      enum: ['user', 'admin', 'mentor'],
+      default: 'user',
     },
-    preferredLanguage: { type: String, default: "en" },
+    preferredLanguage: { type: String, default: 'en' },
     agentGender: {
       type: String,
-      enum: ["male", "female", "neutral"],
-      default: "neutral",
+      enum: ['male', 'female', 'neutral'],
+      default: 'neutral',
     },
     isPremium: { type: Boolean, default: false },
     onboarded: { type: Boolean, default: false },
     onboardingData: { type: Schema.Types.Mixed, default: {} },
+    passwordResetToken: { type: String },
+    passwordResetExpiry: { type: Date },
+    emailVerificationToken: { type: String },
     wellnessMetrics: {
       type: Schema.Types.Mixed,
       default: {
@@ -48,11 +56,11 @@ const UserSchema: Schema = new Schema(
         physical: 60,
         social: 55,
         sleep: 80,
-        spiritual: 40
-      }
+        spiritual: 40,
+      },
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

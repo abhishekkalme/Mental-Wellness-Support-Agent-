@@ -6,7 +6,9 @@ const MeditationSchema = new Schema({
   duration: { type: String, required: true },
   category: { type: String, required: true },
   img: { type: String, required: true },
-  desc: { type: String, required: true }
+  desc: { type: String, required: true },
 });
+
+MeditationSchema.index({ category: 1 });
 
 export default mongoose.models.Meditation || mongoose.model('Meditation', MeditationSchema);

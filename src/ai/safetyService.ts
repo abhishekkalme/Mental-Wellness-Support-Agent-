@@ -1,6 +1,12 @@
 export const crisisKeywords = [
-  "suicide", "kill myself", "end my life", "want to die", 
-  "better off dead", "cutting myself", "self harm", "overdose"
+  'suicide',
+  'kill myself',
+  'end my life',
+  'want to die',
+  'better off dead',
+  'cutting myself',
+  'self harm',
+  'overdose',
 ];
 
 export function detectCrisis(text: string): boolean {

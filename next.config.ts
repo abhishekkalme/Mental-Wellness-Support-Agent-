@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(), geolocation=(self)',
           },
           {
             key: 'Strict-Transport-Security',
@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://images.unsplash.com https://picsum.photos",
               "font-src 'self' data:",
-              "connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com",
+              "connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com https://overpass-api.de",
               "frame-src 'none'",
               "object-src 'none'",
             ].join('; '),

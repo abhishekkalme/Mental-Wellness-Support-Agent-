@@ -21,17 +21,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isSessionLoading = status === 'loading';
 
   useEffect(() => {
-    // Safety timeout: Ensure we hydrate within 3s or force render
-    const timer = setTimeout(() => setHasHydrated(true), 3000);
-    setHasHydrated(true);
-    return () => clearTimeout(timer);
+    // Check if store already hydrated
+    if (useStore.persist.hasHydrated()) {
+      setHasHydrated(true);
+    } else {
+      const unsub = useStore.persist.onFinishHydration(() => setHasHydrated(true));
+      // Safety timeout: Ensure we force render within 3.5s if hydration hangs
+      const timer = setTimeout(() => setHasHydrated(true), 3500);
+      return () => {
+        unsub();
+        clearTimeout(timer);
+      };
+    }
   }, []);
 
   useEffect(() => {
-    if (hasHydrated) {
+    if (hasHydrated && status === 'authenticated') {
       syncRemoteData();
     }
-  }, [syncRemoteData, hasHydrated]);
+  }, [syncRemoteData, hasHydrated, status]);
 
   if (isOnboarding) {
     return (

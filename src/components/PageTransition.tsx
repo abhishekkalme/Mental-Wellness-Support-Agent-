@@ -10,10 +10,10 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
     <AnimatePresence mode="wait">
       <motion.div
         key={pathname}
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.99 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
+        exit={{ opacity: 0.99 }}
+        transition={{ duration: 0.1, ease: 'linear' }}
         className="flex-1 flex flex-col"
       >
         {children}

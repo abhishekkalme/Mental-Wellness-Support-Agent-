@@ -1,85 +1,94 @@
-# 🌿 MindCare AI | Your Personal Wellness Agent
+# MindCare AI | Your Personal Wellness Agent
 
 MindCare AI is a state-of-the-art mental wellness platform designed to provide a safe, AI-guided space for emotional support, journaling, and holistic self-care. Built with a focus on privacy and user agency, it leverages advanced AI models to offer personalized insights and supportive companionship.
 
 ![MindCare AI Logo](/public/og-image.png)
 
-## ✨ Core Features
+## Features
 
-### 🤖 AI-Guided Emotional Support
+### AI-Powered Support
+- **AI Wellness Agent**: Real-time conversations with specialized AI personas powered by LangChain
+- **Multi-Provider AI**: Support for OpenAI, Anthropic, Groq, Hugging Face, and Google Gemini
+- **Personalized Onboarding**: Data-driven flow that adapts the dashboard to your unique needs
 
-- **Wellness Support Agent**: Real-time conversations with specialized AI personas (powered by LangChain, OpenAI, Groq, and Anthropic).
-- **Personalized Onboarding**: A data-driven flow that adapts the dashboard to your unique needs.
-- **Crisis Support (Rescue)**: Instant access to emergency resources and calming techniques.
+### Mental Wellness Tools
+- **Journaling**: Secure personal journal entries with AI-powered insights
+- **Mood Tracking**: Log daily emotional states with visual analytics
+- **Habit & Goal Tracking**: Build resilience through consistent wellness routines
+- **Breathing Exercises**: Guided patterns for stress relief and mindfulness
+- **Sleep Tracking**: Monitor rest quality with detailed analytics
 
-### 📊 Holistic Health Tracking
+### Resource Hub
+- **Meditation**: Curated guided sessions for focus, relaxation, and sleep
+- **Sound Therapy**: Ambient nature sounds for relaxation
+- **Physical Exercises**: Guided routines specifically for mental well-being
+- **Academic Calendar**: Specialized support for students to manage academic stress
 
-- **Mood Tracking & Journaling**: Log your daily emotional state and reflect through secure journal entries.
-- **Habit & Goal Monitoring**: Build resilience by tracking consistent wellness routines.
-- **Sleep & Breathing Analytics**: Monitor your rest and practice guided breathing exercises for stress relief.
-- **Wellness Insights**: Data-driven visualizations of your progress using Recharts.
+### Professional Support
+- **Community**: Share experiences and connect with others on similar journeys
+- **Therapists**: Connect with mental health professionals
+- **Crisis Support**: Instant access to emergency resources and calming techniques (Rescue mode)
 
-### 🧘 Resource Hub
+### User Management
+- **Role-Based Access**: Dedicated dashboards for Users, Mentors, and Admins
+- **Multiple Auth Providers**: Google, GitHub, and email/password authentication
+- **Email Verification**: Secure account setup with verification and password reset
 
-- **Meditation & Sound Therapy**: Curated audio and sessions for focus, relaxation, and sleep.
-- **Physical Exercises**: Guided routines specifically for mental well-being.
-- **Academic Calendar Integration**: Specialized support for students to manage academic stress.
-
-### 🛡️ Privacy & Security
-
-- **Hostel Safe Mode**: A unique visual encryption layer for chat privacy in shared environments.
-- **Secure Authentication**: Robust session management via Auth.js (NextAuth) and MongoDB.
-- **Role-Based Access**: Dedicated dashboards for **Users**, **Mentors**, and **Admins**.
+### Privacy & Security
+- **Hostel Safe Mode**: Visual encryption layer for chat privacy in shared environments
+- **Secure Sessions**: Robust authentication via Auth.js (NextAuth v5)
+- **Rate Limiting**: Redis-backed protection against abuse
+- **Data Encryption**: Secure storage with encrypted sensitive data
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Frontend**: [Next.js 15+](https://nextjs.org/) (App Router), [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/)
-- **State Management**: [Zustand](https://docs.pmnd.rs/zustand/)
-- **Backend & Database**: [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/)
-- **AI Orchestration**: [LangChain](https://js.langchain.com/), [Pinecone](https://www.pinecone.io/) (Vector DB)
+- **Frontend**: Next.js 16 (App Router), TypeScript, React 19
+- **Styling**: Tailwind CSS 4, Framer Motion
+- **State Management**: Zustand
+- **Database**: MongoDB with Mongoose
+- **Authentication**: Auth.js (NextAuth v5)
+- **AI & ML**: LangChain, Pinecone, Qdrant (Vector DBs)
 - **AI Providers**: OpenAI, Anthropic, Groq, Hugging Face, Google Gemini
-- **Authentication**: [Auth.js](https://authjs.dev/) (NextAuth.js v5)
-- **Visualization**: [Recharts](https://recharts.org/)
+- **Caching**: Redis (Upstash), In-memory fallback
+- **Analytics**: Recharts for data visualization
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
-- MongoDB instance (Local or Atlas)
-- API Keys for AI services (OpenAI, Groq, etc.)
+- MongoDB instance (local or Atlas)
+- Redis (optional, for rate limiting)
+- API keys for desired AI services
 
 ### Installation
 
 1. **Clone the repository:**
-
    ```bash
-   git clone https://github.com/your-username/MindCare.git
-   cd MindCare
+   git clone <repository-url>
+   cd mindcare-unified
    ```
 
 2. **Install dependencies:**
-
    ```bash
    npm install
    ```
 
 3. **Configure Environment Variables:**
-   Create a `.env.local` file in the root directory and add the following:
-
+   Create a `.env.local` file:
    ```env
-   # Auth configuration
+   # Auth
    AUTH_SECRET=your_auth_secret
+   AUTH_TRUST_HOST=true
 
    # Database
    MONGODB_URI=your_mongodb_uri
 
-   # AI Service Providers
+   # AI Providers
    OPENAI_API_KEY=your_openai_key
    ANTHROPIC_API_KEY=your_anthropic_key
    GROQ_API_KEY=your_groq_key
@@ -89,6 +98,21 @@ MindCare AI is a state-of-the-art mental wellness platform designed to provide a
    # Vector DB
    PINECONE_API_KEY=your_pinecone_key
    PINECONE_INDEX=your_pinecone_index
+   QDRANT_URL=your_qdrant_url
+   QDRANT_API_KEY=your_qdrant_key
+
+   # OAuth (optional)
+   GOOGLE_CLIENT_ID=your_google_id
+   GOOGLE_CLIENT_SECRET=your_google_secret
+   GITHUB_ID=your_github_id
+   GITHUB_SECRET=your_github_secret
+
+   # Redis (optional)
+   UPSTASH_REDIS_REST_URL=your_redis_url
+   UPSTASH_REDIS_REST_TOKEN=your_redis_token
+
+   # App URL
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
 
 4. **Run the development server:**
@@ -100,37 +124,70 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
-```bash
+```
 src/
-├── app/             # Next.js App Router (Pages, Layouts, API routes)
-├── components/      # Reusable UI components & Layout wrappers
-├── hooks/           # Custom React hooks
-├── lib/             # Utility functions, DB connection, AI logic
-├── models/          # Mongoose schemas for MongoDB
-├── store/           # Zustand state management
-└── types/           # TypeScript definitions
+├── app/                    # Next.js App Router
+│   ├── (app)/              # Authenticated pages
+│   │   ├── admin/          # Admin dashboard
+│   │   ├── agent-chat/     # AI agent chat
+│   │   ├── breathing/      # Breathing exercises
+│   │   ├── chat/           # General chat
+│   │   ├── community/      # Community posts
+│   │   ├── crisis/         # Crisis support
+│   │   ├── dashboard/     # Main dashboard
+│   │   ├── exercises/      # Physical exercises
+│   │   ├── goals/          # Goal tracking
+│   │   ├── habits/         # Habit tracking
+│   │   ├── insights/       # Analytics & charts
+│   │   ├── journal/        # Journaling
+│   │   ├── meditation/    # Meditation sessions
+│   │   ├── mentor/         # Mentor dashboard
+│   │   ├── mood/           # Mood tracking
+│   │   ├── rescue/         # Emergency support
+│   │   ├── sleep/          # Sleep tracking
+│   │   ├── sound-therapy/  # Sound therapy
+│   │   └── therapists/     # Therapist directory
+│   ├── api/                # API routes
+│   └── auth/               # Authentication pages
+├── components/             # React components
+│   ├── ui/                 # UI primitives
+│   ├── dashboard/          # Dashboard widgets
+│   └── charts/             # Chart components
+├── lib/                    # Utilities & logic
+│   ├── auth/               # Auth utilities
+│   ├── cache.ts            # Caching logic
+│   ├── chat/               # Chat utilities
+│   ├── db/                 # Database models
+│   └── rateLimit.ts        # Rate limiting
+├── store/                  # Zustand stores
+└── types/                  # TypeScript definitions
 ```
 
 ---
 
-## 🤝 Contributing
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+
+---
+
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+---
+
+## License
+
+Distributed under the MIT License.
 
 ---
 
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-Built with ❤️ for mental well-being.
+Built with care for mental well-being.

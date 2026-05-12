@@ -216,6 +216,34 @@ export const useStore = create<MindCareStore>()(
       },
     }),
     {
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        // Post-hydration safety sweep: Ensure all history items are definitely arrays
+        // This prevents crashes if local storage was corrupted or from an older version
+        const keys: (keyof MindCareStore)[] = [
+          'moodHistory',
+          'journalEntries',
+          'chatHistory',
+          'wellnessGoals',
+          'habits',
+          'goals',
+          'sleepHistory',
+          'breathingHistory',
+        ];
+
+        keys.forEach((key) => {
+          if (!Array.isArray(state[key])) {
+            (state as any)[key] = [];
+          }
+        });
+
+        // Ensure wellnessMetrics is also an object
+        if (!state.wellnessMetrics || typeof state.wellnessMetrics !== 'object') {
+          state.wellnessMetrics = initialValues.wellnessMetrics;
+        }
+
+        state.setSyncStatus('idle');
+      },
       name: 'mindcare-storage',
       storage: encryptedStorage,
       partialize: (state: UserState & { safeMode: boolean }): any => ({
@@ -223,16 +251,16 @@ export const useStore = create<MindCareStore>()(
         username: state.username,
         isOnboarded: state.isOnboarded,
         onboardingData: state.onboardingData,
-        moodHistory: state.moodHistory.slice(-100),
-        journalEntries: state.journalEntries.slice(-50),
-        chatHistory: state.chatHistory.slice(-50),
+        moodHistory: (state.moodHistory || []).slice(-100),
+        journalEntries: (state.journalEntries || []).slice(-50),
+        chatHistory: (state.chatHistory || []).slice(-50),
         lastActive: state.lastActive,
-        wellnessGoals: state.wellnessGoals,
-        habits: state.habits,
-        goals: state.goals,
-        sleepHistory: state.sleepHistory.slice(-100),
+        wellnessGoals: state.wellnessGoals || [],
+        habits: state.habits || [],
+        goals: state.goals || [],
+        sleepHistory: (state.sleepHistory || []).slice(-100),
         wellnessMetrics: state.wellnessMetrics,
-        breathingHistory: state.breathingHistory.slice(-50),
+        breathingHistory: (state.breathingHistory || []).slice(-50),
         safeMode: state.safeMode,
       }),
     }

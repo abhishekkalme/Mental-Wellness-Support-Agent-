@@ -8,10 +8,11 @@ import { cn } from '@/lib/utils';
 export function WellbeingSummary() {
   const store = useStore();
 
-  const lastSleep = store.sleepHistory[store.sleepHistory.length - 1];
+  const sleepHistoryList = store.sleepHistory || [];
+  const lastSleep = sleepHistoryList[sleepHistoryList.length - 1];
   const sleepHours = lastSleep?.durationHours || 0;
 
-  const moodHistory = store.moodHistory.slice(-7);
+  const moodHistory = (store.moodHistory || []).slice(-7);
   const moodScore =
     moodHistory.length > 0
       ? moodHistory.reduce((acc, m) => {
@@ -26,10 +27,11 @@ export function WellbeingSummary() {
         }, 0) / moodHistory.length
       : 0;
 
+  const breathingHistory = store.breathingHistory || [];
   const breathingMinutes = Math.round(
-    store.breathingHistory
-      .filter((r) => new Date(r.date).toDateString() === new Date().toDateString())
-      .reduce((acc, r) => acc + r.durationSeconds, 0) / 60
+    breathingHistory
+      .filter((r) => r.date && new Date(r.date).toDateString() === new Date().toDateString())
+      .reduce((acc, r) => acc + (r.durationSeconds || 0), 0) / 60
   );
 
   const metrics = [
@@ -40,7 +42,7 @@ export function WellbeingSummary() {
       icon: Moon,
       color: 'text-indigo-400',
       bgColor: 'bg-indigo-500/10',
-      progress: sleepHours > 0 ? (sleepHours / 8) * 100 : 0,
+      progress: sleepHours > 0 ? Math.min(100, (sleepHours / 8) * 100) : 0,
     },
     {
       id: 'mood',
@@ -62,10 +64,10 @@ export function WellbeingSummary() {
     },
   ];
 
-  const overallScore = Math.round(
-    metrics.reduce((acc, m) => acc + (m.progress || 0), 0) /
-      metrics.filter((m) => m.progress > 0).length || 0
-  );
+  const activeMetrics = metrics.filter((m) => m.progress > 0);
+  const overallScore = activeMetrics.length > 0
+    ? Math.round(activeMetrics.reduce((acc, m) => acc + (m.progress || 0), 0) / activeMetrics.length)
+    : 0;
 
   return (
     <div className="space-y-4">

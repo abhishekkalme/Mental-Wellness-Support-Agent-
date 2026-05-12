@@ -8,14 +8,7 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
-
-function LoadingScreen() {
-  return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#E2FF6F] border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-}
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -28,12 +21,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isSessionLoading = status === 'loading';
 
   useEffect(() => {
+    // Safety timeout: Ensure we hydrate within 3s or force render
+    const timer = setTimeout(() => setHasHydrated(true), 3000);
     setHasHydrated(true);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    syncRemoteData();
-  }, [syncRemoteData]);
+    if (hasHydrated) {
+      syncRemoteData();
+    }
+  }, [syncRemoteData, hasHydrated]);
 
   if (isOnboarding) {
     return (

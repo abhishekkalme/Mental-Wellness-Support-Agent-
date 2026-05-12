@@ -11,20 +11,25 @@ export function TodaysFocus() {
   const store = useStore();
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const habits = store.habits.filter((h) => h.frequency === 'daily').slice(0, 4);
+  const habitsList = Array.isArray(store.habits) ? store.habits : [];
+  const habits = habitsList.filter((h) => h && h.frequency === 'daily').slice(0, 4);
 
-  const currentStreak = Math.max(
-    ...store.habits.map((h) => {
-      let streak = 0;
-      const checkDate = new Date();
-      while (h.completedDates.includes(format(checkDate, 'yyyy-MM-dd'))) {
-        streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-      }
-      return streak;
-    }),
-    0
-  );
+  const currentStreak = habitsList.length > 0 
+    ? Math.max(
+        ...habitsList.map((h) => {
+          let streak = 0;
+          const checkDate = new Date();
+          const completedDates = Array.isArray(h.completedDates) ? h.completedDates : [];
+          while (completedDates.includes(format(checkDate, 'yyyy-MM-dd'))) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+            if (streak > 365) break; // Safety break
+          }
+          return streak;
+        }),
+        0
+      )
+    : 0;
 
   return (
     <div className="space-y-4">

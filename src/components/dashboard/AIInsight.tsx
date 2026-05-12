@@ -9,38 +9,40 @@ import { cn } from '@/lib/utils';
 
 const INSIGHT_TEMPLATES = [
   {
-    check: (s: ReturnType<typeof useStore.getState>) =>
-      s.sleepHistory.length > 0 && s.sleepHistory[s.sleepHistory.length - 1].quality < 3,
+    check: (s: any) =>
+      Array.isArray(s.sleepHistory) &&
+      s.sleepHistory.length > 0 &&
+      (s.sleepHistory[s.sleepHistory.length - 1]?.quality || 5) < 3,
     message:
       'Your recent sleep quality has been low. Consistent sleep times—even on weekends—can significantly improve your mood and focus.',
     action: { label: 'Sleep better', href: '/sleep' },
   },
   {
-    check: (s: ReturnType<typeof useStore.getState>) => {
+    check: (s: any) => {
       const mood = s.moodHistory;
-      if (mood.length < 3) return false;
+      if (!Array.isArray(mood) || mood.length < 3) return false;
       const last = mood.slice(-3);
-      return last.every((m) => m.mood === 'bad' || m.mood === 'terrible');
+      return last.every((m) => m && (m.mood === 'bad' || m.mood === 'terrible'));
     },
     message:
       "You've logged low moods for 3 consecutive days. Consider talking to someone—a friend, counselor, or trusted mentor.",
     action: { label: 'Find a therapist', href: '/therapists' },
   },
   {
-    check: (s: ReturnType<typeof useStore.getState>) => {
+    check: (s: any) => {
       const habits = s.habits;
-      if (!habits.length) return false;
+      if (!Array.isArray(habits) || !habits.length) return false;
       const today = new Date().toISOString().split('T')[0];
-      return habits.some((h) => h.completedDates.includes(today));
+      return habits.some((h) => Array.isArray(h.completedDates) && h.completedDates.includes(today));
     },
     message:
       'Great job completing your habits today! Consistency compounds—small daily wins build lasting resilience.',
     action: null,
   },
   {
-    check: (s: ReturnType<typeof useStore.getState>) => {
+    check: (s: any) => {
       const mood = s.moodHistory;
-      if (mood.length < 7) return false;
+      if (!Array.isArray(mood) || mood.length < 7) return false;
       const recent = mood.slice(-7);
       const avg =
         recent.reduce(
@@ -64,18 +66,21 @@ const INSIGHT_TEMPLATES = [
     action: null,
   },
   {
-    check: (s: ReturnType<typeof useStore.getState>) =>
-      s.habits.length === 0 && (s.moodHistory.length > 0 || s.journalEntries.length > 0),
+    check: (s: any) =>
+      Array.isArray(s.habits) &&
+      s.habits.length === 0 &&
+      (Array.isArray(s.moodHistory) && s.moodHistory.length > 0 || 
+       Array.isArray(s.journalEntries) && s.journalEntries.length > 0),
     message:
       "You're actively tracking your wellness but haven't set any habits yet. Start with just one small daily habit—5 minutes of deep breathing counts.",
     action: { label: 'Start a habit', href: '/dashboard' },
   },
   {
-    check: (s: ReturnType<typeof useStore.getState>) => {
+    check: (s: any) => {
       const journal = s.journalEntries;
-      if (journal.length < 3) return false;
+      if (!Array.isArray(journal) || journal.length < 3) return false;
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      return !journal.some((j) => new Date(j.timestamp).getTime() > weekAgo);
+      return !journal.some((j) => j.timestamp && new Date(j.timestamp).getTime() > weekAgo);
     },
     message:
       "You haven't journaled in over a week. Even 3 sentences a day can reduce stress and improve clarity.",

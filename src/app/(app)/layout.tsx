@@ -7,6 +7,15 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
+
+function LoadingScreen() {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="w-8 h-8 border-2 border-[#E2FF6F] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -14,6 +23,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const syncRemoteData = useStore((state) => state.syncRemoteData);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const { status } = useSession();
+
+  const isSessionLoading = status === 'loading';
 
   useEffect(() => {
     setHasHydrated(true);
@@ -66,15 +78,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           isSidebarExpanded ? 'xl:pl-[240px]' : 'xl:pl-[72px]'
         )}
       >
-        <div className="min-h-screen pb-24 md:pb-0">
-          {hasHydrated ? (
-            children
-          ) : (
-            <div className="flex h-screen items-center justify-center">
-              <div className="w-8 h-8 border-2 border-[#E2FF6F] border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
+        <div className="min-h-screen pb-24 md:pb-0">{!hasHydrated || isSessionLoading ? <LoadingScreen /> : children}</div>
       </div>
       <MobileBottomNav />
     </div>

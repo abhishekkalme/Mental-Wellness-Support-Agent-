@@ -1,13 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Brain, ArrowRight, Mail, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -16,12 +16,21 @@ function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const registered = searchParams.get('registered') === '1';
   const needsVerification = searchParams.get('verify') === '1';
 
+  useEffect(() => {
+    if (session) {
+      router.push('/dashboard');
+    }
+  }, [session, router]);
+
   const checkOnboarding = async () => {
+    setCheckingAuth(true);
     try {
       const res = await fetch('/api/auth/me');
       if (!res.ok) {
@@ -32,6 +41,8 @@ function SignInForm() {
       router.push(data.needsOnboarding ? '/onboarding' : '/dashboard');
     } catch {
       router.push('/');
+    } finally {
+      setCheckingAuth(false);
     }
   };
 
@@ -82,7 +93,7 @@ function SignInForm() {
         return;
       }
       if (result?.ok) {
-        checkOnboarding();
+        await checkOnboarding();
       }
     } finally {
       setLoading(false);
@@ -237,8 +248,17 @@ function SignInForm() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full md:mt-4" disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign in'}
+            <Button type="submit" className="w-full md:mt-4" disabled={loading || checkingAuth}>
+              {checkingAuth ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Checking account…
+                </>
+              ) : loading ? (
+                'Signing in…'
+              ) : (
+                'Sign in'
+              )}
             </Button>
           </form>
 

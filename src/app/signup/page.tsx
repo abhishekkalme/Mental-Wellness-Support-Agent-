@@ -1,13 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Brain, ArrowRight } from 'lucide-react';
+import { Brain, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 
 export default function SignUpPage() {
   const [name, setName] = useState('');
@@ -16,7 +16,32 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const router = useRouter();
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (session) {
+      router.push('/dashboard');
+    }
+  }, [session, router]);
+
+  const waitForSessionAndRedirect = async () => {
+    setRedirecting(true);
+    let attempts = 0;
+    while (attempts < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        router.push(data.needsOnboarding ? '/onboarding' : '/dashboard');
+        return;
+      }
+      attempts++;
+    }
+    router.push('/onboarding');
+    setRedirecting(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +78,7 @@ export default function SignUpPage() {
         router.push('/signin?registered=1');
         return;
       }
-      router.push('/onboarding');
+      await waitForSessionAndRedirect();
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -203,8 +228,17 @@ export default function SignUpPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full md:mt-4" disabled={loading}>
-              {loading ? 'Creating account…' : 'Sign up'}
+            <Button type="submit" className="w-full md:mt-4" disabled={loading || redirecting}>
+              {redirecting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Setting up your account…
+                </>
+              ) : loading ? (
+                'Creating account…'
+              ) : (
+                'Sign up'
+              )}
             </Button>
           </form>
 

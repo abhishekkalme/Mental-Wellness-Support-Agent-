@@ -43,7 +43,7 @@ export const authConfig = {
       }
       return true;
     },
-    authorized({ auth, request }) {
+    async authorized({ auth, request }) {
       const path = request.nextUrl.pathname;
       if (path.startsWith('/admin')) {
         if (!auth?.user || auth.user.role !== 'admin') {

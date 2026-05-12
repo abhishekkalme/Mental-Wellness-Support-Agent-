@@ -3,53 +3,19 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Home,
-  Heart,
-  BookText,
-  Brain,
-  Wind,
-  Moon,
-  BarChart3,
-  MessageSquare,
-  Library,
-  Settings,
-  Sparkles,
-  Users,
-  Stethoscope,
-} from 'lucide-react';
+import { Library, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
-import type { LucideIcon } from 'lucide-react';
-
-type NavItem = { name: string; href: string; icon: LucideIcon; roles?: ('admin' | 'mentor')[] };
-
-const baseNavItems: NavItem[] = [
-  { name: 'Home', href: '/dashboard', icon: Home },
-  { name: 'Check-in', href: '/mood', icon: Heart },
-  { name: 'Journal', href: '/journal', icon: BookText },
-  { name: 'Meditate', href: '/meditation', icon: Brain },
-  { name: 'Breathing', href: '/breathing', icon: Wind },
-  { name: 'Sleep', href: '/sleep', icon: Moon },
-  { name: 'Insights', href: '/insights', icon: BarChart3 },
-  { name: 'Community', href: '/community', icon: Users },
-  { name: 'AI Companion', href: '/agent-chat', icon: MessageSquare },
-  { name: 'Habits', href: '/habits', icon: Sparkles },
-  { name: 'Rescue', href: '/rescue', icon: Library },
-  { name: 'Mentor hub', href: '/mentor', icon: Stethoscope, roles: ['mentor', 'admin'] },
-  { name: 'Admin', href: '/admin', icon: Settings, roles: ['admin'] },
-];
+import { allNavItems, filterNavByRole, mobilePrimaryItems } from '@/config/navigation';
+import type { NavItem } from '@/config/navigation';
 
 export function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const role = session?.user?.role ?? 'user';
 
-  const navItems = baseNavItems.filter((item) => {
-    if (!item.roles?.length) return true;
-    return item.roles.includes(role as 'admin' | 'mentor');
-  });
+  const filteredNavItems = filterNavByRole(allNavItems, role);
 
   return (
     <>
@@ -78,7 +44,7 @@ export function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose
         </Link>
 
         <div className="flex-1 overflow-y-auto pt-6 pb-8 px-6 space-y-2 no-scrollbar">
-          {navItems.map((item: NavItem) => {
+          {filteredNavItems.map((item: NavItem) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link

@@ -164,7 +164,7 @@ export default function Navbar() {
               <div className="pt-6 border-t border-white/5 flex flex-col gap-4">
                 {isAuthenticated ? (
                   <>
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                    {/* <Link href="/dashboard" onClick={() => setIsOpen(false)}>
                       <Button
                         variant="outline"
                         className="w-full text-white border-white/10 h-14 text-lg"
@@ -172,8 +172,8 @@ export default function Navbar() {
                         <LayoutDashboard className="w-5 h-5 mr-3" />
                         Dashboard
                       </Button>
-                    </Link>
-                    <Link href="/profile" onClick={() => setIsOpen(false)}>
+                    </Link> */}
+                    {/* <Link href="/profile" onClick={() => setIsOpen(false)}>
                       <Button
                         variant="outline"
                         className="w-full text-white border-white/10 h-14 text-lg"
@@ -190,8 +190,8 @@ export default function Navbar() {
                         <Settings className="w-5 h-5 mr-3" />
                         Settings
                       </Button>
-                    </Link>
-                    <Button
+                    </Link> */}
+                    {/* <Button
                       variant="outline"
                       className="w-full text-red-400 border-red-400/30 h-14 text-lg"
                       onClick={() => {
@@ -201,11 +201,11 @@ export default function Navbar() {
                     >
                       <LogOut className="w-5 h-5 mr-3" />
                       Logout
-                    </Button>
+                    </Button> */}
                   </>
                 ) : (
                   <>
-                    <Link href="/signin" onClick={() => setIsOpen(false)}>
+                    {/* <Link href="/signin" onClick={() => setIsOpen(false)}>
                       <Button
                         variant="outline"
                         className="w-full text-white border-white/10 h-14 text-lg"
@@ -217,7 +217,7 @@ export default function Navbar() {
                       <Button className="w-full bg-[#E2FF6F] text-black h-14 text-lg font-bold">
                         Get Started
                       </Button>
-                    </Link>
+                    </Link> */}
                   </>
                 )}
               </div>

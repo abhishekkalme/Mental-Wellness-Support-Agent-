@@ -2,10 +2,11 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles, LayoutDashboard, LogOut, ArrowRight } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 
 const FloatingTag = ({ label, delay }: { label: string; delay: number }) => (
   <motion.div
@@ -19,6 +20,56 @@ const FloatingTag = ({ label, delay }: { label: string; delay: number }) => (
     <Plus className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
   </motion.div>
 );
+
+const MobileHeroActions = () => {
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1, duration: 0.8 }}
+      className="flex md:hidden flex-col gap-3 mt-8"
+    >
+      {isAuthenticated ? (
+        <>
+          <Link href="/dashboard">
+            <Button className="w-full bg-[#E2FF6F] text-black hover:bg-[#d4f056] font-bold rounded-full h-14 text-lg flex items-center justify-center gap-2">
+              <LayoutDashboard className="w-5 h-5" />
+              Dashboard
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className="w-full text-white border-white/20 h-14 text-lg font-bold flex items-center justify-center gap-2 hover:bg-white/5"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </Button>
+        </>
+      ) : (
+        <>
+          <Link href="/signin">
+            <Button
+              variant="outline"
+              className="w-full text-white border-white/20 h-14 text-lg font-bold flex items-center justify-center hover:bg-white/5"
+            >
+              Sign In
+            </Button>
+          </Link>
+          <Link href="/signup">
+            <Button className="w-full bg-[#E2FF6F] text-black hover:bg-[#d4f056] font-bold rounded-full h-14 text-lg flex items-center justify-center gap-2">
+              Get Started
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </Link>
+        </>
+      )}
+    </motion.div>
+  );
+};
 
 export default function LandingPage() {
   return (
@@ -93,6 +144,8 @@ export default function LandingPage() {
             Take your time and productivity so you can see where you&apos;re spending your time and
             make adjustment as needed.
           </motion.p>
+
+          <MobileHeroActions />
         </div>
 
         {/* Vertical Floating Tags */}

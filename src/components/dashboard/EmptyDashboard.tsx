@@ -5,11 +5,41 @@ import { Heart, BookOpen, Wind, Moon, Target, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 const actions = [
-  { label: 'Log Mood', href: '/mood', icon: Heart, bg: 'bg-rose-500/10', iconColor: 'text-rose-400' },
-  { label: 'Write Journal', href: '/journal', icon: BookOpen, bg: 'bg-amber-500/10', iconColor: 'text-amber-400' },
-  { label: 'Breathe', href: '/breathing', icon: Wind, bg: 'bg-cyan-500/10', iconColor: 'text-cyan-400' },
-  { label: 'Track Sleep', href: '/sleep', icon: Moon, bg: 'bg-indigo-500/10', iconColor: 'text-indigo-400' },
-  { label: 'Set Habit', href: '/habits', icon: Target, bg: 'bg-[#E2FF6F]/10', iconColor: 'text-[#E2FF6F]' },
+  {
+    label: 'Log Mood',
+    href: '/mood',
+    icon: Heart,
+    bg: 'bg-rose-500/10',
+    iconColor: 'text-rose-400',
+  },
+  {
+    label: 'Write Journal',
+    href: '/journal',
+    icon: BookOpen,
+    bg: 'bg-amber-500/10',
+    iconColor: 'text-amber-400',
+  },
+  {
+    label: 'Breathe',
+    href: '/breathing',
+    icon: Wind,
+    bg: 'bg-cyan-500/10',
+    iconColor: 'text-cyan-400',
+  },
+  {
+    label: 'Track Sleep',
+    href: '/sleep',
+    icon: Moon,
+    bg: 'bg-indigo-500/10',
+    iconColor: 'text-indigo-400',
+  },
+  {
+    label: 'Set Habit',
+    href: '/habits',
+    icon: Target,
+    bg: 'bg-[#E2FF6F]/10',
+    iconColor: 'text-[#E2FF6F]',
+  },
 ];
 
 export function EmptyDashboard() {

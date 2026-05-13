@@ -33,7 +33,9 @@ const INSIGHT_TEMPLATES = [
       const habits = s.habits;
       if (!Array.isArray(habits) || !habits.length) return false;
       const today = new Date().toISOString().split('T')[0];
-      return habits.some((h) => Array.isArray(h.completedDates) && h.completedDates.includes(today));
+      return habits.some(
+        (h) => Array.isArray(h.completedDates) && h.completedDates.includes(today)
+      );
     },
     message:
       'Great job completing your habits today! Consistency compounds—small daily wins build lasting resilience.',
@@ -69,8 +71,8 @@ const INSIGHT_TEMPLATES = [
     check: (s: any) =>
       Array.isArray(s.habits) &&
       s.habits.length === 0 &&
-      (Array.isArray(s.moodHistory) && s.moodHistory.length > 0 ||
-       Array.isArray(s.journalEntries) && s.journalEntries.length > 0),
+      ((Array.isArray(s.moodHistory) && s.moodHistory.length > 0) ||
+        (Array.isArray(s.journalEntries) && s.journalEntries.length > 0)),
     message:
       "You're actively tracking your wellness but haven't set any habits yet. Start with just one small daily habit—5 minutes of deep breathing counts.",
     action: { label: 'Start a habit', href: '/habits' },
@@ -104,15 +106,22 @@ const NEW_USER_TEMPLATES = (onboardingData: any) => {
 
   if (priorities.includes('focus') || priorities.includes('clarity')) {
     templates.push({
-      message: 'Deep work starts with a calm mind. Try a 3-minute breathing exercise before your next task.',
+      message:
+        'Deep work starts with a calm mind. Try a 3-minute breathing exercise before your next task.',
       action: { label: 'Breathe now', href: '/breathing' },
       icon: Brain,
     });
   }
 
-  if (priorities.includes('anxiety') || priorities.includes('emotional') || feeling === 'anxious' || feeling === 'stressed') {
+  if (
+    priorities.includes('anxiety') ||
+    priorities.includes('emotional') ||
+    feeling === 'anxious' ||
+    feeling === 'stressed'
+  ) {
     templates.push({
-      message: "You said reducing anxiety is a priority. Consider starting a daily journaling practice.",
+      message:
+        'You said reducing anxiety is a priority. Consider starting a daily journaling practice.',
       action: { label: 'Write journal', href: '/journal' },
       icon: Heart,
     });
@@ -120,7 +129,8 @@ const NEW_USER_TEMPLATES = (onboardingData: any) => {
 
   if (priorities.includes('habits') || priorities.includes('clarity')) {
     templates.push({
-      message: "Building habits takes consistency, not perfection. Start with one small habit today.",
+      message:
+        'Building habits takes consistency, not perfection. Start with one small habit today.',
       action: { label: 'Set habit', href: '/habits' },
       icon: Target,
     });
@@ -128,7 +138,7 @@ const NEW_USER_TEMPLATES = (onboardingData: any) => {
 
   if (priorities.includes('energy') || feeling === 'tired') {
     templates.push({
-      message: "Low energy? Small movements and hydration can make a big difference right now.",
+      message: 'Low energy? Small movements and hydration can make a big difference right now.',
       action: { label: 'Log mood', href: '/mood' },
       icon: Zap,
     });
@@ -136,7 +146,7 @@ const NEW_USER_TEMPLATES = (onboardingData: any) => {
 
   if (biggestChallenge === 'overthinking') {
     templates.push({
-      message: "Overthinking? Try the 5-4-3-2-1 grounding technique when your mind races.",
+      message: 'Overthinking? Try the 5-4-3-2-1 grounding technique when your mind races.',
       action: { label: 'Try rescue exercises', href: '/rescue' },
       icon: Brain,
     });
@@ -144,7 +154,7 @@ const NEW_USER_TEMPLATES = (onboardingData: any) => {
 
   if (biggestChallenge === 'procrastination') {
     templates.push({
-      message: "Procrastination often starts with one small step. Try the Pomodoro technique.",
+      message: 'Procrastination often starts with one small step. Try the Pomodoro technique.',
       action: { label: 'Set a timer', href: '/breathing' },
       icon: Target,
     });
@@ -156,23 +166,25 @@ const NEW_USER_TEMPLATES = (onboardingData: any) => {
 export function AIInsight() {
   const store = useStore();
   const onboardingData = store.onboardingData as any;
-  const isNewUser = !store.moodHistory.length && !store.journalEntries.length && !store.sleepHistory.length;
+  const isNewUser =
+    !store.moodHistory.length && !store.journalEntries.length && !store.sleepHistory.length;
 
-  const newUserInsights = useMemo(() => NEW_USER_TEMPLATES(onboardingData), [
-    onboardingData.priorities,
-    onboardingData.feeling,
-    onboardingData.biggestChallenge,
-  ]);
-
-  const insight = useMemo(
-    () => {
-      for (const t of INSIGHT_TEMPLATES) {
-        if (t.check(store as any)) return { ...t, icon: Sparkles };
-      }
-      return null;
-    },
-    [store.moodHistory.length, store.sleepHistory.length, store.habits.length, store.journalEntries.length]
+  const newUserInsights = useMemo(
+    () => NEW_USER_TEMPLATES(onboardingData),
+    [onboardingData.priorities, onboardingData.feeling, onboardingData.biggestChallenge]
   );
+
+  const insight = useMemo(() => {
+    for (const t of INSIGHT_TEMPLATES) {
+      if (t.check(store as any)) return { ...t, icon: Sparkles };
+    }
+    return null;
+  }, [
+    store.moodHistory.length,
+    store.sleepHistory.length,
+    store.habits.length,
+    store.journalEntries.length,
+  ]);
 
   const showInsight = isNewUser ? newUserInsights[0] : insight;
 
@@ -233,7 +245,8 @@ export function AIInsight() {
           )}
           {isNewUser && newUserInsights.length > 1 && (
             <p className="text-[10px] text-white/30 mt-1">
-              {newUserInsights.length - 1} more personalized tip{newUserInsights.length > 2 ? 's' : ''} based on your profile
+              {newUserInsights.length - 1} more personalized tip
+              {newUserInsights.length > 2 ? 's' : ''} based on your profile
             </p>
           )}
         </div>

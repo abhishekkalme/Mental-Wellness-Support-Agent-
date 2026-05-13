@@ -17,9 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <LazyMotion features={domMax}>
-        <MotionConfig reducedMotion="user">
-          {children}
-        </MotionConfig>
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
       </LazyMotion>
       <AnalyticsWrapper />
     </SessionProvider>

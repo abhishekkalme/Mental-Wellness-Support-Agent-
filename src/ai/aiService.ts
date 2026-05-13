@@ -27,7 +27,9 @@ export async function agenticReply(
   const contextParts: string[] = [];
 
   if (contexts.length > 0) {
-    contextParts.push(`Previous conversation context:\n${contexts.map((c) => `• ${c}`).join('\n')}`);
+    contextParts.push(
+      `Previous conversation context:\n${contexts.map((c) => `• ${c}`).join('\n')}`
+    );
   }
 
   if (userContext) {

@@ -71,9 +71,12 @@ export function WellbeingSummary() {
   ];
 
   const activeMetrics = metrics.filter((m) => m.progress > 0);
-  const overallScore = activeMetrics.length > 0
-    ? Math.round(activeMetrics.reduce((acc, m) => acc + (m.progress || 0), 0) / activeMetrics.length)
-    : 0;
+  const overallScore =
+    activeMetrics.length > 0
+      ? Math.round(
+          activeMetrics.reduce((acc, m) => acc + (m.progress || 0), 0) / activeMetrics.length
+        )
+      : 0;
 
   const metricsToShow = metrics.map((m) => ({
     ...m,
@@ -211,10 +214,19 @@ function getDefaultHint(metricId: string, onboardingData: any) {
   const biggestChallenge = onboardingData.biggestChallenge || '';
 
   if (metricId === 'mood') {
-    if (priorities.includes('emotional') || priorities.includes('anxiety') || biggestChallenge === 'overthinking' || biggestChallenge === 'self-doubt') {
+    if (
+      priorities.includes('emotional') ||
+      priorities.includes('anxiety') ||
+      biggestChallenge === 'overthinking' ||
+      biggestChallenge === 'self-doubt'
+    ) {
       return { label: 'Track your emotions', href: '/mood' };
     }
-    if (priorities.includes('energy') || biggestChallenge === 'burnout' || biggestChallenge === 'motivation') {
+    if (
+      priorities.includes('energy') ||
+      biggestChallenge === 'burnout' ||
+      biggestChallenge === 'motivation'
+    ) {
       return { label: 'Check in with yourself', href: '/mood' };
     }
     return { label: 'Log your first mood', href: '/mood' };

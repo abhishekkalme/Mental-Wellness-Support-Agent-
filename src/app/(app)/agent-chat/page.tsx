@@ -386,8 +386,9 @@ export default function AgentChatPage() {
     setShowModules(true);
     setActiveTool(tool);
   }
-  const topBarButton ='h-9 px-3 flex items-center justify-center rounded-full border transition-all shrink-0 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white';
-  
+  const topBarButton =
+    'h-9 px-3 flex items-center justify-center rounded-full border transition-all shrink-0 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white';
+
   return (
     <div className="flex flex-col h-screen max-h-screen relative overflow-hidden bg-[#0A0D08]">
       <div className="absolute inset-0 pointer-events-none">
@@ -414,51 +415,41 @@ export default function AgentChatPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => store.setSafeMode(!store.safeMode)}
+            className={cn(
+              topBarButton,
+              store.safeMode && 'bg-rose-500/15 border-rose-400/30 text-rose-200'
+            )}
+          >
+            Safe Mode
+          </button>
 
-  <button
-    type="button"
-    onClick={() => store.setSafeMode(!store.safeMode)}
-    className={cn(
-      topBarButton,
-      store.safeMode &&
-        'bg-rose-500/15 border-rose-400/30 text-rose-200'
-    )}
-  >
-    Safe Mode
-  </button>
+          <button
+            type="button"
+            onClick={() => setFirstGen(!firstGen)}
+            className={cn(
+              topBarButton,
+              firstGen && 'bg-cyan-500/15 border-cyan-400/30 text-cyan-200'
+            )}
+            title="Start fresh: AI responds as if it's meeting you for the first time, with no memory of previous conversations."
+          >
+            1st Gen
+          </button>
 
-  <button
-    type="button"
-    onClick={() => setFirstGen(!firstGen)}
-    className={cn(
-      topBarButton,
-      firstGen &&
-        'bg-cyan-500/15 border-cyan-400/30 text-cyan-200'
-    )}
-    title="Start fresh: AI responds as if it's meeting you for the first time, with no memory of previous conversations."
-  >
-    1st Gen
-  </button>
-
-  <button
-    type="button"
-    onClick={() => setSpeakReplies((v) => !v)}
-    className={cn(
-      topBarButton,
-      'w-9 px-0',
-      speakReplies &&
-        'bg-[#E2FF6F]/10 border-[#E2FF6F]/30 text-[#E2FF6F]'
-    )}
-    aria-label={speakReplies ? 'Disable voice' : 'Enable voice'}
-  >
-    {speakReplies ? (
-      <Volume2 className="w-4 h-4" />
-    ) : (
-      <VolumeX className="w-4 h-4" />
-    )}
-  </button>
-
-
+          <button
+            type="button"
+            onClick={() => setSpeakReplies((v) => !v)}
+            className={cn(
+              topBarButton,
+              'w-9 px-0',
+              speakReplies && 'bg-[#E2FF6F]/10 border-[#E2FF6F]/30 text-[#E2FF6F]'
+            )}
+            aria-label={speakReplies ? 'Disable voice' : 'Enable voice'}
+          >
+            {speakReplies ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
 
           <div className="relative ml-1" ref={langMenuRef}>
             <button
@@ -479,7 +470,9 @@ export default function AgentChatPage() {
                 {lang.flag}
               </span>
               <Languages className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E2FF6F] shrink-0" />
-              <span className="max-w-[60px] sm:max-w-[160px] truncate hidden sm:block">{lang.label}</span>
+              <span className="max-w-[60px] sm:max-w-[160px] truncate hidden sm:block">
+                {lang.label}
+              </span>
               <ChevronDown
                 className={cn(
                   'w-3 h-3 sm:w-4 sm:h-4 opacity-60 transition-transform',
@@ -487,7 +480,6 @@ export default function AgentChatPage() {
                 )}
               />
             </button>
-            
 
             <AnimatePresence>
               {langMenuOpen && (
@@ -533,8 +525,6 @@ export default function AgentChatPage() {
           >
             <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
-
-          
         </div>
       </header>
 
@@ -810,13 +800,17 @@ export default function AgentChatPage() {
                         className="w-full text-xs p-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-purple-500/50 text-white placeholder-white/30"
                         placeholder="Best moment today"
                         value={insightInputs.bestMoment}
-                        onChange={(e) => setInsightInputs((s) => ({ ...s, bestMoment: e.target.value }))}
+                        onChange={(e) =>
+                          setInsightInputs((s) => ({ ...s, bestMoment: e.target.value }))
+                        }
                       />
                       <input
                         className="w-full text-xs p-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-purple-500/50 text-white placeholder-white/30"
                         placeholder="Worst moment"
                         value={insightInputs.worstMoment}
-                        onChange={(e) => setInsightInputs((s) => ({ ...s, worstMoment: e.target.value }))}
+                        onChange={(e) =>
+                          setInsightInputs((s) => ({ ...s, worstMoment: e.target.value }))
+                        }
                       />
                       <input
                         className="w-full text-xs p-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-purple-500/50 text-white placeholder-white/30"

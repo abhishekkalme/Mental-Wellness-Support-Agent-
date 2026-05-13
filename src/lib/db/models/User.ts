@@ -58,7 +58,8 @@ const UserSchema: Schema = new Schema(
         sleep: 80,
         spiritual: 40,
       },
-      comment: 'Initial starter values assigned to new users. Users update these through assessments and tracking.',
+      comment:
+        'Initial starter values assigned to new users. Users update these through assessments and tracking.',
     },
   },
   { timestamps: true }

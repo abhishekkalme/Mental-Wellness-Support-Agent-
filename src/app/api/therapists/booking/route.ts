@@ -20,9 +20,7 @@ export async function GET(req: Request) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
     await connectDB();
-    const bookings = await Booking.find({ userId: session.user.id })
-      .sort({ date: -1 })
-      .limit(50);
+    const bookings = await Booking.find({ userId: session.user.id }).sort({ date: -1 }).limit(50);
     return NextResponse.json(bookings);
   } catch {
     return new NextResponse('Internal Error', { status: 500 });
@@ -73,10 +71,7 @@ export async function DELETE(req: Request) {
       return new NextResponse('Missing id', { status: 400 });
     }
     await connectDB();
-    await Booking.updateOne(
-      { _id: id, userId: session.user.id },
-      { status: 'cancelled' }
-    );
+    await Booking.updateOne({ _id: id, userId: session.user.id }, { status: 'cancelled' });
     return NextResponse.json({ success: true });
   } catch {
     return new NextResponse('Internal Error', { status: 500 });

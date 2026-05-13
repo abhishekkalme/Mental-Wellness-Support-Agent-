@@ -140,42 +140,72 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
         {sections.wellness.length > 0 && (
           <>
             <div className="h-px bg-white/5 mx-3" />
-            <NavSection items={sections.wellness} title="Wellness" pathname={pathname} isExpanded={isExpanded} />
+            <NavSection
+              items={sections.wellness}
+              title="Wellness"
+              pathname={pathname}
+              isExpanded={isExpanded}
+            />
           </>
         )}
 
         {sections.progress.length > 0 && (
           <>
             <div className="h-px bg-white/5 mx-3" />
-            <NavSection items={sections.progress} title="Progress" pathname={pathname} isExpanded={isExpanded} />
+            <NavSection
+              items={sections.progress}
+              title="Progress"
+              pathname={pathname}
+              isExpanded={isExpanded}
+            />
           </>
         )}
 
         {sections.ai.length > 0 && (
           <>
             <div className="h-px bg-white/5 mx-3" />
-            <NavSection items={sections.ai} title="AI" pathname={pathname} isExpanded={isExpanded} />
+            <NavSection
+              items={sections.ai}
+              title="AI"
+              pathname={pathname}
+              isExpanded={isExpanded}
+            />
           </>
         )}
 
         {sections.social.length > 0 && (
           <>
             <div className="h-px bg-white/5 mx-3" />
-            <NavSection items={sections.social} title="Social" pathname={pathname} isExpanded={isExpanded} />
+            <NavSection
+              items={sections.social}
+              title="Social"
+              pathname={pathname}
+              isExpanded={isExpanded}
+            />
           </>
         )}
 
         {sections.tools.length > 0 && (
           <>
             <div className="h-px bg-white/5 mx-3" />
-            <NavSection items={sections.tools} title="Tools" pathname={pathname} isExpanded={isExpanded} />
+            <NavSection
+              items={sections.tools}
+              title="Tools"
+              pathname={pathname}
+              isExpanded={isExpanded}
+            />
           </>
         )}
 
         {sections.more.length > 0 && (
           <>
             <div className="h-px bg-white/5 mx-3" />
-            <NavSection items={sections.more} title="More" pathname={pathname} isExpanded={isExpanded} />
+            <NavSection
+              items={sections.more}
+              title="More"
+              pathname={pathname}
+              isExpanded={isExpanded}
+            />
           </>
         )}
       </nav>

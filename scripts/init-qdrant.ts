@@ -24,7 +24,7 @@ async function init() {
   console.log(`Checking for collection: ${COLLECTION_NAME}...`);
   try {
     const collections = await client.getCollections();
-    const exists = collections.collections.some(c => c.name === COLLECTION_NAME);
+    const exists = collections.collections.some((c) => c.name === COLLECTION_NAME);
 
     if (exists) {
       console.log(`Collection ${COLLECTION_NAME} already exists.`);
@@ -33,8 +33,8 @@ async function init() {
       await client.createCollection(COLLECTION_NAME, {
         vectors: {
           size: VECTOR_DIM,
-          distance: 'Cosine'
-        }
+          distance: 'Cosine',
+        },
       });
       console.log('Collection created successfully!');
     }

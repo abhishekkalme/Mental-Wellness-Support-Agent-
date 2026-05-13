@@ -139,6 +139,11 @@ export default function Navbar() {
               <div className="pt-4 border-t border-white/10 flex flex-col gap-3">
                 {isAuthenticated ? (
                   <>
+                    <Link href="/" onClick={() => setIsOpen(false)}>
+                      <Button className="w-full bg-white/5 border border-white/10 text-white hover:bg-white/10 font-bold h-12 text-base gap-2 rounded-2xl">
+                        Home
+                      </Button>
+                    </Link>
                     <Link href="/dashboard" onClick={() => setIsOpen(false)}>
                       <Button className="w-full bg-[#E2FF6F] text-black hover:bg-[#d4f056] font-bold h-14 text-lg gap-2 rounded-2xl">
                         <LayoutDashboard className="w-5 h-5" />
@@ -147,7 +152,7 @@ export default function Navbar() {
                     </Link>
                     <Button
                       variant="outline"
-                      className="w-full text-white/60 border-white/10 h-14 text-lg font-bold rounded-2xl hover:bg-white/5"
+                      className="w-full text-red-400 border-red-400/30 hover:bg-red-500/10 hover:text-red-300 h-14 text-lg font-bold rounded-2xl"
                       onClick={() => {
                         setIsOpen(false);
                         useStore.getState().clearStore();
@@ -156,7 +161,7 @@ export default function Navbar() {
                       }}
                     >
                       <LogOut className="w-5 h-5 mr-2" />
-                      Logout
+                      Sign Out
                     </Button>
                   </>
                 ) : (

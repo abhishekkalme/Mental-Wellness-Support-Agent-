@@ -4,9 +4,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
-import { 
-  Calendar, Plus, Flame, CheckCircle2, Circle, TrendingUp, Award, Target, 
-  Heart, Brain, Dumbbell, ChevronRight, X, Zap, Activity
+import {
+  Calendar,
+  Plus,
+  Flame,
+  CheckCircle2,
+  Circle,
+  TrendingUp,
+  Award,
+  Target,
+  Heart,
+  Brain,
+  Dumbbell,
+  ChevronRight,
+  X,
+  Zap,
+  Activity,
 } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 
@@ -71,13 +84,15 @@ export default function HabitsPage() {
   const todayStr = format(today, 'yyyy-MM-dd');
   const weekStartStr = format(weekStart, 'yyyy-MM-dd');
 
-  const items: UnifiedItem[] = store.habits.map(h => ({
+  const items: UnifiedItem[] = store.habits.map((h) => ({
     ...h,
     category: h.category as ItemCategory | undefined,
   }));
 
   const getItemStats = (item: UnifiedItem) => {
-    const weekCompleted = item.completedDates.filter(d => d >= weekStartStr && d <= todayStr).length;
+    const weekCompleted = item.completedDates.filter(
+      (d) => d >= weekStartStr && d <= todayStr
+    ).length;
     const totalCompleted = item.completedDates.length;
     const target = item.targetDays || 30;
     const progress = Math.min(100, Math.round((totalCompleted / target) * 100));
@@ -87,41 +102,51 @@ export default function HabitsPage() {
 
   const getCategoryIcon = (cat?: ItemCategory) => {
     switch (cat) {
-      case 'wellness': return Heart;
-      case 'exercise': return Dumbbell;
-      case 'mind': return Brain;
-      default: return Target;
+      case 'wellness':
+        return Heart;
+      case 'exercise':
+        return Dumbbell;
+      case 'mind':
+        return Brain;
+      default:
+        return Target;
     }
   };
 
   const getCategoryColor = (cat?: ItemCategory) => {
     switch (cat) {
-      case 'wellness': return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
-      case 'exercise': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
-      case 'mind': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-      default: return 'text-white/40 bg-white/5 border-white/10';
+      case 'wellness':
+        return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+      case 'exercise':
+        return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+      case 'mind':
+        return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+      default:
+        return 'text-white/40 bg-white/5 border-white/10';
     }
   };
 
   const overallStats = useMemo(() => {
     const totalItems = items.length;
     const totalCompletions = items.reduce((sum, i) => sum + i.completedDates.length, 0);
-    const activeStreaks = items.filter(i => i.streak > 0).length;
-    const avgProgress = items.length > 0 
-      ? Math.round(items.reduce((sum, i) => sum + getItemStats(i).progress, 0) / items.length)
-      : 0;
+    const activeStreaks = items.filter((i) => i.streak > 0).length;
+    const avgProgress =
+      items.length > 0
+        ? Math.round(items.reduce((sum, i) => sum + getItemStats(i).progress, 0) / items.length)
+        : 0;
     return { totalItems, totalCompletions, activeStreaks, avgProgress };
   }, [items]);
 
   const totalWeekCompleted = items.reduce((sum, item) => {
-    return sum + item.completedDates.filter(d => d >= weekStartStr && d <= todayStr).length;
+    return sum + item.completedDates.filter((d) => d >= weekStartStr && d <= todayStr).length;
   }, 0);
   const totalPossible = items.length * 7;
-  const weeklySuccess = totalPossible > 0 ? Math.round((totalWeekCompleted / totalPossible) * 100) : 0;
+  const weeklySuccess =
+    totalPossible > 0 ? Math.round((totalWeekCompleted / totalPossible) * 100) : 0;
 
   const categoryColors: Record<string, string> = {
     wellness: 'text-rose-400',
-    exercise: 'text-blue-400', 
+    exercise: 'text-blue-400',
     mind: 'text-emerald-400',
   };
 
@@ -139,10 +164,12 @@ export default function HabitsPage() {
             <Target className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest">Progress Hub</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Habits &amp; Goals</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
+            Habits &amp; Goals
+          </h1>
           <p className="text-white/40 text-lg">Track your daily rituals and milestone progress.</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowAddModal(true)}
           className="gap-2 rounded-full h-12 px-6 bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold shadow-lg shadow-[#E2FF6F]/20"
         >
@@ -156,7 +183,9 @@ export default function HabitsPage() {
             <Target className="w-4 h-4" />
             <span className="text-[10px] font-bold uppercase tracking-widest">Total</span>
           </div>
-          <div className="text-3xl font-black text-white tabular-nums">{overallStats.totalItems}</div>
+          <div className="text-3xl font-black text-white tabular-nums">
+            {overallStats.totalItems}
+          </div>
           <div className="text-xs text-white/40">Active Items</div>
         </div>
         <div className="glass-panel p-5 bg-white/[0.03] border-white/[0.06]">
@@ -172,7 +201,9 @@ export default function HabitsPage() {
             <Flame className="w-4 h-4" />
             <span className="text-[10px] font-bold uppercase tracking-widest">Streaks</span>
           </div>
-          <div className="text-3xl font-black text-orange-400 tabular-nums">{overallStats.activeStreaks}</div>
+          <div className="text-3xl font-black text-orange-400 tabular-nums">
+            {overallStats.activeStreaks}
+          </div>
           <div className="text-xs text-white/40">Active</div>
         </div>
         <div className="glass-panel p-5 bg-white/[0.03] border-white/[0.06]">
@@ -180,13 +211,15 @@ export default function HabitsPage() {
             <Activity className="w-4 h-4" />
             <span className="text-[10px] font-bold uppercase tracking-widest">Progress</span>
           </div>
-          <div className="text-3xl font-black text-[#E2FF6F] tabular-nums">{overallStats.avgProgress}%</div>
+          <div className="text-3xl font-black text-[#E2FF6F] tabular-nums">
+            {overallStats.avgProgress}%
+          </div>
           <div className="text-xs text-white/40">Avg Completion</div>
         </div>
       </div>
 
       {items.length === 0 ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass-panel p-12 md:p-16 text-center border-2 border-dashed border-white/[0.06] bg-white/[0.02] relative z-10"
@@ -198,7 +231,7 @@ export default function HabitsPage() {
           <p className="text-white/40 mb-8 max-w-md mx-auto">
             Create habits and set goals to track your progress toward a healthier, happier you.
           </p>
-          <Button 
+          <Button
             onClick={() => setShowAddModal(true)}
             className="h-12 px-8 bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold rounded-full shadow-lg shadow-[#E2FF6F]/20"
           >
@@ -212,7 +245,7 @@ export default function HabitsPage() {
             const CatIcon = getCategoryIcon(item.category);
             const isCompletedToday = item.completedDates.includes(todayStr);
             const isFullyComplete = stats.progress >= 100;
-            
+
             return (
               <motion.div
                 key={item.id}
@@ -225,18 +258,24 @@ export default function HabitsPage() {
                     <button
                       onClick={() => handleToggle(item.id, todayStr)}
                       className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shrink-0 ${
-                        isCompletedToday 
-                          ? 'bg-[#E2FF6F] text-black shadow-lg shadow-[#E2FF6F]/20' 
+                        isCompletedToday
+                          ? 'bg-[#E2FF6F] text-black shadow-lg shadow-[#E2FF6F]/20'
                           : 'bg-white/[0.04] text-white/20 hover:text-white/40 hover:bg-white/10 border border-white/[0.06]'
                       }`}
                     >
-                      {isCompletedToday ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
+                      {isCompletedToday ? (
+                        <CheckCircle2 className="w-6 h-6" />
+                      ) : (
+                        <Circle className="w-6 h-6" />
+                      )}
                     </button>
-                    
+
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         {item.category && (
-                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${getCategoryColor(item.category)}`}>
+                          <span
+                            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${getCategoryColor(item.category)}`}
+                          >
                             {item.category}
                           </span>
                         )}
@@ -247,7 +286,9 @@ export default function HabitsPage() {
                           </span>
                         )}
                       </div>
-                      <h3 className={`font-bold text-lg truncate ${isCompletedToday ? 'text-white/40 line-through' : 'text-white'}`}>
+                      <h3
+                        className={`font-bold text-lg truncate ${isCompletedToday ? 'text-white/40 line-through' : 'text-white'}`}
+                      >
                         {item.name}
                       </h3>
                     </div>
@@ -255,44 +296,58 @@ export default function HabitsPage() {
 
                   <div className="flex items-center gap-4 lg:gap-6 flex-wrap">
                     <div className="text-center">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Target</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">
+                        Target
+                      </div>
                       <div className="font-bold text-white text-sm">{stats.target} days</div>
                     </div>
-                    
+
                     <div className="text-center">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Progress</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">
+                        Progress
+                      </div>
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
-                          <motion.div 
+                          <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${stats.progress}%` }}
                             className={`h-full rounded-full ${isFullyComplete ? 'bg-[#E2FF6F]' : 'bg-[#E2FF6F]/60'}`}
                           />
                         </div>
-                        <span className={`text-sm font-bold tabular-nums ${isFullyComplete ? 'text-[#E2FF6F]' : 'text-white'}`}>
+                        <span
+                          className={`text-sm font-bold tabular-nums ${isFullyComplete ? 'text-[#E2FF6F]' : 'text-white'}`}
+                        >
                           {stats.progress}%
                         </span>
                       </div>
                     </div>
 
                     <div className="text-center hidden md:block">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">This Week</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">
+                        This Week
+                      </div>
                       <div className="text-sm font-bold text-white">{stats.weekCompleted}/7</div>
                     </div>
 
                     <div className="text-center hidden lg:block">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Total</div>
-                      <div className="text-sm font-bold text-white tabular-nums">{stats.totalCompleted}</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">
+                        Total
+                      </div>
+                      <div className="text-sm font-bold text-white tabular-nums">
+                        {stats.totalCompleted}
+                      </div>
                     </div>
 
                     <div className="w-28 hidden lg:block">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Weekly</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2">
+                        Weekly
+                      </div>
                       <div className="flex items-end gap-1 h-5">
                         {weekDays.map((day, i) => {
                           const dateStr = format(day, 'yyyy-MM-dd');
                           const done = item.completedDates.includes(dateStr);
                           return (
-                            <div 
+                            <div
                               key={i}
                               className={`flex-1 rounded-sm transition-all duration-200 ${done ? 'bg-[#E2FF6F]' : 'bg-white/10'}`}
                               style={{ height: done ? '100%' : '20%' }}
@@ -311,7 +366,7 @@ export default function HabitsPage() {
 
       <AnimatePresence>
         {showAddModal && (
-          <div 
+          <div
             className="fixed inset-0 bg-[#0A0C0B]/90 backdrop-blur-xl z-50 flex items-center justify-center p-4"
             role="dialog"
             aria-modal="true"
@@ -325,7 +380,10 @@ export default function HabitsPage() {
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-bold text-white">New Habit or Goal</h3>
-                <button onClick={() => setShowAddModal(false)} className="text-white/40 hover:text-white transition-colors">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="text-white/40 hover:text-white transition-colors"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -356,8 +414,8 @@ export default function HabitsPage() {
                           key={cat}
                           onClick={() => setNewCategory(cat)}
                           className={`h-14 rounded-xl text-xs font-bold uppercase flex flex-col items-center justify-center gap-2 border transition-all duration-200 ${
-                            newCategory === cat 
-                              ? 'bg-[#E2FF6F] text-black border-[#E2FF6F] shadow-lg shadow-[#E2FF6F]/20' 
+                            newCategory === cat
+                              ? 'bg-[#E2FF6F] text-black border-[#E2FF6F] shadow-lg shadow-[#E2FF6F]/20'
                               : 'bg-white/[0.03] text-white/40 border-white/[0.06] hover:bg-white/10 hover:border-white/20'
                           }`}
                         >
@@ -379,8 +437,8 @@ export default function HabitsPage() {
                         key={f}
                         onClick={() => setNewFreq(f)}
                         className={`h-12 rounded-xl text-sm font-bold uppercase border transition-all duration-200 ${
-                          newFreq === f 
-                            ? 'bg-[#E2FF6F] text-black border-[#E2FF6F]' 
+                          newFreq === f
+                            ? 'bg-[#E2FF6F] text-black border-[#E2FF6F]'
                             : 'bg-white/[0.03] text-white/40 border-white/[0.06] hover:bg-white/10 hover:border-white/20'
                         }`}
                       >
@@ -410,14 +468,14 @@ export default function HabitsPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setShowAddModal(false)} 
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowAddModal(false)}
                   className="flex-1 h-12 text-white/40 hover:text-white hover:bg-white/[0.04]"
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={handleAddItem}
                   className="flex-1 h-12 bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold"
                 >

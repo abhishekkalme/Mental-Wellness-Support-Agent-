@@ -2,21 +2,53 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { ArrowRight, Sparkles, MessageSquare, BarChart3, Shield, Moon, BookOpen, Wind, Brain, Heart, Target, Activity, TrendingUp, LayoutDashboard, LogOut, Users, Star } from 'lucide-react';
+import {
+  ArrowRight,
+  Sparkles,
+  MessageSquare,
+  BarChart3,
+  Shield,
+  Moon,
+  BookOpen,
+  Wind,
+  Brain,
+  Heart,
+  Target,
+  Activity,
+  TrendingUp,
+  LayoutDashboard,
+  LogOut,
+  Users,
+  Star,
+} from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useStore } from '@/store/useStore';
 
-function FloatingTag({ label, href, delay, icon: Icon }: { label: string; href: string; delay: number; icon: any }) {
+function FloatingTag({
+  label,
+  href,
+  delay,
+  icon: Icon,
+}: {
+  label: string;
+  href: string;
+  delay: number;
+  icon: any;
+}) {
   return (
     <Link href={href}>
       <motion.div
         initial={{ x: 50, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ delay, duration: 0.8, ease: 'easeOut' }}
-        whileHover={{ x: -8, backgroundColor: 'rgba(226, 255, 111, 0.15)', borderColor: 'rgba(226, 255, 111, 0.3)' }}
+        whileHover={{
+          x: -8,
+          backgroundColor: 'rgba(226, 255, 111, 0.15)',
+          borderColor: 'rgba(226, 255, 111, 0.3)',
+        }}
         className="flex items-center gap-3 px-6 py-4 border border-white/10 rounded-full backdrop-blur-md bg-white/5 cursor-pointer whitespace-nowrap group transition-all"
       >
         <Icon className="w-4 h-4 text-[#E2FF6F] group-hover:scale-110 transition-transform" />
@@ -49,10 +81,10 @@ const HeroActions = () => {
           <Button
             variant="outline"
             onClick={() => {
-                useStore.getState().clearStore();
-                useStore.getState().clearPersistedData();
-                signOut({ callbackUrl: '/' });
-              }}
+              useStore.getState().clearStore();
+              useStore.getState().clearPersistedData();
+              signOut({ callbackUrl: '/' });
+            }}
             className="w-full sm:w-auto text-white/60 border-white/10 h-14 px-8 text-lg font-bold flex items-center justify-center gap-2 hover:bg-white/5 hover:text-red-400 rounded-full"
           >
             <LogOut className="w-5 h-5" />
@@ -149,7 +181,8 @@ export default function LandingPage() {
             transition={{ delay: 0.7, duration: 1 }}
             className="text-white/60 text-lg md:text-2xl mt-12 max-w-xl leading-relaxed font-medium"
           >
-            AI-powered wellness companion that understands you. Track your mood, build habits, and find peace — all in one place.
+            AI-powered wellness companion that understands you. Track your mood, build habits, and
+            find peace — all in one place.
           </motion.p>
 
           <HeroActions />
@@ -217,7 +250,8 @@ export default function LandingPage() {
               Everything for your <br /> <span className="text-[#E2FF6F]">inner peace.</span>
             </h2>
             <p className="text-white/60 max-w-sm text-lg font-medium">
-              We&apos;ve built a multi-sensory platform designed to help you reconnect with your most grounded self.
+              We&apos;ve built a multi-sensory platform designed to help you reconnect with your
+              most grounded self.
             </p>
           </div>
 
@@ -275,7 +309,9 @@ export default function LandingPage() {
                 whileHover={{ y: -8 }}
                 className="glass-panel p-8 md:p-10 bg-white/5 border-white/10 hover:border-[#E2FF6F]/30 transition-all group"
               >
-                <div className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
+                >
                   <f.icon className={`w-6 h-6 ${f.color}`} />
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-3">{f.title}</h3>
@@ -330,7 +366,9 @@ export default function LandingPage() {
                 <div className="w-16 h-16 rounded-2xl bg-[#E2FF6F]/10 flex items-center justify-center mx-auto">
                   <s.icon className="w-8 h-8 text-[#E2FF6F]" />
                 </div>
-                <span className="text-[#E2FF6F] font-bold text-5xl tracking-tighter block">{s.step}</span>
+                <span className="text-[#E2FF6F] font-bold text-5xl tracking-tighter block">
+                  {s.step}
+                </span>
                 <h3 className="text-3xl font-bold text-white">{s.title}</h3>
                 <p className="text-white/40 leading-relaxed max-w-xs mx-auto">{s.desc}</p>
               </motion.div>
@@ -347,7 +385,8 @@ export default function LandingPage() {
               Your peace is our <br /> <span className="text-[#E2FF6F]">mission.</span>
             </h2>
             <p className="text-white/60 text-lg md:text-xl font-medium leading-relaxed">
-              More than just an app, MindCare AI is a movement towards mental clarity in a chaotic world.
+              More than just an app, MindCare AI is a movement towards mental clarity in a chaotic
+              world.
             </p>
             <div className="flex gap-6 items-center">
               <Link href="/signup">
@@ -369,11 +408,13 @@ export default function LandingPage() {
             {[
               {
                 name: 'Sophia R.',
-                quote: "The AI companion actually feels like it understands me. It's the first thing I open when I'm stressed.",
+                quote:
+                  "The AI companion actually feels like it understands me. It's the first thing I open when I'm stressed.",
               },
               {
                 name: 'James L.',
-                quote: 'Clean UI, beautiful animations, and it actually helps. The rescue sessions are life-saving.',
+                quote:
+                  'Clean UI, beautiful animations, and it actually helps. The rescue sessions are life-saving.',
               },
             ].map((t, i) => (
               <motion.div
@@ -388,7 +429,9 @@ export default function LandingPage() {
                     <Star key={s} className="w-4 h-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-white/70 text-lg italic leading-relaxed mb-6">&quot;{t.quote}&quot;</p>
+                <p className="text-white/70 text-lg italic leading-relaxed mb-6">
+                  &quot;{t.quote}&quot;
+                </p>
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-[#E2FF6F]/20 flex items-center justify-center font-bold text-[#E2FF6F] text-sm">
                     {t.name[0]}
@@ -416,7 +459,8 @@ export default function LandingPage() {
             Ready to find <br /> <span className="text-[#E2FF6F]">your calm?</span>
           </h2>
           <p className="text-white/50 text-lg md:text-xl max-w-xl mx-auto font-medium">
-            Join thousands of others who&apos;ve transformed their mental wellness journey with AI-powered guidance.
+            Join thousands of others who&apos;ve transformed their mental wellness journey with
+            AI-powered guidance.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
@@ -438,9 +482,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer
-        className="relative z-10 bg-black py-16 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5"
-      >
+      <footer className="relative z-10 bg-black py-16 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12">
           <div className="space-y-6">
             <Link href="/" className="flex items-center gap-2">
@@ -458,26 +500,66 @@ export default function LandingPage() {
             <div className="space-y-4">
               <p className="text-white font-bold text-sm uppercase tracking-[0.2em]">Product</p>
               <ul className="space-y-2 text-white/40 text-sm">
-                <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
-                <li><Link href="/breathing" className="hover:text-white transition-colors">Breathing</Link></li>
-                <li><Link href="/sleep" className="hover:text-white transition-colors">Sleep</Link></li>
-                <li><Link href="/habits" className="hover:text-white transition-colors">Habits</Link></li>
+                <li>
+                  <Link href="/dashboard" className="hover:text-white transition-colors">
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/breathing" className="hover:text-white transition-colors">
+                    Breathing
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/sleep" className="hover:text-white transition-colors">
+                    Sleep
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/habits" className="hover:text-white transition-colors">
+                    Habits
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className="space-y-4">
               <p className="text-white font-bold text-sm uppercase tracking-[0.2em]">Company</p>
               <ul className="space-y-2 text-white/40 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Privacy
+                  </a>
+                </li>
               </ul>
             </div>
             <div className="space-y-4">
               <p className="text-white font-bold text-sm uppercase tracking-[0.2em]">Social</p>
               <ul className="space-y-2 text-white/40 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Instagram</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">X / Twitter</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">LinkedIn</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Instagram
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    X / Twitter
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    LinkedIn
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

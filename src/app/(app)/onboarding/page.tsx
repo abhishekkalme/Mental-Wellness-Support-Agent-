@@ -36,7 +36,13 @@ type Priority = 'sleep' | 'focus' | 'emotional' | 'anxiety' | 'habits' | 'clarit
 type AIStyle = 'listen' | 'practical' | 'organize' | 'motivate';
 type SleepSchedule = 'early-bird' | 'night-owl' | 'regular' | 'irregular';
 type Motivation = 'career' | 'relationships' | 'health' | 'learning' | 'creativity' | 'impact';
-type Challenge = 'overthinking' | 'sleep' | 'procrastination' | 'burnout' | 'self-doubt' | 'motivation';
+type Challenge =
+  | 'overthinking'
+  | 'sleep'
+  | 'procrastination'
+  | 'burnout'
+  | 'self-doubt'
+  | 'motivation';
 
 interface OnboardingData {
   name: string;
@@ -723,7 +729,9 @@ export default function OnboardingPage() {
               className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
             >
               <div>
-                <h2 className="text-3xl font-bold text-white mb-2">What&apos;s your sleep schedule like?</h2>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  What&apos;s your sleep schedule like?
+                </h2>
                 <p className="text-white/40 font-medium">
                   This helps us tailor rest recommendations for you
                 </p>

@@ -174,7 +174,15 @@ export default function TherapistPage() {
               <Button
                 variant="ghost"
                 className="w-full text-rose-400 hover:text-rose-500 hover:bg-rose-400/10"
-                onClick={() => { setSearchQuery(''); setFilters({ online: false, inPerson: false, slidingScale: false, crisisReady: false }); }}
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilters({
+                    online: false,
+                    inPerson: false,
+                    slidingScale: false,
+                    crisisReady: false,
+                  });
+                }}
               >
                 Clear Filters
               </Button>
@@ -259,7 +267,15 @@ export default function TherapistPage() {
             <div className="glass-panel p-20 text-center border-rose-400/10 bg-rose-400/5 rounded-[40px]">
               <p className="text-white/40 text-lg mb-4">No specialists match your search.</p>
               <button
-                onClick={() => { setSearchQuery(''); setFilters({ online: false, inPerson: false, slidingScale: false, crisisReady: false }); }}
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilters({
+                    online: false,
+                    inPerson: false,
+                    slidingScale: false,
+                    crisisReady: false,
+                  });
+                }}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#E2FF6F]/10 border border-[#E2FF6F]/30 text-[#E2FF6F] font-bold text-sm hover:bg-[#E2FF6F]/20 transition-all"
               >
                 <Search className="w-4 h-4" />
@@ -357,29 +373,31 @@ export default function TherapistPage() {
                     <div className="text-7xl w-32 h-32 glass-panel flex items-center justify-center bg-rose-400/5 shrink-0">
                       {selected.img}
                     </div>
-                      <div className="space-y-4">
-                        <div className="space-y-1">
-                          <h2 className="text-3xl font-bold">{selected.name}</h2>
-                          <p className="text-lg text-rose-500 font-bold">{selected.specialty}</p>
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <h2 className="text-3xl font-bold">{selected.name}</h2>
+                        <p className="text-lg text-rose-500 font-bold">{selected.specialty}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {selected.reviews > 0
+                          ? `A verified specialist with ${selected.reviews} reviews and a ${selected.rating} rating. Specializes in ${selected.specialty.toLowerCase()}.`
+                          : `Specializes in ${selected.specialty.toLowerCase()}. Ready to support your wellness journey.`}
+                      </p>
+                      <div className="flex gap-4 justify-center md:justify-start">
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase">
+                          <MapPin className="w-4 h-4 text-primary" /> Online Session
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {selected.reviews > 0
-                            ? `A verified specialist with ${selected.reviews} reviews and a ${selected.rating} rating. Specializes in ${selected.specialty.toLowerCase()}.`
-                            : `Specializes in ${selected.specialty.toLowerCase()}. Ready to support your wellness journey.`}
-                        </p>
-                        <div className="flex gap-4 justify-center md:justify-start">
-                          <div className="flex items-center gap-2 text-xs font-bold uppercase">
-                            <MapPin className="w-4 h-4 text-primary" /> Online Session
-                          </div>
-                          <div className="flex items-center gap-2 text-xs font-bold uppercase">
-                            <ShieldCheck className="w-4 h-4 text-emerald-500" /> Verified Expert
-                          </div>
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase">
+                          <ShieldCheck className="w-4 h-4 text-emerald-500" /> Verified Expert
                         </div>
                       </div>
+                    </div>
                   </div>
 
                   <div className="space-y-3">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Select a Time Slot</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                      Select a Time Slot
+                    </p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {['Mon 10am', 'Tue 2pm', 'Wed 11am', 'Fri 4pm'].map((slot) => (
                         <button
@@ -397,9 +415,7 @@ export default function TherapistPage() {
                     </div>
                   </div>
 
-                  {bookError && (
-                    <p className="text-sm text-rose-500 font-bold">{bookError}</p>
-                  )}
+                  {bookError && <p className="text-sm text-rose-500 font-bold">{bookError}</p>}
                   <div className="flex items-center justify-between pt-6 border-t border-border">
                     <div>
                       <p className="text-xs font-bold text-muted-foreground uppercase">
@@ -455,7 +471,8 @@ export default function TherapistPage() {
                   <div className="space-y-2">
                     <h2 className="text-3xl font-bold">Session Requested!</h2>
                     <p className="text-muted-foreground">
-                      Your session with {selected.name} on <strong>{selectedSlot}</strong> has been submitted. You will receive a confirmation email within 2 hours.
+                      Your session with {selected.name} on <strong>{selectedSlot}</strong> has been
+                      submitted. You will receive a confirmation email within 2 hours.
                     </p>
                   </div>
                   <Button

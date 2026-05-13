@@ -32,7 +32,10 @@ export function HabitStreaks() {
 
   if (habits.length === 0) {
     return (
-      <Link href="/habits" className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 transition-all">
+      <Link
+        href="/habits"
+        className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 transition-all"
+      >
         <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">Streaks</h3>
         <div className="flex items-center gap-2 text-[#E2FF6F] text-sm font-medium">
           <Plus className="w-4 h-4" /> Create your first habit
@@ -45,7 +48,10 @@ export function HabitStreaks() {
     <div className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider">Streaks</h3>
-        <Link href="/habits" className="flex items-center gap-0.5 text-[10px] text-[#E2FF6F] hover:text-[#d4f056] transition-colors">
+        <Link
+          href="/habits"
+          className="flex items-center gap-0.5 text-[10px] text-[#E2FF6F] hover:text-[#d4f056] transition-colors"
+        >
           View all <ChevronRight className="w-3 h-3" />
         </Link>
       </div>
@@ -80,9 +86,7 @@ export function HabitStreaks() {
             className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full"
           />
         </div>
-        {bestStreak > 0 && (
-          <p className="text-[10px] text-white/30">Best streak: {bestStreak}d</p>
-        )}
+        {bestStreak > 0 && <p className="text-[10px] text-white/30">Best streak: {bestStreak}d</p>}
       </div>
     </div>
   );

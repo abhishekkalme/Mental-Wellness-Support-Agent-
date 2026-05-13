@@ -49,7 +49,7 @@ interface MindCareStore extends UserState {
   syncRemoteData: (userId?: string) => Promise<void>;
   syncStatus: 'idle' | 'syncing' | 'success' | 'error';
   setSyncStatus: (status: 'idle' | 'syncing' | 'success' | 'error') => void;
-lastSyncedAt: number;
+  lastSyncedAt: number;
   preferredLanguage: string;
   agentGender: 'male' | 'female' | 'neutral';
   _syncPending: Record<string, number>;
@@ -331,7 +331,9 @@ export const useStore = create<MindCareStore>()(
       },
       name: 'mindcare-storage',
       storage: encryptedStorage,
-      partialize: (state: UserState & { safeMode: boolean; lastSyncedAt: number; lastSyncedUserId: string }): any => ({
+      partialize: (
+        state: UserState & { safeMode: boolean; lastSyncedAt: number; lastSyncedUserId: string }
+      ): any => ({
         name: state.name,
         username: state.username,
         isOnboarded: state.isOnboarded,

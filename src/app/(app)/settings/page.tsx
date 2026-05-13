@@ -52,7 +52,10 @@ export default function SettingsPage() {
   const [preferredLanguage, setPreferredLanguage] = useState(store.preferredLanguage || 'en');
   const [agentGender, setAgentGender] = useState(store.agentGender || 'neutral');
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [saveMessage, setSaveMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -64,7 +67,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const loadSettings = async () => {
       if (settingsLoaded || !session?.user?.email) return;
-      
+
       try {
         const res = await fetch('/api/admin/settings', {
           credentials: 'include',
@@ -349,9 +352,7 @@ export default function SettingsPage() {
                     }`}
                   />
                 </button>
-                <p className="text-xs text-white/40">
-                  Enable safe mode for the AI companion
-                </p>
+                <p className="text-xs text-white/40">Enable safe mode for the AI companion</p>
               </div>
 
               {saveMessage && (
@@ -404,15 +405,13 @@ export default function SettingsPage() {
                     store.syncStatus === 'idle'
                       ? 'bg-white/10 text-white/60'
                       : store.syncStatus === 'syncing'
-                      ? 'bg-yellow-500/10 text-yellow-400'
-                      : store.syncStatus === 'success'
-                      ? 'bg-green-500/10 text-green-400'
-                      : 'bg-red-500/10 text-red-400'
+                        ? 'bg-yellow-500/10 text-yellow-400'
+                        : store.syncStatus === 'success'
+                          ? 'bg-green-500/10 text-green-400'
+                          : 'bg-red-500/10 text-red-400'
                   }`}
                 >
-                  {store.syncStatus === 'syncing' && (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  )}
+                  {store.syncStatus === 'syncing' && <Loader2 className="w-3 h-3 animate-spin" />}
                   {store.syncStatus === 'success' && <CheckCircle className="w-3 h-3" />}
                   {store.syncStatus === 'error' && <AlertCircle className="w-3 h-3" />}
                   {store.syncStatus.charAt(0).toUpperCase() + store.syncStatus.slice(1)}
@@ -421,9 +420,7 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/60">Last Active</span>
-                <span className="text-sm text-white/40">
-                  {formatLastActive(store.lastActive)}
-                </span>
+                <span className="text-sm text-white/40">{formatLastActive(store.lastActive)}</span>
               </div>
 
               <Button
@@ -453,9 +450,7 @@ export default function SettingsPage() {
               Danger Zone
             </h2>
 
-            <p className="text-sm text-white/40 mb-4">
-              Sign out of your account on this device.
-            </p>
+            <p className="text-sm text-white/40 mb-4">Sign out of your account on this device.</p>
 
             <Button
               onClick={() => {

@@ -4,7 +4,21 @@ import { motion } from 'framer-motion';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
 import { format, subDays, isSameDay } from 'date-fns';
-import { Bell, User, ShieldAlert, Activity, Moon, Wind, BookOpen, Loader2, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
+import {
+  Bell,
+  User,
+  ShieldAlert,
+  Activity,
+  Moon,
+  Wind,
+  BookOpen,
+  Loader2,
+  TrendingUp,
+  Sparkles,
+  ChevronRight,
+  LogOut,
+  Home,
+} from 'lucide-react';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { TodaysFocus } from '@/components/dashboard/TodaysFocus';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
@@ -17,6 +31,7 @@ import { AIInsight } from '@/components/dashboard/AIInsight';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { signOut } from 'next-auth/react';
 
 const SYNC_STALE_MS = 60_000;
 
@@ -150,7 +165,14 @@ export default function DashboardPage() {
       })
       .catch(() => {})
       .finally(() => setAiLoading(false));
-  }, [isDataSufficient, store.moodHistory, store.sleepHistory, store.journalEntries, store.habits, store.breathingHistory]);
+  }, [
+    isDataSufficient,
+    store.moodHistory,
+    store.sleepHistory,
+    store.journalEntries,
+    store.habits,
+    store.breathingHistory,
+  ]);
 
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-US', {
@@ -205,20 +227,37 @@ export default function DashboardPage() {
                 <div className="absolute top-12 right-0 w-72 bg-[#141716] border border-white/10 rounded-2xl p-4 shadow-2xl z-50">
                   <h3 className="font-bold text-white mb-2 text-sm">Notifications</h3>
                   <div className="text-white/40 text-xs py-4 text-center">
-                    No new notifications yet.<br />
+                    No new notifications yet.
+                    <br />
                     <span className="text-white/20">Your activity will appear here.</span>
                   </div>
                 </div>
               )}
             </div>
 
-            <Link href="/admin">
+            <Link href="/" title="Home">
+              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 hover:border-[#E2FF6F]/30 transition-all flex items-center justify-center text-white/40 hover:text-[#E2FF6F]">
+                <Home className="w-4 h-4" />
+              </div>
+            </Link>
+            {/* <Link href="/admin" title="Admin">
               <div className="w-9 h-9 rounded-xl bg-white/5 overflow-hidden border border-white/10 hover:border-[#E2FF6F]/30 transition-all">
                 <div className="w-full h-full bg-[#E2FF6F]/10 flex items-center justify-center text-[#E2FF6F]">
                   <User className="w-4 h-4" />
                 </div>
               </div>
-            </Link>
+            </Link> */}
+            <button
+              onClick={() => {
+                useStore.getState().clearStore();
+                useStore.getState().clearPersistedData();
+                signOut({ callbackUrl: '/' });
+              }}
+              className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 hover:border-red-400/30 hover:bg-red-500/10 transition-all flex items-center justify-center text-white/40 hover:text-red-400"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
@@ -281,7 +320,10 @@ export default function DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 }}
               >
-                <Link href="/breathing" className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-cyan-400/20 transition-all h-full">
+                <Link
+                  href="/breathing"
+                  className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-cyan-400/20 transition-all h-full"
+                >
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
                       <Wind className="w-3 h-3 text-cyan-400" /> Breathe
@@ -289,7 +331,9 @@ export default function DashboardPage() {
                     <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />
                   </div>
                   <div className="flex items-baseline gap-1 mb-2">
-                    <span className={`text-2xl font-bold ${breathingToday > 0 ? 'text-white' : 'text-white/40'}`}>
+                    <span
+                      className={`text-2xl font-bold ${breathingToday > 0 ? 'text-white' : 'text-white/40'}`}
+                    >
                       {Math.round(breathingToday / 60)}
                     </span>
                     <span className="text-xs text-white/40">min</span>
@@ -301,7 +345,8 @@ export default function DashboardPage() {
                         className="flex-1 rounded-sm transition-all"
                         style={{
                           height: `${(mins / maxBreathing) * 100}%`,
-                          backgroundColor: mins > 0 ? 'rgba(34,211,238,0.6)' : 'rgba(255,255,255,0.05)',
+                          backgroundColor:
+                            mins > 0 ? 'rgba(34,211,238,0.6)' : 'rgba(255,255,255,0.05)',
                           minHeight: 2,
                         }}
                       />
@@ -318,7 +363,10 @@ export default function DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <Link href="/journal" className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-amber-400/20 transition-all h-full">
+                <Link
+                  href="/journal"
+                  className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-amber-400/20 transition-all h-full"
+                >
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
                       <BookOpen className="w-3 h-3 text-amber-400" /> Journal
@@ -326,7 +374,9 @@ export default function DashboardPage() {
                     <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />
                   </div>
                   <div className="flex items-baseline gap-1 mb-2">
-                    <span className={`text-2xl font-bold ${journalToday > 0 ? 'text-white' : 'text-white/40'}`}>
+                    <span
+                      className={`text-2xl font-bold ${journalToday > 0 ? 'text-white' : 'text-white/40'}`}
+                    >
                       {journalToday}
                     </span>
                     <span className="text-xs text-white/40">words</span>
@@ -338,7 +388,8 @@ export default function DashboardPage() {
                         className="flex-1 rounded-sm transition-all"
                         style={{
                           height: `${(words / maxJournal) * 100}%`,
-                          backgroundColor: words > 0 ? 'rgba(251,191,36,0.6)' : 'rgba(255,255,255,0.05)',
+                          backgroundColor:
+                            words > 0 ? 'rgba(251,191,36,0.6)' : 'rgba(255,255,255,0.05)',
                           minHeight: 2,
                         }}
                       />

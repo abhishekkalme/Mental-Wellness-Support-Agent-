@@ -32,7 +32,13 @@ export function DashboardHero() {
     store.moodHistory.length > 0
       ? Math.round(
           store.moodHistory.reduce((acc, m) => {
-            const scores: Record<string, number> = { excellent: 100, good: 75, okay: 50, bad: 25, terrible: 0 };
+            const scores: Record<string, number> = {
+              excellent: 100,
+              good: 75,
+              okay: 50,
+              bad: 25,
+              terrible: 0,
+            };
             return acc + (scores[m.mood] || 50);
           }, 0) / store.moodHistory.length
         )
@@ -41,8 +47,8 @@ export function DashboardHero() {
   const sleepScore =
     store.sleepHistory.length > 0
       ? Math.round(
-          store.sleepHistory.reduce((acc, s) => acc + (s.durationHours || 0), 0) /
-            store.sleepHistory.length *
+          (store.sleepHistory.reduce((acc, s) => acc + (s.durationHours || 0), 0) /
+            store.sleepHistory.length) *
             12.5
         )
       : 0;
@@ -50,10 +56,14 @@ export function DashboardHero() {
   const wellbeingScore = hasData ? Math.round((moodScore + sleepScore) / 2) : 0;
 
   const getStatus = () => {
-    if (wellbeingScore >= 75) return { label: 'Thriving', color: 'text-emerald-400', dot: 'bg-emerald-400' };
-    if (wellbeingScore >= 55) return { label: 'Balanced', color: 'text-[#E2FF6F]', dot: 'bg-[#E2FF6F]' };
-    if (wellbeingScore >= 35) return { label: 'Managing', color: 'text-amber-400', dot: 'bg-amber-400' };
-    if (wellbeingScore >= 15) return { label: 'Struggling', color: 'text-rose-400', dot: 'bg-rose-400' };
+    if (wellbeingScore >= 75)
+      return { label: 'Thriving', color: 'text-emerald-400', dot: 'bg-emerald-400' };
+    if (wellbeingScore >= 55)
+      return { label: 'Balanced', color: 'text-[#E2FF6F]', dot: 'bg-[#E2FF6F]' };
+    if (wellbeingScore >= 35)
+      return { label: 'Managing', color: 'text-amber-400', dot: 'bg-amber-400' };
+    if (wellbeingScore >= 15)
+      return { label: 'Struggling', color: 'text-rose-400', dot: 'bg-rose-400' };
     return null;
   };
 
@@ -65,10 +75,13 @@ export function DashboardHero() {
         <div className="space-y-1">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-              {getGreeting()}{store.name ? `, ${store.name}` : ''}
+              {getGreeting()}
+              {store.name ? `, ${store.name}` : ''}
             </h1>
             {status && (
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${status.color} bg-white/5 border border-white/10`}>
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${status.color} bg-white/5 border border-white/10`}
+              >
                 <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
                 {status.label}
               </span>

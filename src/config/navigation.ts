@@ -1,4 +1,23 @@
-import { Home, Heart, BookText, Wind, Moon, BarChart3, MessageSquare, Sparkles, Library, Users, Stethoscope, Settings, ShieldAlert, Music, Dumbbell, CalendarDays, ListChecks } from 'lucide-react';
+import {
+  Home,
+  Heart,
+  BookText,
+  Wind,
+  Moon,
+  BarChart3,
+  MessageSquare,
+  Sparkles,
+  Library,
+  Users,
+  Stethoscope,
+  Settings,
+  ShieldAlert,
+  Music,
+  Dumbbell,
+  CalendarDays,
+  ListChecks,
+  LayoutDashboard,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type NavItem = {
@@ -11,7 +30,7 @@ export type NavItem = {
 };
 
 export const allNavItems: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home, section: 'primary' },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, section: 'primary' },
   { name: 'Check-in', href: '/mood', icon: Heart, section: 'wellness' },
   { name: 'Journal', href: '/journal', icon: BookText, section: 'wellness' },
   { name: 'Breathing', href: '/breathing', icon: Wind, section: 'wellness' },
@@ -23,7 +42,13 @@ export const allNavItems: NavItem[] = [
   { name: 'Academic Calendar', href: '/academic-calendar', icon: CalendarDays, section: 'tools' },
   { name: 'Crisis Support', href: '/crisis', icon: ShieldAlert, section: 'support' },
   { name: 'Settings', href: '/settings', icon: Settings, section: 'more' },
-  { name: 'Mentor Hub', href: '/mentor', icon: Stethoscope, roles: ['mentor', 'admin'], section: 'more' },
+  {
+    name: 'Mentor Hub',
+    href: '/mentor',
+    icon: Stethoscope,
+    roles: ['mentor', 'admin'],
+    section: 'more',
+  },
   { name: 'Admin', href: '/admin', icon: Settings, roles: ['admin'], section: 'more' },
 ];
 

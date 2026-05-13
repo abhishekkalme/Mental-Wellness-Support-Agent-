@@ -14,22 +14,23 @@ export function TodaysFocus() {
   const habitsList = Array.isArray(store.habits) ? store.habits : [];
   const habits = habitsList.filter((h) => h && h.frequency === 'daily').slice(0, 5);
 
-  const currentStreak = habitsList.length > 0
-    ? Math.max(
-        ...habitsList.map((h) => {
-          let streak = 0;
-          const checkDate = new Date();
-          const completedDates = Array.isArray(h.completedDates) ? h.completedDates : [];
-          while (completedDates.includes(format(checkDate, 'yyyy-MM-dd'))) {
-            streak++;
-            checkDate.setDate(checkDate.getDate() - 1);
-            if (streak > 365) break;
-          }
-          return streak;
-        }),
-        0
-      )
-    : 0;
+  const currentStreak =
+    habitsList.length > 0
+      ? Math.max(
+          ...habitsList.map((h) => {
+            let streak = 0;
+            const checkDate = new Date();
+            const completedDates = Array.isArray(h.completedDates) ? h.completedDates : [];
+            while (completedDates.includes(format(checkDate, 'yyyy-MM-dd'))) {
+              streak++;
+              checkDate.setDate(checkDate.getDate() - 1);
+              if (streak > 365) break;
+            }
+            return streak;
+          }),
+          0
+        )
+      : 0;
 
   const completedToday = habitsList.filter((h) => h.completedDates.includes(today)).length;
   const rate = habitsList.length ? Math.round((completedToday / habitsList.length) * 100) : 0;

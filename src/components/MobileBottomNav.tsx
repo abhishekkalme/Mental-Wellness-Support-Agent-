@@ -3,7 +3,23 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Heart, BookText, Brain, Wind, Moon, BarChart3, MessageSquare, Sparkles, Library, Users, Stethoscope, Settings, MoreHorizontal, X } from 'lucide-react';
+import {
+  Home,
+  Heart,
+  BookText,
+  Brain,
+  Wind,
+  Moon,
+  BarChart3,
+  MessageSquare,
+  Sparkles,
+  Library,
+  Users,
+  Stethoscope,
+  Settings,
+  MoreHorizontal,
+  X,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import { allNavItems, filterNavByRole, mobilePrimaryItems } from '@/config/navigation';
@@ -59,8 +75,15 @@ export function MobileBottomNav() {
                   isActive(item.href) ? 'text-[#E2FF6F]' : 'text-white/40 hover:text-white'
                 )}
               >
-                <item.icon className={cn('w-5 h-5 transition-transform', isActive(item.href) ? 'scale-110' : '')} />
-                <span className="text-[10px] font-medium">{primaryLabels[item.href] || item.name}</span>
+                <item.icon
+                  className={cn(
+                    'w-5 h-5 transition-transform',
+                    isActive(item.href) ? 'scale-110' : ''
+                  )}
+                />
+                <span className="text-[10px] font-medium">
+                  {primaryLabels[item.href] || item.name}
+                </span>
               </Link>
             ))}
             <button
@@ -102,12 +125,16 @@ export function MobileBottomNav() {
                     onClick={() => setIsMoreOpen(false)}
                     className={cn(
                       'flex flex-col items-center gap-2 py-3 px-2 rounded-xl transition-all',
-                      isActive(item.href) ? 'bg-white/10 text-[#E2FF6F]' : 'text-white/50 hover:bg-white/5 hover:text-white',
+                      isActive(item.href)
+                        ? 'bg-white/10 text-[#E2FF6F]'
+                        : 'text-white/50 hover:bg-white/5 hover:text-white',
                       item.className
                     )}
                   >
                     <item.icon className="w-5 h-5" />
-                    <span className="text-[10px] font-medium text-center leading-tight">{item.name}</span>
+                    <span className="text-[10px] font-medium text-center leading-tight">
+                      {item.name}
+                    </span>
                   </Link>
                 ))}
               </div>

@@ -30,12 +30,15 @@ const EmergencyContactSchema = new Schema({
   isTrustedAlert: { type: Boolean, default: true },
 });
 
-const SafetyPlanSchema = new Schema({
-  warningSigns: { type: String, default: '' },
-  copingStrategies: { type: String, default: '' },
-  reasonsToLive: { type: String, default: '' },
-  safePlaces: { type: String, default: '' },
-}, { _id: false });
+const SafetyPlanSchema = new Schema(
+  {
+    warningSigns: { type: String, default: '' },
+    copingStrategies: { type: String, default: '' },
+    reasonsToLive: { type: String, default: '' },
+    safePlaces: { type: String, default: '' },
+  },
+  { _id: false }
+);
 
 const CrisisProfileSchema = new Schema(
   {
@@ -46,4 +49,5 @@ const CrisisProfileSchema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.CrisisProfile || mongoose.model<ICrisisProfile>('CrisisProfile', CrisisProfileSchema);
+export default mongoose.models.CrisisProfile ||
+  mongoose.model<ICrisisProfile>('CrisisProfile', CrisisProfileSchema);

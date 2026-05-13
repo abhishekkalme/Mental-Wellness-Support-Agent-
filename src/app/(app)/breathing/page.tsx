@@ -4,7 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store/useStore';
-import { Settings2, Play, Square, RotateCcw, BarChart3, ChevronLeft, Timer, Wind, Fingerprint, CheckCircle2 } from 'lucide-react';
+import {
+  Settings2,
+  Play,
+  Square,
+  RotateCcw,
+  BarChart3,
+  ChevronLeft,
+  Timer,
+  Wind,
+  Fingerprint,
+  CheckCircle2,
+} from 'lucide-react';
 import { isSameDay, format, subDays } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts';
 
@@ -33,7 +44,9 @@ export default function BreathingPage() {
   const [phase, setPhase] = useState<'inhale' | 'hold' | 'exhale' | 'holdEmpty'>('inhale');
   const [timer, setTimer] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
-  const [activeQuickExercise, setActiveQuickExercise] = useState<'breathing' | 'grounding' | null>(null);
+  const [activeQuickExercise, setActiveQuickExercise] = useState<'breathing' | 'grounding' | null>(
+    null
+  );
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -207,9 +220,9 @@ export default function BreathingPage() {
                   <p className="text-sm text-white/40 leading-relaxed">
                     Design your own inhales, holds, and exhales to match your comfort.
                   </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-white/[0.08] hover:bg-white/10 text-white" 
+                  <Button
+                    variant="outline"
+                    className="w-full border-white/[0.08] hover:bg-white/10 text-white"
                     onClick={() => setMode('builder')}
                   >
                     Enter Builder
@@ -222,9 +235,9 @@ export default function BreathingPage() {
                   <p className="text-sm text-white/40">
                     Track your consistency and total mindfulness minutes.
                   </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-white/[0.08] hover:bg-white/10 text-white" 
+                  <Button
+                    variant="outline"
+                    className="w-full border-white/[0.08] hover:bg-white/10 text-white"
                     onClick={() => setMode('stats')}
                   >
                     View Progress
@@ -236,9 +249,9 @@ export default function BreathingPage() {
                   <p className="text-sm text-white/40">
                     Fast techniques for anxiety relief and grounding.
                   </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-white/[0.08] hover:bg-white/10 text-white" 
+                  <Button
+                    variant="outline"
+                    className="w-full border-white/[0.08] hover:bg-white/10 text-white"
                     onClick={() => setMode('quick-exercise')}
                   >
                     Quick Exercises
@@ -294,7 +307,10 @@ export default function BreathingPage() {
                 className="w-48 h-48 rounded-full bg-gradient-to-br from-[#E2FF6F]/20 to-[#E2FF6F]/5 border-2 border-[#E2FF6F]/30 flex items-center justify-center relative overflow-hidden shadow-2xl shadow-[#E2FF6F]/10"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-[#E2FF6F]/10 to-transparent" />
-                <span className="text-4xl font-bold text-[#E2FF6F] relative z-10 tabular-nums" aria-hidden="true">
+                <span
+                  className="text-4xl font-bold text-[#E2FF6F] relative z-10 tabular-nums"
+                  aria-hidden="true"
+                >
                   {activePattern[phase] - timer}
                 </span>
               </motion.div>
@@ -358,7 +374,10 @@ export default function BreathingPage() {
               ].map((field) => (
                 <div key={field.key} className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <label htmlFor={`breathing-${field.key}`} className="text-sm font-medium text-white">
+                    <label
+                      htmlFor={`breathing-${field.key}`}
+                      className="text-sm font-medium text-white"
+                    >
                       {field.label}
                     </label>
                     <span className="text-[#E2FF6F] font-bold tabular-nums">
@@ -475,15 +494,32 @@ export default function BreathingPage() {
               ) : (
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={weeklyData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                    <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
                     <Tooltip
-                      contentStyle={{ background: '#0A0D08', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: 'white' }}
+                      contentStyle={{
+                        background: '#0A0D08',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 12,
+                        color: 'white',
+                      }}
                       formatter={(value) => [`${value ?? 0} min`, 'Breathing']}
                     />
                     <Bar dataKey="mins" radius={[8, 8, 0, 0]}>
                       {weeklyData.map((_, index) => (
-                        <Cell key={`breath-${index}`} fill={index === 6 ? '#22d3ee' : 'rgba(34,211,238,0.4)'} />
+                        <Cell
+                          key={`breath-${index}`}
+                          fill={index === 6 ? '#22d3ee' : 'rgba(34,211,238,0.4)'}
+                        />
                       ))}
                     </Bar>
                   </BarChart>
@@ -510,7 +546,9 @@ export default function BreathingPage() {
               </button>
               <div>
                 <h2 className="text-3xl font-bold text-white">Quick Exercises</h2>
-                <p className="text-white/40 mt-1">Fast techniques for anxiety relief and grounding.</p>
+                <p className="text-white/40 mt-1">
+                  Fast techniques for anxiety relief and grounding.
+                </p>
               </div>
             </header>
 
@@ -527,7 +565,9 @@ export default function BreathingPage() {
                         <CheckCircle2 className="w-4 h-4 text-black" />
                       </div>
                     )}
-                    <div className={`w-16 h-16 rounded-2xl ${ex.colorClass} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                    <div
+                      className={`w-16 h-16 rounded-2xl ${ex.colorClass} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
+                    >
                       <ex.icon className="w-8 h-8" />
                     </div>
                     <h3 className="text-xl font-semibold text-white">{ex.title}</h3>
@@ -538,19 +578,19 @@ export default function BreathingPage() {
             )}
 
             {activeQuickExercise === 'breathing' && (
-              <QuickBreathingExercise 
-                onComplete={() => { 
-                  store.addExerciseCompletion('breathing'); 
-                  setActiveQuickExercise(null); 
-                }} 
+              <QuickBreathingExercise
+                onComplete={() => {
+                  store.addExerciseCompletion('breathing');
+                  setActiveQuickExercise(null);
+                }}
                 onBack={() => setActiveQuickExercise(null)}
               />
             )}
             {activeQuickExercise === 'grounding' && (
-              <GroundingExercise 
-                onComplete={() => { 
-                  store.addExerciseCompletion('grounding'); 
-                  setActiveQuickExercise(null); 
+              <GroundingExercise
+                onComplete={() => {
+                  store.addExerciseCompletion('grounding');
+                  setActiveQuickExercise(null);
                 }}
                 onBack={() => setActiveQuickExercise(null)}
               />
@@ -562,7 +602,13 @@ export default function BreathingPage() {
   );
 }
 
-function QuickBreathingExercise({ onComplete, onBack }: { onComplete: () => void; onBack: () => void }) {
+function QuickBreathingExercise({
+  onComplete,
+  onBack,
+}: {
+  onComplete: () => void;
+  onBack: () => void;
+}) {
   const [phase, setPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
   const [playing, setPlaying] = useState(false);
 
@@ -607,14 +653,19 @@ function QuickBreathingExercise({ onComplete, onBack }: { onComplete: () => void
       </div>
 
       <div className="mt-16 flex items-center gap-4">
-        <Button 
-          onClick={() => setPlaying(!playing)} 
+        <Button
+          onClick={() => setPlaying(!playing)}
           size="lg"
           className="bg-[#E2FF6F] text-black hover:bg-[#d4f056] rounded-2xl h-14 px-8 font-bold shadow-lg shadow-[#E2FF6F]/20"
         >
           {playing ? 'Pause' : 'Start Exercise'}
         </Button>
-        <Button variant="outline" onClick={onBack} size="lg" className="border-white/20 hover:bg-white/10 rounded-2xl h-14 px-8">
+        <Button
+          variant="outline"
+          onClick={onBack}
+          size="lg"
+          className="border-white/20 hover:bg-white/10 rounded-2xl h-14 px-8"
+        >
           Back
         </Button>
       </div>
@@ -644,30 +695,32 @@ function GroundingExercise({ onComplete, onBack }: { onComplete: () => void; onB
         <div className="w-20 h-20 rounded-full bg-[#E2FF6F]/15 text-[#E2FF6F] text-3xl font-bold flex items-center justify-center mx-auto shadow-lg shadow-[#E2FF6F]/10">
           {steps[step].num}
         </div>
-        <h2 className="text-xl md:text-2xl font-semibold text-white leading-snug">{steps[step].action}</h2>
+        <h2 className="text-xl md:text-2xl font-semibold text-white leading-snug">
+          {steps[step].action}
+        </h2>
         <p className="text-white/40 text-sm">Take your time. Take a deep breath.</p>
 
         <div className="pt-6 flex gap-4 justify-center flex-wrap">
           {step < 4 ? (
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={() => setStep((s) => s + 1)}
               className="bg-[#E2FF6F] text-black hover:bg-[#d4f056] rounded-2xl h-14 px-8 font-bold shadow-lg shadow-[#E2FF6F]/20"
             >
               Next Step
             </Button>
           ) : (
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={onComplete}
               className="bg-emerald-500 text-white hover:bg-emerald-600 rounded-2xl h-14 px-8 font-bold shadow-lg shadow-emerald-500/20"
             >
               Complete
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            onClick={onBack} 
+          <Button
+            variant="outline"
+            onClick={onBack}
             size="lg"
             className="border-white/20 hover:bg-white/10 rounded-2xl h-14 px-8"
           >

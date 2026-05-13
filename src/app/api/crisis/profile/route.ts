@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     await connectDB();
-    
+
     let profile = await CrisisProfile.findOne({ user: session.user.id });
     if (!profile) {
       profile = await CrisisProfile.create({ user: session.user.id });
@@ -29,7 +29,7 @@ export async function PUT(req: Request) {
     }
     const data = await req.json();
     await connectDB();
-    
+
     const profile = await CrisisProfile.findOneAndUpdate(
       { user: session.user.id },
       { $set: data },

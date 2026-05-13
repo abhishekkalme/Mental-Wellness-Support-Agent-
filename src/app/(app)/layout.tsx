@@ -102,7 +102,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           isSidebarExpanded ? 'xl:pl-[240px]' : 'xl:pl-[72px]'
         )}
       >
-        <div className="min-h-screen pb-24 md:pb-0">{!hasHydrated || isSessionLoading ? <LoadingScreen /> : children}</div>
+        <div className="min-h-screen pb-24 md:pb-0">
+          {!hasHydrated || isSessionLoading ? <LoadingScreen /> : children}
+        </div>
       </div>
       <MobileBottomNav />
     </div>

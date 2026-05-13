@@ -30,7 +30,13 @@ export function WeeklyMomentum() {
         date: d,
       };
     });
-  }, [store.moodHistory, store.sleepHistory, store.breathingHistory, store.journalEntries, store.habits]);
+  }, [
+    store.moodHistory,
+    store.sleepHistory,
+    store.breathingHistory,
+    store.journalEntries,
+    store.habits,
+  ]);
 
   const activeDays = weekData.filter((d) => d.active).length;
 

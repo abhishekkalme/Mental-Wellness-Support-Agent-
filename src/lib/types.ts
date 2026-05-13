@@ -109,7 +109,13 @@ export interface OnboardingData {
   overthinkingFrequency?: string;
   sleepSchedule?: 'early-bird' | 'night-owl' | 'regular' | 'irregular';
   motivation?: 'career' | 'relationships' | 'health' | 'learning' | 'creativity' | 'impact';
-  biggestChallenge?: 'overthinking' | 'sleep' | 'procrastination' | 'burnout' | 'self-doubt' | 'motivation';
+  biggestChallenge?:
+    | 'overthinking'
+    | 'sleep'
+    | 'procrastination'
+    | 'burnout'
+    | 'self-doubt'
+    | 'motivation';
   struggles: string[];
   agentBehavior?: string;
   checkInFrequency?: string;

@@ -31,9 +31,7 @@ export async function POST(req: Request) {
 
     const updated = await CommunityPost.findByIdAndUpdate(
       parsed.data._id,
-      isSaved
-        ? { $pull: { savedBy: userId } }
-        : { $addToSet: { savedBy: userId } },
+      isSaved ? { $pull: { savedBy: userId } } : { $addToSet: { savedBy: userId } },
       { new: true }
     );
 

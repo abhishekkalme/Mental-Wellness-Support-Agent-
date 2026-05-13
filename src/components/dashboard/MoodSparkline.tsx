@@ -29,13 +29,15 @@ export function MoodSparkline() {
     return store.moodHistory.slice(-14).map((m) => m.mood);
   }, [store.moodHistory]);
 
-  const todayMood = store.moodHistory.length > 0
-    ? store.moodHistory[store.moodHistory.length - 1]
-    : null;
+  const todayMood =
+    store.moodHistory.length > 0 ? store.moodHistory[store.moodHistory.length - 1] : null;
 
   if (!todayMood) {
     return (
-      <Link href="/mood" className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-rose-400/20 transition-all h-full">
+      <Link
+        href="/mood"
+        className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-rose-400/20 transition-all h-full"
+      >
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider">Mood</h3>
           <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -58,7 +60,10 @@ export function MoodSparkline() {
         : 'text-rose-400';
 
   return (
-    <Link href="/mood" className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-rose-400/20 transition-all h-full">
+    <Link
+      href="/mood"
+      className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-rose-400/20 transition-all h-full"
+    >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider">Mood</h3>
         <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -82,9 +87,7 @@ export function MoodSparkline() {
           ))}
         </div>
       )}
-      <p className="text-[10px] text-white/30 mt-2">
-        {store.moodHistory.length} total entries
-      </p>
+      <p className="text-[10px] text-white/30 mt-2">{store.moodHistory.length} total entries</p>
     </Link>
   );
 }

@@ -43,13 +43,24 @@ export async function POST(request: Request) {
     maxOutputTokens: 300,
   });
 
-  let parsed = { state: 'unknown', steps: ['Start with a 5-minute task.', 'Take a short break.', 'Reach out to a friend.'], acknowledgment: 'It is okay to feel this way.' };
+  let parsed = {
+    state: 'unknown',
+    steps: ['Start with a 5-minute task.', 'Take a short break.', 'Reach out to a friend.'],
+    acknowledgment: 'It is okay to feel this way.',
+  };
   try {
-    const cleaned = response.replace(/```json\n?/gi, '').replace(/```\n?$/gi, '').trim();
+    const cleaned = response
+      .replace(/```json\n?/gi, '')
+      .replace(/```\n?$/gi, '')
+      .trim();
     parsed = JSON.parse(cleaned);
   } catch {
     // Fallback to raw response if JSON parsing fails
-    return NextResponse.json({ state: 'unknown', steps: [response], acknowledgment: 'It is okay to feel this way.' });
+    return NextResponse.json({
+      state: 'unknown',
+      steps: [response],
+      acknowledgment: 'It is okay to feel this way.',
+    });
   }
 
   return NextResponse.json(parsed);

@@ -27,23 +27,16 @@ export default auth((req) => {
 
   const isLoggedIn = !!session?.user;
 
-  const isPublicRoute = PUBLIC_ROUTES.some(
-    (route) => pathname === route
-  );
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname === route);
 
-  const isPublicPrefix = PUBLIC_PREFIXES.some(
-    (prefix) => pathname.startsWith(prefix)
-  );
+  const isPublicPrefix = PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   const isApiRoute = pathname.startsWith('/api/');
 
   // Allow public routes/assets/apis
   if (isPublicRoute || isPublicPrefix) {
     // Redirect signed-in users away from auth pages/home
-    if (
-      isLoggedIn &&
-      (pathname === '/signin' || pathname === '/signup')
-    ) {
+    if (isLoggedIn && (pathname === '/signin' || pathname === '/signup')) {
       const targetUrl = session?.user?.onboarded ? '/dashboard' : '/onboarding';
       return NextResponse.redirect(new URL(targetUrl, req.url));
     }
@@ -59,22 +52,14 @@ export default auth((req) => {
   // Require auth
   if (!isLoggedIn) {
     const signInUrl = new URL('/signin', req.url);
-    signInUrl.searchParams.set(
-      'callbackUrl',
-      pathname + search
-    );
+    signInUrl.searchParams.set('callbackUrl', pathname + search);
 
     return NextResponse.redirect(signInUrl);
   }
 
   // Admin protection
-  if (
-    pathname.startsWith('/admin') &&
-    session.user?.role !== 'admin'
-  ) {
-    return NextResponse.redirect(
-      new URL('/dashboard', req.url)
-    );
+  if (pathname.startsWith('/admin') && session.user?.role !== 'admin') {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   // Mentor protection
@@ -83,9 +68,7 @@ export default auth((req) => {
     session.user?.role !== 'mentor' &&
     session.user?.role !== 'admin'
   ) {
-    return NextResponse.redirect(
-      new URL('/dashboard', req.url)
-    );
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   return NextResponse.next();

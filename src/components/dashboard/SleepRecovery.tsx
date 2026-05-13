@@ -23,7 +23,10 @@ export function SleepRecovery() {
 
   if (!lastSleep) {
     return (
-      <Link href="/sleep" className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-indigo-400/20 transition-all h-full">
+      <Link
+        href="/sleep"
+        className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-indigo-400/20 transition-all h-full"
+      >
         <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5 mb-3">
           <Moon className="w-3 h-3 text-indigo-400" /> Sleep
         </h3>
@@ -35,10 +38,14 @@ export function SleepRecovery() {
   }
 
   const hourColor = hours >= 7 ? 'text-white' : hours >= 5 ? 'text-amber-400' : 'text-rose-400';
-  const qualityColor = quality >= 4 ? 'bg-indigo-400' : quality >= 3 ? 'bg-indigo-300' : 'bg-indigo-200';
+  const qualityColor =
+    quality >= 4 ? 'bg-indigo-400' : quality >= 3 ? 'bg-indigo-300' : 'bg-indigo-200';
 
   return (
-    <Link href="/sleep" className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-indigo-400/20 transition-all h-full">
+    <Link
+      href="/sleep"
+      className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-indigo-400/20 transition-all h-full"
+    >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
           <Moon className="w-3 h-3 text-indigo-400" /> Sleep

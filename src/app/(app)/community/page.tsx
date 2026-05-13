@@ -143,13 +143,17 @@ export default function CommunityPage() {
       ]);
 
       const groupsDataArr = Array.isArray(groupsData) ? groupsData : [];
-      const deduplicatedGroups = Array.from(new Map(groupsDataArr.map((g: Group) => [g.name, g])).values()) as Group[];
+      const deduplicatedGroups = Array.from(
+        new Map(groupsDataArr.map((g: Group) => [g.name, g])).values()
+      ) as Group[];
 
-      const postsDataArr = Array.isArray(postsRaw) ? postsRaw : (postsRaw?.data || []);
+      const postsDataArr = Array.isArray(postsRaw) ? postsRaw : postsRaw?.data || [];
       const totalFromApi = postsRaw?.total || 0;
 
       const newPosts = Array.isArray(postsDataArr)
-        ? Array.from(new Map(postsDataArr.map((p: Post) => [p.content || p._id, p])).values()) as Post[]
+        ? (Array.from(
+            new Map(postsDataArr.map((p: Post) => [p.content || p._id, p])).values()
+          ) as Post[])
         : [];
 
       setGroups(deduplicatedGroups);
@@ -529,17 +533,15 @@ export default function CommunityPage() {
                       <div className="flex items-center justify-between border-t border-white/[0.08] pt-4 mt-auto">
                         <div className="flex -space-x-2">
                           {room.participants && room.participants.length > 0 ? (
-                            room.participants
-                              .slice(0, 3)
-                              .map((participant, idx) => (
-                          <div
-                            key={idx}
-                            className="w-7 h-7 rounded-full bg-[#E2FF6F]/20 border border-white/20 flex items-center justify-center text-[9px] text-[#E2FF6F] font-bold uppercase"
-                            title={participant.name}
-                          >
-                            {participant.name?.charAt(0) || '?'}
-                          </div>
-                              ))
+                            room.participants.slice(0, 3).map((participant, idx) => (
+                              <div
+                                key={idx}
+                                className="w-7 h-7 rounded-full bg-[#E2FF6F]/20 border border-white/20 flex items-center justify-center text-[9px] text-[#E2FF6F] font-bold uppercase"
+                                title={participant.name}
+                              >
+                                {participant.name?.charAt(0) || '?'}
+                              </div>
+                            ))
                           ) : (
                             <span className="text-white/30 text-[10px] uppercase font-bold">
                               Open Public

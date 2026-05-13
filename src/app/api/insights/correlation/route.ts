@@ -10,7 +10,13 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { moodHistory = [], sleepHistory = [], journalEntries = [], habits = [], breathingHistory = [] } = body;
+    const {
+      moodHistory = [],
+      sleepHistory = [],
+      journalEntries = [],
+      habits = [],
+      breathingHistory = [],
+    } = body;
 
     const moodSummary = summarizeMood(moodHistory);
     const sleepSummary = summarizeSleep(sleepHistory);
@@ -58,9 +64,7 @@ function summarizeMood(entries: any[]): string {
   const counts: Record<string, number> = {};
   for (const e of entries) counts[e.mood] = (counts[e.mood] || 0) + 1;
   const entries_sorted = Object.entries(counts).sort(([, a], [, b]) => b - a);
-  return entries_sorted
-    .map(([mood, count]) => `${count} ${mood} days`)
-    .join(', ');
+  return entries_sorted.map(([mood, count]) => `${count} ${mood} days`).join(', ');
 }
 
 function summarizeSleep(entries: any[]): string {
@@ -81,13 +85,8 @@ function summarizeJournal(entries: any[]): string {
 
 function summarizeHabits(habits: any[]): string {
   if (!habits.length) return 'No habits set.';
-  const completedCount = habits.reduce(
-    (s, h) => s + (h.completedDates || []).length,
-    0
-  );
-  const streaks = habits
-    .filter((h) => h.streak > 0)
-    .map((h) => `${h.name} (${h.streak}d streak)`);
+  const completedCount = habits.reduce((s, h) => s + (h.completedDates || []).length, 0);
+  const streaks = habits.filter((h) => h.streak > 0).map((h) => `${h.name} (${h.streak}d streak)`);
   return `${habits.length} active habits, ${completedCount} total completions. ${streaks.join(', ') || 'No active streaks.'}`;
 }
 

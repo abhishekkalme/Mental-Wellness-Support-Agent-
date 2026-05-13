@@ -15,11 +15,11 @@ export function LoadingScreen() {
           transition={{
             duration: 2,
             repeat: Infinity,
-            ease: "easeInOut",
+            ease: 'easeInOut',
           }}
           className="absolute inset-0 bg-[#E2FF6F] blur-2xl rounded-full"
         />
-        
+
         {/* Main Spinner */}
         <div className="relative w-12 h-12">
           <div className="absolute inset-0 border-4 border-[#E2FF6F]/10 rounded-full" />
@@ -28,13 +28,13 @@ export function LoadingScreen() {
             transition={{
               duration: 1,
               repeat: Infinity,
-              ease: "linear",
+              ease: 'linear',
             }}
             className="absolute inset-0 border-4 border-t-[#E2FF6F] rounded-full"
           />
         </div>
       </div>
-      
+
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

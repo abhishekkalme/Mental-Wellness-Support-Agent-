@@ -64,7 +64,7 @@ const actions = [
 
 export function QuickActions() {
   return (
-    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+    <div id="ftue-quick-actions" className="grid grid-cols-3 md:grid-cols-6 gap-2">
       {actions.map((action, index) => (
         <motion.div
           key={action.id}

@@ -15,6 +15,10 @@ import {
 import { encrypt, decrypt } from '@/lib/crypto';
 
 interface MindCareStore extends UserState {
+  ftueStep: number;
+  ftueDismissed: boolean;
+  setFtueStep: (step: number) => void;
+  dismissFtue: () => void;
   setName: (name: string) => void;
   setUsername: (username: string) => void;
   setOnboarded: (status: boolean) => void;
@@ -57,6 +61,8 @@ interface MindCareStore extends UserState {
 }
 
 const initialValues: UserState & {
+  ftueStep: number;
+  ftueDismissed: boolean;
   safeMode: boolean;
   syncStatus: 'idle' | 'syncing' | 'success' | 'error';
   _syncPending: Record<string, number>;
@@ -65,6 +71,8 @@ const initialValues: UserState & {
   agentGender: 'male' | 'female' | 'neutral';
   lastSyncedUserId: string;
 } = {
+  ftueStep: 1,
+  ftueDismissed: false,
   name: '',
   username: '',
   isOnboarded: false,
@@ -159,6 +167,10 @@ export const useStore = create<MindCareStore>()(
   persist<MindCareStore>(
     (set, get) => ({
       ...initialValues,
+      ftueStep: 1,
+      ftueDismissed: false,
+      setFtueStep: (step) => set({ ftueStep: step }),
+      dismissFtue: () => set({ ftueDismissed: true, ftueStep: 0 }),
       setName: (name) => set({ name }),
       setUsername: (username) => set({ username }),
       setOnboarded: (status) => set({ isOnboarded: status }),
@@ -332,8 +344,16 @@ export const useStore = create<MindCareStore>()(
       name: 'mindcare-storage',
       storage: encryptedStorage,
       partialize: (
-        state: UserState & { safeMode: boolean; lastSyncedAt: number; lastSyncedUserId: string }
+        state: UserState & {
+          safeMode: boolean;
+          lastSyncedAt: number;
+          lastSyncedUserId: string;
+          ftueStep: number;
+          ftueDismissed: boolean;
+        }
       ): any => ({
+        ftueStep: state.ftueStep,
+        ftueDismissed: state.ftueDismissed,
         name: state.name,
         username: state.username,
         isOnboarded: state.isOnboarded,

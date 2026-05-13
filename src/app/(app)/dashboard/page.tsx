@@ -19,6 +19,7 @@ import {
   LogOut,
   Home,
 } from 'lucide-react';
+import { FTUETour } from '@/components/ftue/FTUETour';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { TodaysFocus } from '@/components/dashboard/TodaysFocus';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
@@ -204,7 +205,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
-            <Link href="/crisis">
+            <Link href="/crisis" id="ftue-sos">
               <Button
                 variant="outline"
                 size="sm"
@@ -262,6 +263,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
+      <FTUETour />
       <main className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-5 md:space-y-6 pb-24 md:pb-6">
         <DashboardHero />
 

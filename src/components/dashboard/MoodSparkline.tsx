@@ -35,6 +35,7 @@ export function MoodSparkline() {
   if (!todayMood) {
     return (
       <Link
+        id="ftue-mood"
         href="/mood"
         className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-rose-400/20 transition-all h-full"
       >
@@ -61,6 +62,7 @@ export function MoodSparkline() {
 
   return (
     <Link
+      id="ftue-mood"
       href="/mood"
       className="glass-panel p-5 bg-white/5 border-white/5 rounded-2xl block group hover:bg-white/10 hover:border-rose-400/20 transition-all h-full"
     >

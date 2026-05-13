@@ -37,7 +37,10 @@ export function TodaysFocus() {
 
   if (habits.length === 0) {
     return (
-      <div className="glass-panel p-6 bg-white/5 border-white/5 rounded-2xl space-y-4">
+      <div
+        id="ftue-todays-focus"
+        className="glass-panel p-6 bg-white/5 border-white/5 rounded-2xl space-y-4"
+      >
         <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider">
           Today&apos;s Focus
         </h3>
@@ -58,7 +61,10 @@ export function TodaysFocus() {
   }
 
   return (
-    <div className="glass-panel p-6 bg-white/5 border-white/5 rounded-2xl space-y-4">
+    <div
+      id="ftue-todays-focus"
+      className="glass-panel p-6 bg-white/5 border-white/5 rounded-2xl space-y-4"
+    >
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider">
           Today&apos;s Focus

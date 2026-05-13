@@ -31,6 +31,9 @@ export interface Habit {
   frequency: 'daily' | 'weekly';
   streak: number;
   completedDates: string[];
+  targetDays?: number;
+  category?: 'wellness' | 'exercise' | 'mind';
+  isGoal?: boolean;
 }
 
 export interface Goal {
@@ -95,6 +98,7 @@ export interface AcademicEvent {
 
 export interface OnboardingData {
   stage?: string;
+  name?: string;
   feeling?: string;
   priorities?: string[];
   aiStyle?: string;
@@ -103,6 +107,9 @@ export interface OnboardingData {
   sleepQuality?: number;
   focusLevel?: number;
   overthinkingFrequency?: string;
+  sleepSchedule?: 'early-bird' | 'night-owl' | 'regular' | 'irregular';
+  motivation?: 'career' | 'relationships' | 'health' | 'learning' | 'creativity' | 'impact';
+  biggestChallenge?: 'overthinking' | 'sleep' | 'procrastination' | 'burnout' | 'self-doubt' | 'motivation';
   struggles: string[];
   agentBehavior?: string;
   checkInFrequency?: string;
@@ -124,5 +131,7 @@ export interface UserState {
   sleepHistory: SleepEntry[];
   wellnessMetrics: WellnessMetrics;
   breathingHistory: BreathingRecord[];
+  completedRescueModules: string[];
+  completedExercises: string[];
   safeMode: boolean;
 }

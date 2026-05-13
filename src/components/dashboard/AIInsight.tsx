@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store/useStore';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Moon, Brain, Target, Heart, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -69,11 +69,11 @@ const INSIGHT_TEMPLATES = [
     check: (s: any) =>
       Array.isArray(s.habits) &&
       s.habits.length === 0 &&
-      (Array.isArray(s.moodHistory) && s.moodHistory.length > 0 || 
+      (Array.isArray(s.moodHistory) && s.moodHistory.length > 0 ||
        Array.isArray(s.journalEntries) && s.journalEntries.length > 0),
     message:
       "You're actively tracking your wellness but haven't set any habits yet. Start with just one small daily habit—5 minutes of deep breathing counts.",
-    action: { label: 'Start a habit', href: '/dashboard' },
+    action: { label: 'Start a habit', href: '/habits' },
   },
   {
     check: (s: any) => {
@@ -88,25 +88,95 @@ const INSIGHT_TEMPLATES = [
   },
 ];
 
+const NEW_USER_TEMPLATES = (onboardingData: any) => {
+  const templates = [];
+  const priorities = onboardingData?.priorities || [];
+  const feeling = onboardingData?.feeling || '';
+  const biggestChallenge = onboardingData?.biggestChallenge || '';
+
+  if (priorities.includes('sleep') || biggestChallenge === 'sleep') {
+    templates.push({
+      message: "You mentioned sleep is important to you. Start by logging your first night's rest.",
+      action: { label: 'Log sleep', href: '/sleep' },
+      icon: Moon,
+    });
+  }
+
+  if (priorities.includes('focus') || priorities.includes('clarity')) {
+    templates.push({
+      message: 'Deep work starts with a calm mind. Try a 3-minute breathing exercise before your next task.',
+      action: { label: 'Breathe now', href: '/breathing' },
+      icon: Brain,
+    });
+  }
+
+  if (priorities.includes('anxiety') || priorities.includes('emotional') || feeling === 'anxious' || feeling === 'stressed') {
+    templates.push({
+      message: "You said reducing anxiety is a priority. Consider starting a daily journaling practice.",
+      action: { label: 'Write journal', href: '/journal' },
+      icon: Heart,
+    });
+  }
+
+  if (priorities.includes('habits') || priorities.includes('clarity')) {
+    templates.push({
+      message: "Building habits takes consistency, not perfection. Start with one small habit today.",
+      action: { label: 'Set habit', href: '/habits' },
+      icon: Target,
+    });
+  }
+
+  if (priorities.includes('energy') || feeling === 'tired') {
+    templates.push({
+      message: "Low energy? Small movements and hydration can make a big difference right now.",
+      action: { label: 'Log mood', href: '/mood' },
+      icon: Zap,
+    });
+  }
+
+  if (biggestChallenge === 'overthinking') {
+    templates.push({
+      message: "Overthinking? Try the 5-4-3-2-1 grounding technique when your mind races.",
+      action: { label: 'Try rescue exercises', href: '/rescue' },
+      icon: Brain,
+    });
+  }
+
+  if (biggestChallenge === 'procrastination') {
+    templates.push({
+      message: "Procrastination often starts with one small step. Try the Pomodoro technique.",
+      action: { label: 'Set a timer', href: '/breathing' },
+      icon: Target,
+    });
+  }
+
+  return templates;
+};
+
 export function AIInsight() {
   const store = useStore();
+  const onboardingData = store.onboardingData as any;
+  const isNewUser = !store.moodHistory.length && !store.journalEntries.length && !store.sleepHistory.length;
+
+  const newUserInsights = useMemo(() => NEW_USER_TEMPLATES(onboardingData), [
+    onboardingData.priorities,
+    onboardingData.feeling,
+    onboardingData.biggestChallenge,
+  ]);
 
   const insight = useMemo(
     () => {
       for (const t of INSIGHT_TEMPLATES) {
-        if (t.check(store as any)) return t;
+        if (t.check(store as any)) return { ...t, icon: Sparkles };
       }
       return null;
-    }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      store.moodHistory.length,
-      store.sleepHistory.length,
-      store.habits.length,
-      store.journalEntries.length,
-    ]
+    },
+    [store.moodHistory.length, store.sleepHistory.length, store.habits.length, store.journalEntries.length]
   );
 
-  if (!insight) {
+  const showInsight = isNewUser ? newUserInsights[0] : insight;
+
+  if (!showInsight) {
     return (
       <div
         className={cn(
@@ -135,6 +205,8 @@ export function AIInsight() {
     );
   }
 
+  const IconComponent = showInsight.icon || Sparkles;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -147,17 +219,22 @@ export function AIInsight() {
     >
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-[#E2FF6F]/10 flex items-center justify-center shrink-0">
-          <Sparkles className="w-5 h-5 text-[#E2FF6F]" />
+          <IconComponent className="w-5 h-5 text-[#E2FF6F]" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium text-white">{insight.message}</p>
-          {insight.action && (
+          <p className="text-sm font-medium text-white">{showInsight.message}</p>
+          {showInsight.action && (
             <Link
-              href={insight.action.href}
+              href={showInsight.action.href}
               className="inline-flex items-center gap-1 mt-2 text-xs text-[#E2FF6F] hover:text-[#d4f056] transition-colors"
             >
-              {insight.action.label} <ArrowRight className="w-3 h-3" />
+              {showInsight.action.label} <ArrowRight className="w-3 h-3" />
             </Link>
+          )}
+          {isNewUser && newUserInsights.length > 1 && (
+            <p className="text-[10px] text-white/30 mt-1">
+              {newUserInsights.length - 1} more personalized tip{newUserInsights.length > 2 ? 's' : ''} based on your profile
+            </p>
           )}
         </div>
       </div>

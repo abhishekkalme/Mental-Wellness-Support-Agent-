@@ -18,11 +18,18 @@ const PostSchema = z.object({
 
 const BulkPostSchema = z.array(PostSchema);
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
+    const skip = (page - 1) * limit;
     await connectDB();
-    const posts = await CommunityPost.find({ deletedAt: null }).sort({ createdAt: -1 });
-    return NextResponse.json(posts);
+    const [posts, total] = await Promise.all([
+      CommunityPost.find({ deletedAt: null }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      CommunityPost.countDocuments({ deletedAt: null }),
+    ]);
+    return NextResponse.json({ data: posts, page, limit, total });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },

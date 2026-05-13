@@ -435,6 +435,7 @@ export default function AgentChatPage() {
       firstGen &&
         'bg-cyan-500/15 border-cyan-400/30 text-cyan-200'
     )}
+    title="Start fresh: AI responds as if it's meeting you for the first time, with no memory of previous conversations."
   >
     1st Gen
   </button>

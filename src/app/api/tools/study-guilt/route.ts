@@ -1,51 +1,56 @@
 import { NextResponse } from 'next/server';
+import { callLlm } from '@/ai/llm';
+import { dataRateLimit, getClientIdentifier } from '@/lib/rateLimit';
 
 type Req = {
   answer?: string;
 };
 
 export async function POST(request: Request) {
+  const ip = getClientIdentifier(request);
+  const { success, resetIn } = await dataRateLimit(ip);
+  if (!success) {
+    return new NextResponse('Rate limited', {
+      status: 429,
+      headers: { 'Retry-After': String(resetIn) },
+    });
+  }
+
   const body = (await request.json().catch(() => null)) as Req | null;
-  const a = (body?.answer ?? '').toLowerCase();
+  const userInput = body?.answer?.trim() ?? '';
 
-  // Minimal deterministic "decoder" (hackathon MVP).
-  // Can be upgraded to LLM classification later.
-  let state: 'anxious' | 'tired' | 'overwhelmed' | 'distracted' | 'unknown' = 'unknown';
+  const system = [
+    'You are a compassionate study guilt coach for students struggling with academic pressure.',
+    'When a student shares how they are feeling about studying, respond with:',
+    '1. A brief emotional acknowledgment (1 sentence)',
+    '2. A classification of their state: anxious, tired, overwhelmed, distracted, or unmotivated',
+    '3. 3 concrete, actionable steps they can do RIGHT NOW (each under 10 words)',
+    'Format your response exactly as JSON with keys: "acknowledgment", "state", "steps" (array of 3 strings).',
+    'Be warm, non-judgmental, and practical. Use simple language. Support Hinglish inputs.',
+    'If the user has not shared anything specific, still respond helpfully.',
+  ].join('\n');
 
-  if (/(tired|sleepy|thak|neend|exhaust)/i.test(a)) state = 'tired';
-  else if (/(anxious|panic|dar|ghabra|overthink)/i.test(a)) state = 'anxious';
-  else if (/(overwhelmed|too much|bohot|everything|pressure)/i.test(a)) state = 'overwhelmed';
-  else if (/(phone|scroll|instagram|youtube|distract|focus nahi)/i.test(a)) state = 'distracted';
-
-  const actionsByState: Record<typeof state, string[]> = {
-    anxious: [
-      '2 min grounding: 5-4-3-2-1 (silent).',
-      '10 min tiny-start: sirf outline/3 bullets.',
-      'Phir 1 pomodoro (25-5).',
+  const response = await callLlm({
+    system,
+    messages: [
+      {
+        id: 'study-guilt-1',
+        role: 'user',
+        content: userInput || 'I am not feeling great about studying.',
+        timestamp: new Date().toISOString(),
+      },
     ],
-    tired: [
-      '20 min power rest (alarm).',
-      'Phir 15 min light revision (notes only).',
-      'Raat ko sleep window fix: aaj target time choose karo.',
-    ],
-    overwhelmed: [
-      'List everything in 2 inutes (dump).',
-      'Pick 1 task only (smallest).',
-      '10 min timer: start, perfect nahi.',
-    ],
-    distracted: [
-      "Phone 15 min 'out of reach' + silent.",
-      'Environment tweak: desk clear, 1 tab only.',
-      '10 min timer: read 1 page / solve 2 questions.',
-    ],
-    unknown: [
-      'Aaj 10 min timer: bas start karo (outline/notes).',
-      'Agar tum bolo: anxious/tired/overwhelmed/distracted—main exact steps dunga.',
-    ],
-  };
-
-  return NextResponse.json({
-    state,
-    steps: actionsByState[state],
+    maxOutputTokens: 300,
   });
+
+  let parsed = { state: 'unknown', steps: ['Start with a 5-minute task.', 'Take a short break.', 'Reach out to a friend.'], acknowledgment: 'It is okay to feel this way.' };
+  try {
+    const cleaned = response.replace(/```json\n?/gi, '').replace(/```\n?$/gi, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    // Fallback to raw response if JSON parsing fails
+    return NextResponse.json({ state: 'unknown', steps: [response], acknowledgment: 'It is okay to feel this way.' });
+  }
+
+  return NextResponse.json(parsed);
 }

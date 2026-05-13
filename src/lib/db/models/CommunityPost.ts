@@ -7,12 +7,15 @@ const CommunityPostSchema = new Schema({
   likes: { type: Number, default: 0 },
   comments: { type: Number, default: 0 },
   liked: { type: Boolean, default: false },
+  savedBy: { type: [String], default: [] },
+  reports: { type: Number, default: 0 },
   deletedAt: { type: Date, default: null },
 });
 
 CommunityPostSchema.index({ time: -1 });
 CommunityPostSchema.index({ deletedAt: 1 });
 CommunityPostSchema.index({ user: 1, time: -1 });
+CommunityPostSchema.index({ savedBy: 1 });
 
 export default mongoose.models.CommunityPost ||
   mongoose.model('CommunityPost', CommunityPostSchema);

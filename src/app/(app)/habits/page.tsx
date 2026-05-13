@@ -1,80 +1,50 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
-import { Calendar, Plus, Flame, CheckCircle2, Circle, TrendingUp, Award } from 'lucide-react';
+import { 
+  Calendar, Plus, Flame, CheckCircle2, Circle, TrendingUp, Award, Target, 
+  Heart, Brain, Dumbbell, ChevronRight, X, Zap, Activity
+} from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
+
+type ItemCategory = 'wellness' | 'exercise' | 'mind';
+
+interface UnifiedItem {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly';
+  streak: number;
+  completedDates: string[];
+  targetDays?: number;
+  category?: ItemCategory;
+  isGoal?: boolean;
+  completed?: boolean;
+}
 
 export default function HabitsPage() {
   const store = useStore();
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [newFreq, setNewFreq] = useState<'daily' | 'weekly'>('daily');
+  const [newCategory, setNewCategory] = useState<ItemCategory>('wellness');
+  const [newTarget, setNewTarget] = useState<number>(30);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (showAdd && firstFocusRef.current) {
+    if (showAddModal && firstFocusRef.current) {
       firstFocusRef.current.focus();
     }
-  }, [showAdd]);
+  }, [showAddModal]);
 
   useEffect(() => {
-    if (!showAdd) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowAdd(false);
-      }
-      if (e.key === 'Tab') {
-        const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusable || focusable.length === 0) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showAdd]);
-
-  const today = new Date();
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
-
-  // Deduplicate habits by name, keeping first occurrence
-  const uniqueHabits = store.habits.filter(
-    (habit, index, self) => index === self.findIndex((h) => h.name === habit.name)
-  );
-
-  // Clean up duplicate habits from store on mount
-  useEffect(() => {
-    const seen = new Set<string>();
-    const toRemove: string[] = [];
-    for (const habit of store.habits) {
-      if (seen.has(habit.name)) {
-        toRemove.push(habit.id);
-      } else {
-        seen.add(habit.name);
-      }
-    }
-    // Filter duplicates directly via store state update if deleteHabit exists
-    if (toRemove.length > 0) {
-      toRemove.forEach((id) => store.deleteHabit(id));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    store.syncRemoteData();
   }, []);
 
-  const handleAdd = () => {
+  const handleAddItem = () => {
     if (!newName.trim()) return;
     store.addHabit({
       id: Date.now().toString(),
@@ -82,302 +52,379 @@ export default function HabitsPage() {
       frequency: newFreq,
       streak: 0,
       completedDates: [],
+      targetDays: newTarget,
+      category: newCategory,
     });
     setNewName('');
-    setShowAdd(false);
+    setNewTarget(30);
+    setNewCategory('wellness');
+    setShowAddModal(false);
+  };
+
+  const handleToggle = (itemId: string, date: string) => {
+    store.toggleHabit(itemId, date);
+  };
+
+  const today = new Date();
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
+  const todayStr = format(today, 'yyyy-MM-dd');
+  const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+
+  const items: UnifiedItem[] = store.habits.map(h => ({
+    ...h,
+    category: h.category as ItemCategory | undefined,
+  }));
+
+  const getItemStats = (item: UnifiedItem) => {
+    const weekCompleted = item.completedDates.filter(d => d >= weekStartStr && d <= todayStr).length;
+    const totalCompleted = item.completedDates.length;
+    const target = item.targetDays || 30;
+    const progress = Math.min(100, Math.round((totalCompleted / target) * 100));
+    const weeklyRate = Math.round((weekCompleted / 7) * 100);
+    return { weekCompleted, totalCompleted, progress, weeklyRate, target };
+  };
+
+  const getCategoryIcon = (cat?: ItemCategory) => {
+    switch (cat) {
+      case 'wellness': return Heart;
+      case 'exercise': return Dumbbell;
+      case 'mind': return Brain;
+      default: return Target;
+    }
+  };
+
+  const getCategoryColor = (cat?: ItemCategory) => {
+    switch (cat) {
+      case 'wellness': return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+      case 'exercise': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+      case 'mind': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+      default: return 'text-white/40 bg-white/5 border-white/10';
+    }
+  };
+
+  const overallStats = useMemo(() => {
+    const totalItems = items.length;
+    const totalCompletions = items.reduce((sum, i) => sum + i.completedDates.length, 0);
+    const activeStreaks = items.filter(i => i.streak > 0).length;
+    const avgProgress = items.length > 0 
+      ? Math.round(items.reduce((sum, i) => sum + getItemStats(i).progress, 0) / items.length)
+      : 0;
+    return { totalItems, totalCompletions, activeStreaks, avgProgress };
+  }, [items]);
+
+  const totalWeekCompleted = items.reduce((sum, item) => {
+    return sum + item.completedDates.filter(d => d >= weekStartStr && d <= todayStr).length;
+  }, 0);
+  const totalPossible = items.length * 7;
+  const weeklySuccess = totalPossible > 0 ? Math.round((totalWeekCompleted / totalPossible) * 100) : 0;
+
+  const categoryColors: Record<string, string> = {
+    wellness: 'text-rose-400',
+    exercise: 'text-blue-400', 
+    mind: 'text-emerald-400',
   };
 
   return (
-    <main className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto space-y-8 lg:space-y-16">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-10">
-        <div className="space-y-2 md:space-y-4">
-          <div className="flex items-center gap-3 text-[#E2FF6F] mb-1 md:mb-2">
-            <Calendar className="w-5 h-5 md:w-7 md:h-7" />
-            <span className="text-xs font-bold uppercase tracking-[0.3em]">
-              Foundation & Routine
-            </span>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-white leading-tight">
-            Habit Architecture
-          </h1>
-          <p className="text-white/40 text-base md:text-xl font-medium italic tracking-wide line-clamp-2">
-            &quot;We are what we repeatedly do. Excellence, then, is not an act, but a habit.&quot;
-          </p>
-        </div>
+    <main className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 lg:space-y-8 relative">
+      {/* Ambient glow */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#E2FF6F]/5 blur-[150px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-rose-500/5 blur-[150px] rounded-full" />
+      </div>
 
-        <Button
-          onClick={() => setShowAdd(true)}
-          aria-label="Create new habit ritual"
-          className="gap-2 rounded-[24px] h-12 md:h-16 px-6 md:px-10 bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold text-base md:text-lg shadow-xl shadow-[#E2FF6F]/10 transition-all active:scale-95 self-start md:self-auto"
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-[#E2FF6F]">
+            <Target className="w-5 h-5" />
+            <span className="text-xs font-bold uppercase tracking-widest">Progress Hub</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Habits &amp; Goals</h1>
+          <p className="text-white/40 text-lg">Track your daily rituals and milestone progress.</p>
+        </div>
+        <Button 
+          onClick={() => setShowAddModal(true)}
+          className="gap-2 rounded-full h-12 px-6 bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold shadow-lg shadow-[#E2FF6F]/20"
         >
-          <Plus className="w-6 h-6" /> Create Ritual
+          <Plus className="w-5 h-5" /> Add New
         </Button>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
-        <div className="lg:col-span-3 space-y-10">
-          <div className="glass-panel p-4 md:p-10 overflow-hidden bg-white/5 border-white/5 shadow-2xl relative">
-            <div className="absolute top-0 right-0 p-8 opacity-5">
-              <div className="w-32 h-32 rounded-full border-4 border-[#E2FF6F] animate-pulse" />
-            </div>
-
-            <div className="flex items-center justify-between mb-6 md:mb-12 relative z-10 flex-wrap gap-3">
-              <h3 className="font-bold text-xl md:text-2xl text-white tracking-tight">
-                Active Momentum
-              </h3>
-              <div className="flex items-center gap-2 text-[9px] md:text-[10px] text-[#E2FF6F] uppercase tracking-[0.2em] font-bold bg-[#E2FF6F]/10 px-3 py-2 rounded-full border border-[#E2FF6F]/20">
-                <Calendar className="w-3 h-3 md:w-4 md:h-4" /> {format(weekStart, 'MMM d')} -{' '}
-                {format(addDays(weekStart, 6), 'MMM d, yyyy')}
-              </div>
-            </div>
-
-            <div className="overflow-x-auto -mx-4 md:mx-0">
-              <div className="min-w-[520px] px-4 md:px-0 relative z-10">
-                <div className="grid grid-cols-[130px_repeat(7,1fr)] md:grid-cols-[200px_repeat(7,1fr)] gap-2 md:gap-6 mb-4 md:mb-8 border-b border-white/5 pb-4 md:pb-8">
-                  <div />
-                  {weekDays.map((day) => (
-                    <div key={day.toString()} className="text-center space-y-1 md:space-y-3">
-                      <p className="text-[9px] md:text-[10px] font-bold uppercase text-white/30 tracking-[0.2em]">
-                        {format(day, 'EEE')}
-                      </p>
-                      <p
-                        className={`text-xs md:text-sm font-bold w-7 h-7 md:w-12 md:h-12 flex items-center justify-center mx-auto rounded-xl md:rounded-2xl transition-all duration-500 ${isSameDay(day, today) ? 'bg-[#E2FF6F] text-black shadow-lg shadow-[#E2FF6F]/20' : 'text-white/40 bg-white/5 hover:bg-white/10'}`}
-                      >
-                        {format(day, 'd')}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-3 md:space-y-6">
-                  {store.habits.length === 0 ? (
-                    <div className="text-center py-16 text-white/20 italic border-2 border-dashed border-white/5 rounded-[40px] bg-white/[0.02]">
-                      Your ritual space is empty. Add a habit to begin your journey.
-                    </div>
-                  ) : (
-                    uniqueHabits.map((habit) => (
-                      <div
-                        key={habit.id}
-                        className="grid grid-cols-[130px_repeat(7,1fr)] md:grid-cols-[200px_repeat(7,1fr)] gap-2 md:gap-6 items-center group"
-                      >
-                        <div className="font-bold text-sm md:text-lg truncate pr-2 md:pr-6 text-white/60 group-hover:text-[#E2FF6F] transition-all duration-500 flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#E2FF6F]/40 group-hover:bg-[#E2FF6F] transition-all shrink-0" />
-                          {habit.name}
-                        </div>
-                        {weekDays.map((day) => {
-                          const dateStr = format(day, 'yyyy-MM-dd');
-                          const isCompleted = habit.completedDates.includes(dateStr);
-                          return (
-                            <button
-                              key={dateStr}
-                              onClick={() => store.toggleHabit(habit.id, dateStr)}
-                              aria-pressed={habit.completedDates.includes(dateStr)}
-                              aria-label={`Mark ${habit.name} as ${habit.completedDates.includes(dateStr) ? 'incomplete' : 'complete'} for ${format(day, 'MMMM d')}`}
-                              className={`flex justify-center transition-all p-1 md:p-3 rounded-xl md:rounded-2xl relative overflow-hidden group/btn ${isCompleted ? 'text-[#E2FF6F]' : 'text-white/10 hover:text-white/30 hover:bg-white/5'}`}
-                            >
-                              {isCompleted ? (
-                                <motion.div
-                                  initial={{ opacity: 0 }}
-                                  animate={{ scale: 1, opacity: 1 }}
-                                  transition={{ duration: 0.3 }}
-                                  className="filter drop-shadow-[0_0_8px_rgba(226,255,111,0.5)]"
-                                >
-                                  <CheckCircle2 className="w-6 h-6 md:w-10 md:h-10" />
-                                </motion.div>
-                              ) : (
-                                <Circle className="w-6 h-6 md:w-10 md:h-10 group-hover/btn:scale-110 transition-transform" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+        <div className="glass-panel p-5 bg-white/[0.03] border-white/[0.06]">
+          <div className="flex items-center gap-2 text-white/40 mb-2">
+            <Target className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Total</span>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="glass-panel p-10 bg-[#E2FF6F]/5 border-[#E2FF6F]/10 space-y-8 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-t from-[#E2FF6F]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <div className="flex items-center justify-between relative z-10">
-                <h3 className="font-bold text-2xl text-white tracking-tight">Ritual Velocity</h3>
-                <TrendingUp className="w-7 h-7 text-[#E2FF6F]" />
-              </div>
-              <div className="space-y-4 relative z-10">
-                <div className="flex justify-between text-[10px] font-bold text-[#E2FF6F] uppercase tracking-[0.2em]">
-                  <span>Success Quotient</span>
-                  <span>82%</span>
-                </div>
-                <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[2px]">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ width: '82%' }}
-                    transition={{ duration: 0.6, ease: 'easeOut' }}
-                    className="h-full bg-gradient-to-r from-[#E2FF6F]/40 to-[#E2FF6F] rounded-full shadow-[0_0_15px_rgba(226,255,111,0.2)]"
-                  />
-                </div>
-                <p className="text-sm text-white/40 font-medium">
-                  Your consistency has increased by 18% this month. Elite performance detected.
-                </p>
-              </div>
-            </div>
-
-            <div className="glass-panel p-10 bg-white/5 border-white/5 space-y-8 shadow-2xl">
-              <h3 className="font-bold text-2xl text-white tracking-tight flex items-center gap-3">
-                <Flame className="w-7 h-7 text-orange-500" /> Power Streaks
-              </h3>
-              <div className="space-y-6">
-                {store.habits.slice(0, 3).map((h) => (
-                  <div
-                    key={h.id}
-                    className="flex items-center justify-between p-4 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-orange-500/30 transition-all group"
-                  >
-                    <span className="text-white/60 font-medium group-hover:text-white transition-colors">
-                      {h.name}
-                    </span>
-                    <div className="flex items-center gap-2 text-orange-400 font-bold text-sm bg-orange-500/10 px-4 py-1.5 rounded-full border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
-                      <Flame className="w-4.5 h-4.5" /> {h.streak} Days
-                    </div>
-                  </div>
-                ))}
-                {store.habits.length === 0 && (
-                  <p className="text-sm text-white/20 italic text-center py-4">
-                    Cultivate rituals to ignite your first streak.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+          <div className="text-3xl font-black text-white tabular-nums">{overallStats.totalItems}</div>
+          <div className="text-xs text-white/40">Active Items</div>
         </div>
-
-        <div className="space-y-8">
-          <div className="glass-panel p-10 bg-white/5 border-white/5 space-y-10 shadow-2xl relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/5 blur-3xl rounded-full" />
-            <h3 className="font-bold text-2xl text-white tracking-tight flex items-center gap-4 relative z-10">
-              <Award className="w-8 h-8 text-amber-500" /> Pantheon
-            </h3>
-            <div className="space-y-6 relative z-10">
-              {[
-                { name: 'Early Bird', sub: '10 rituals completed', icon: '🌅', locked: false },
-                { name: 'Centurion', sub: '100 ritual logs', icon: '🏺', locked: true },
-                { name: 'Fire Starter', sub: '7-day streak reached', icon: '🌋', locked: false },
-              ].map((m, i) => (
-                <div
-                  key={i}
-                  className={`p-6 rounded-[32px] border flex items-center gap-5 transition-all duration-500 ${m.locked ? 'opacity-30 grayscale bg-white/5 border-transparent' : 'bg-white/5 border-amber-500/20 hover:bg-white/10 hover:border-amber-500/40'}`}
-                >
-                  <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center text-3xl shadow-inner shadow-white/5">
-                    {m.icon}
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-lg font-bold text-white">{m.name}</p>
-                    <p className="text-[10px] text-[#E2FF6F] uppercase font-bold tracking-widest opacity-60">
-                      {m.sub}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="glass-panel p-5 bg-white/[0.03] border-white/[0.06]">
+          <div className="flex items-center gap-2 text-white/40 mb-2">
+            <TrendingUp className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Weekly</span>
           </div>
+          <div className="text-3xl font-black text-white tabular-nums">{weeklySuccess}%</div>
+          <div className="text-xs text-white/40">Success Rate</div>
+        </div>
+        <div className="glass-panel p-5 bg-white/[0.03] border-white/[0.06]">
+          <div className="flex items-center gap-2 text-white/40 mb-2">
+            <Flame className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Streaks</span>
+          </div>
+          <div className="text-3xl font-black text-orange-400 tabular-nums">{overallStats.activeStreaks}</div>
+          <div className="text-xs text-white/40">Active</div>
+        </div>
+        <div className="glass-panel p-5 bg-white/[0.03] border-white/[0.06]">
+          <div className="flex items-center gap-2 text-white/40 mb-2">
+            <Activity className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Progress</span>
+          </div>
+          <div className="text-3xl font-black text-[#E2FF6F] tabular-nums">{overallStats.avgProgress}%</div>
+          <div className="text-xs text-white/40">Avg Completion</div>
         </div>
       </div>
 
-      <AnimatePresence>
-        {showAdd && (
-          <div
-            className="fixed inset-0 bg-[#0A0C0B]/90 backdrop-blur-2xl z-50 flex items-center justify-center p-6"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Create new habit ritual"
-            aria-describedby="habit-modal-desc"
+      {items.length === 0 ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-panel p-12 md:p-16 text-center border-2 border-dashed border-white/[0.06] bg-white/[0.02] relative z-10"
+        >
+          <div className="w-20 h-20 rounded-full bg-[#E2FF6F]/10 flex items-center justify-center mx-auto mb-6">
+            <Target className="w-10 h-10 text-[#E2FF6F]" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-3">Start Your Journey</h3>
+          <p className="text-white/40 mb-8 max-w-md mx-auto">
+            Create habits and set goals to track your progress toward a healthier, happier you.
+          </p>
+          <Button 
+            onClick={() => setShowAddModal(true)}
+            className="h-12 px-8 bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold rounded-full shadow-lg shadow-[#E2FF6F]/20"
           >
-            <div ref={modalRef}>
+            <Plus className="w-5 h-5 mr-2" /> Create Your First Habit
+          </Button>
+        </motion.div>
+      ) : (
+        <div className="space-y-3 relative z-10">
+          {items.map((item) => {
+            const stats = getItemStats(item);
+            const CatIcon = getCategoryIcon(item.category);
+            const isCompletedToday = item.completedDates.includes(todayStr);
+            const isFullyComplete = stats.progress >= 100;
+            
+            return (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="glass-panel p-6 md:p-12 w-full max-w-xl space-y-6 md:space-y-10 shadow-[0_0_100px_rgba(226,255,111,0.05)] relative overflow-hidden bg-black/40 border-white/10"
+                key={item.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`glass-panel p-4 md:p-5 bg-white/[0.03] border-white/[0.06] hover:border-white/20 transition-all duration-300 ${isFullyComplete ? 'ring-1 ring-[#E2FF6F]/20' : ''}`}
               >
-                <p id="habit-modal-desc" className="sr-only">
-                  Define the foundation of your daily consciousness by entering a ritual name and
-                  frequency.
-                </p>
-                <div className="absolute top-0 right-0 p-8 opacity-5">
-                  <Plus className="w-40 h-40 text-[#E2FF6F]" />
-                </div>
-
-                <div className="space-y-3 relative z-10">
-                  <h3 className="text-4xl font-bold tracking-tighter text-white">
-                    Initialize New Ritual
-                  </h3>
-                  <p className="text-white/40 font-medium italic">
-                    Define the foundation of your daily consciousness.
-                  </p>
-                </div>
-
-                <div className="space-y-8 relative z-10">
-                  <div className="space-y-4">
-                    <label
-                      htmlFor="habit-name"
-                      className="text-[10px] font-bold text-[#E2FF6F] uppercase tracking-[0.3em]"
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <button
+                      onClick={() => handleToggle(item.id, todayStr)}
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shrink-0 ${
+                        isCompletedToday 
+                          ? 'bg-[#E2FF6F] text-black shadow-lg shadow-[#E2FF6F]/20' 
+                          : 'bg-white/[0.04] text-white/20 hover:text-white/40 hover:bg-white/10 border border-white/[0.06]'
+                      }`}
                     >
-                      Ritual Designation
-                    </label>
-                    <input
-                      ref={firstFocusRef}
-                      id="habit-name"
-                      autoFocus
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      placeholder="e.g. Morning Meditation"
-                      aria-label="Habit ritual name"
-                      className="w-full h-16 rounded-[24px] bg-white/5 border border-white/5 px-8 text-xl font-bold text-white outline-none focus:ring-2 focus:ring-[#E2FF6F]/30 focus:border-[#E2FF6F]/20 transition-all placeholder:text-white/10"
-                    />
+                      {isCompletedToday ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
+                    </button>
+                    
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {item.category && (
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${getCategoryColor(item.category)}`}>
+                            {item.category}
+                          </span>
+                        )}
+                        {item.streak > 0 && (
+                          <span className="flex items-center gap-1 text-xs text-orange-400 font-semibold">
+                            <Flame className="w-3 h-3" />
+                            {item.streak}d
+                          </span>
+                        )}
+                      </div>
+                      <h3 className={`font-bold text-lg truncate ${isCompletedToday ? 'text-white/40 line-through' : 'text-white'}`}>
+                        {item.name}
+                      </h3>
+                    </div>
                   </div>
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-bold text-[#E2FF6F] uppercase tracking-[0.3em]">
-                      Temporal Frequency
-                    </label>
-                    <div
-                      className="grid grid-cols-2 gap-4"
-                      role="group"
-                      aria-label="Select frequency"
-                    >
-                      {['daily', 'weekly'].map((f) => (
-                        <button
-                          key={f}
-                          onClick={() => setNewFreq(f as 'daily' | 'weekly')}
-                          aria-pressed={newFreq === f}
-                          className={`h-14 rounded-[20px] text-sm font-bold uppercase tracking-widest border transition-all duration-500 ${newFreq === f ? 'bg-[#E2FF6F] text-black border-[#E2FF6F] shadow-lg shadow-[#E2FF6F]/20' : 'bg-white/5 text-white/30 border-white/5 hover:bg-white/10'}`}
-                        >
-                          {f}
-                        </button>
-                      ))}
+
+                  <div className="flex items-center gap-4 lg:gap-6 flex-wrap">
+                    <div className="text-center">
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Target</div>
+                      <div className="font-bold text-white text-sm">{stats.target} days</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Progress</div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${stats.progress}%` }}
+                            className={`h-full rounded-full ${isFullyComplete ? 'bg-[#E2FF6F]' : 'bg-[#E2FF6F]/60'}`}
+                          />
+                        </div>
+                        <span className={`text-sm font-bold tabular-nums ${isFullyComplete ? 'text-[#E2FF6F]' : 'text-white'}`}>
+                          {stats.progress}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-center hidden md:block">
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">This Week</div>
+                      <div className="text-sm font-bold text-white">{stats.weekCompleted}/7</div>
+                    </div>
+
+                    <div className="text-center hidden lg:block">
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Total</div>
+                      <div className="text-sm font-bold text-white tabular-nums">{stats.totalCompleted}</div>
+                    </div>
+
+                    <div className="w-28 hidden lg:block">
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Weekly</div>
+                      <div className="flex items-end gap-1 h-5">
+                        {weekDays.map((day, i) => {
+                          const dateStr = format(day, 'yyyy-MM-dd');
+                          const done = item.completedDates.includes(dateStr);
+                          return (
+                            <div 
+                              key={i}
+                              className={`flex-1 rounded-sm transition-all duration-200 ${done ? 'bg-[#E2FF6F]' : 'bg-white/10'}`}
+                              style={{ height: done ? '100%' : '20%' }}
+                            />
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-4 pt-6 relative z-10">
-                  <Button
-                    aria-label="Cancel and close modal"
-                    variant="ghost"
-                    className="flex-1 h-16 rounded-[24px] text-white/40 font-bold tracking-widest uppercase hover:bg-white/5 hover:text-white"
-                    onClick={() => setShowAdd(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    aria-label="Confirm and create new habit"
-                    className="flex-1 h-16 rounded-[24px] bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold tracking-widest uppercase shadow-xl shadow-[#E2FF6F]/10 active:scale-95 transition-all"
-                    onClick={handleAdd}
-                  >
-                    Confirm Ritual
-                  </Button>
-                </div>
               </motion.div>
-            </div>
+            );
+          })}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {showAddModal && (
+          <div 
+            className="fixed inset-0 bg-[#0A0C0B]/90 backdrop-blur-xl z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <motion.div
+              ref={modalRef}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass-panel p-6 md:p-8 w-full max-w-md space-y-6 bg-black/40 border-white/[0.08]"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-white">New Habit or Goal</h3>
+                <button onClick={() => setShowAddModal(false)} className="text-white/40 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <label className="text-[10px] font-bold text-[#E2FF6F] uppercase tracking-widest mb-2 block">
+                    Name
+                  </label>
+                  <input
+                    ref={firstFocusRef}
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="e.g. Morning Meditation, Run 5K..."
+                    className="w-full h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 text-white font-medium placeholder:text-white/20 focus:border-[#E2FF6F]/30 focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-[#E2FF6F] uppercase tracking-widest mb-2 block">
+                    Category
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(['wellness', 'exercise', 'mind'] as const).map((cat) => {
+                      const Icon = getCategoryIcon(cat);
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => setNewCategory(cat)}
+                          className={`h-14 rounded-xl text-xs font-bold uppercase flex flex-col items-center justify-center gap-2 border transition-all duration-200 ${
+                            newCategory === cat 
+                              ? 'bg-[#E2FF6F] text-black border-[#E2FF6F] shadow-lg shadow-[#E2FF6F]/20' 
+                              : 'bg-white/[0.03] text-white/40 border-white/[0.06] hover:bg-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-[#E2FF6F] uppercase tracking-widest mb-2 block">
+                    Frequency
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(['daily', 'weekly'] as const).map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setNewFreq(f)}
+                        className={`h-12 rounded-xl text-sm font-bold uppercase border transition-all duration-200 ${
+                          newFreq === f 
+                            ? 'bg-[#E2FF6F] text-black border-[#E2FF6F]' 
+                            : 'bg-white/[0.03] text-white/40 border-white/[0.06] hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-[#E2FF6F] uppercase tracking-widest mb-2 block">
+                    Target Days: <span className="text-base">{newTarget}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="7"
+                    max="100"
+                    value={newTarget}
+                    onChange={(e) => setNewTarget(parseInt(e.target.value))}
+                    className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-[#E2FF6F] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#E2FF6F] [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-[#E2FF6F]/30"
+                  />
+                  <div className="flex justify-between text-[10px] text-white/30 mt-2">
+                    <span>7 days</span>
+                    <span>100 days</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowAddModal(false)} 
+                  className="flex-1 h-12 text-white/40 hover:text-white hover:bg-white/[0.04]"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAddItem}
+                  className="flex-1 h-12 bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold"
+                >
+                  Create
+                </Button>
+              </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>

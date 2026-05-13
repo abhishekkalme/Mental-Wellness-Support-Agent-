@@ -49,18 +49,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     },
-    {
-      url: `${baseUrl}/meditation`,
-      lastModified: now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/insights`,
-      lastModified: now,
-      changeFrequency: 'daily' as const,
-      priority: 0.7,
-    },
+    
     {
       url: `${baseUrl}/community`,
       lastModified: now,
@@ -69,12 +58,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/crisis`,
-      lastModified: now,
-      changeFrequency: 'monthly' as const,
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/rescue`,
       lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.5,
@@ -104,25 +87,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     {
-      url: `${baseUrl}/goals`,
-      lastModified: now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/exercises`,
-      lastModified: now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    },
-    {
       url: `${baseUrl}/academic-calendar`,
-      lastModified: now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/sound-therapy`,
       lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.5,

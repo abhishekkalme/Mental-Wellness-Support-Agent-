@@ -19,18 +19,79 @@ import {
   Battery,
   CloudRain,
   Smile,
+  BookOpen,
+  Briefcase,
+  HeartHandshake,
+  Dumbbell,
+  Sun,
+  Sunrise,
+  Clock,
+  Sunset,
+  MoonStar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type FeelingState = 'stressed' | 'low' | 'tired' | 'anxious' | 'stable' | 'energized';
 type Priority = 'sleep' | 'focus' | 'emotional' | 'anxiety' | 'habits' | 'clarity' | 'energy';
 type AIStyle = 'listen' | 'practical' | 'organize' | 'motivate';
+type SleepSchedule = 'early-bird' | 'night-owl' | 'regular' | 'irregular';
+type Motivation = 'career' | 'relationships' | 'health' | 'learning' | 'creativity' | 'impact';
+type Challenge = 'overthinking' | 'sleep' | 'procrastination' | 'burnout' | 'self-doubt' | 'motivation';
 
 interface OnboardingData {
+  name: string;
   feeling: FeelingState | '';
   priorities: Priority[];
+  sleepSchedule: SleepSchedule;
+  motivation: Motivation;
+  biggestChallenge: Challenge;
   aiStyle: AIStyle;
 }
+
+const sleepOptions = [
+  {
+    id: 'early-bird' as SleepSchedule,
+    label: 'Early riser',
+    description: 'I like to wake up with the sun',
+    icon: Sunrise,
+  },
+  {
+    id: 'night-owl' as SleepSchedule,
+    label: 'Night owl',
+    description: 'I do my best work after dark',
+    icon: MoonStar,
+  },
+  {
+    id: 'regular' as SleepSchedule,
+    label: 'Consistent schedule',
+    description: 'I keep a steady sleep routine',
+    icon: Clock,
+  },
+  {
+    id: 'irregular' as SleepSchedule,
+    label: 'Unpredictable',
+    description: 'My schedule varies a lot',
+    icon: Moon,
+  },
+];
+
+const motivationOptions = [
+  { id: 'career' as Motivation, label: 'Career & ambition', icon: Briefcase },
+  { id: 'relationships' as Motivation, label: 'Relationships', icon: HeartHandshake },
+  { id: 'health' as Motivation, label: 'Health & fitness', icon: Dumbbell },
+  { id: 'learning' as Motivation, label: 'Learning & growth', icon: BookOpen },
+  { id: 'creativity' as Motivation, label: 'Creative pursuits', icon: Sparkles },
+  { id: 'impact' as Motivation, label: 'Making an impact', icon: Heart },
+];
+
+const challengeOptions = [
+  { id: 'overthinking' as Challenge, label: 'Overthinking', icon: Brain },
+  { id: 'sleep' as Challenge, label: 'Sleep issues', icon: Moon },
+  { id: 'procrastination' as Challenge, label: 'Procrastination', icon: Clock },
+  { id: 'burnout' as Challenge, label: 'Burnout', icon: Battery },
+  { id: 'self-doubt' as Challenge, label: 'Self-doubt', icon: Activity },
+  { id: 'motivation' as Challenge, label: 'Staying motivated', icon: Target },
+];
 
 const feelingOptions = [
   {
@@ -152,7 +213,15 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(storedProgress?.step ?? 0);
   const [generationPhase, setGenerationPhase] = useState(0);
   const [formData, setFormData] = useState<OnboardingData>(
-    storedProgress?.formData ?? { feeling: '', priorities: [], aiStyle: 'listen' }
+    storedProgress?.formData ?? {
+      name: '',
+      feeling: '',
+      priorities: [],
+      sleepSchedule: 'regular',
+      motivation: 'health',
+      biggestChallenge: 'overthinking',
+      aiStyle: 'listen',
+    }
   );
 
   useEffect(() => {
@@ -183,7 +252,7 @@ export default function OnboardingPage() {
   }, [session, router]);
 
   const username = session?.user?.username || '';
-  const steps = ['Feeling', 'Priorities', 'AI Style', 'Setup'];
+  const steps = ['Intro', 'Feeling', 'Priorities', 'Sleep', 'Goal', 'AI Style', 'Setup'];
 
   const generateHabitsFromOnboarding = () => {
     const habits: {
@@ -319,13 +388,18 @@ export default function OnboardingPage() {
 
   const completeOnboarding = async () => {
     const onboardingData = {
+      name: formData.name,
       feeling: formData.feeling,
       priorities: formData.priorities,
+      sleepSchedule: formData.sleepSchedule,
+      motivation: formData.motivation,
+      biggestChallenge: formData.biggestChallenge,
       aiStyle: formData.aiStyle,
       lastAssessmentDate: new Date().toISOString(),
     };
 
-    store.setUsername(username);
+    store.setName(formData.name);
+    store.setUsername(formData.name || username);
     store.setOnboardingData(onboardingData);
 
     const metrics = getWellnessMetricsFromFeeling();
@@ -409,6 +483,84 @@ export default function OnboardingPage() {
         <AnimatePresence mode="wait">
           {currentStep === 0 && (
             <motion.div
+              key="step0"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
+            >
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">Welcome to MindCare</h2>
+                <p className="text-white/40 font-medium">
+                  Let&apos;s get to know you a little better
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-white/60 font-medium mb-2 block">Your name</label>
+                  <input
+                    type="text"
+                    placeholder="Enter your first name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full h-12 px-4 rounded-xl bg-black/30 border border-white/10 text-white placeholder:text-white/30 font-medium focus:outline-none focus:border-[#E2FF6F]/50 transition-all"
+                    maxLength={30}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-white/60 font-medium mb-3 block">
+                    What&apos;s your biggest challenge right now?
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {challengeOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => setFormData({ ...formData, biggestChallenge: option.id })}
+                        className={cn(
+                          'p-3 rounded-xl border text-left transition-all flex items-center gap-2',
+                          formData.biggestChallenge === option.id
+                            ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                            : 'bg-black/20 border-white/5 hover:bg-white/5'
+                        )}
+                      >
+                        <option.icon
+                          className={cn(
+                            'w-4 h-4 flex-shrink-0',
+                            formData.biggestChallenge === option.id
+                              ? 'text-[#E2FF6F]'
+                              : 'text-white/40'
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            'text-xs font-bold',
+                            formData.biggestChallenge === option.id
+                              ? 'text-[#E2FF6F]'
+                              : 'text-white/70'
+                          )}
+                        >
+                          {option.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                className="w-full h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
+                onClick={nextStep}
+                disabled={!formData.name.trim()}
+              >
+                Get Started
+              </Button>
+            </motion.div>
+          )}
+
+          {currentStep === 1 && (
+            <motion.div
               key="step1"
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
@@ -474,7 +626,7 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {currentStep === 1 && (
+          {currentStep === 2 && (
             <motion.div
               key="step2"
               initial={{ opacity: 0, x: 40 }}
@@ -562,9 +714,138 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 3 && (
             <motion.div
               key="step3"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
+            >
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">What&apos;s your sleep schedule like?</h2>
+                <p className="text-white/40 font-medium">
+                  This helps us tailor rest recommendations for you
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {sleepOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setFormData({ ...formData, sleepSchedule: option.id })}
+                    className={cn(
+                      'p-4 rounded-2xl border text-left transition-all flex flex-col gap-2',
+                      formData.sleepSchedule === option.id
+                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                        : 'bg-black/20 border-white/5 hover:bg-white/5'
+                    )}
+                  >
+                    <option.icon
+                      className={cn(
+                        'w-6 h-6',
+                        formData.sleepSchedule === option.id ? 'text-[#E2FF6F]' : 'text-white/40'
+                      )}
+                    />
+                    <div>
+                      <p
+                        className={cn(
+                          'font-bold text-sm',
+                          formData.sleepSchedule === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
+                        )}
+                      >
+                        {option.label}
+                      </p>
+                      <p className="text-xs text-white/40 mt-0.5">{option.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                  onClick={prevStep}
+                >
+                  Back
+                </Button>
+                <Button
+                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
+                  onClick={nextStep}
+                >
+                  Continue
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {currentStep === 4 && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
+            >
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">What drives you?</h2>
+                <p className="text-white/40 font-medium">
+                  This helps us keep you motivated and engaged
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {motivationOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setFormData({ ...formData, motivation: option.id })}
+                    className={cn(
+                      'p-4 rounded-2xl border text-left transition-all flex flex-col gap-2',
+                      formData.motivation === option.id
+                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                        : 'bg-black/20 border-white/5 hover:bg-white/5'
+                    )}
+                  >
+                    <option.icon
+                      className={cn(
+                        'w-6 h-6',
+                        formData.motivation === option.id ? 'text-[#E2FF6F]' : 'text-white/40'
+                      )}
+                    />
+                    <p
+                      className={cn(
+                        'font-bold text-sm',
+                        formData.motivation === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
+                      )}
+                    >
+                      {option.label}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                  onClick={prevStep}
+                >
+                  Back
+                </Button>
+                <Button
+                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
+                  onClick={nextStep}
+                >
+                  Continue
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {currentStep === 5 && (
+            <motion.div
+              key="step5"
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -40 }}
@@ -629,9 +910,9 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 6 && (
             <motion.div
-              key="step4"
+              key="step6"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="glass-panel p-10 rounded-3xl bg-[#E2FF6F]/5 border border-[#E2FF6F]/20 shadow-2xl text-center space-y-8"
@@ -649,10 +930,11 @@ export default function OnboardingPage() {
 
               <div className="space-y-3 text-left max-w-xs mx-auto">
                 {[
-                  { p: 1, t: 'Creating your habits' },
-                  { p: 2, t: 'Setting up wellness metrics' },
-                  { p: 3, t: 'Configuring AI companion' },
-                  { p: 4, t: 'Preparing dashboard' },
+                  { p: 1, t: `Welcome, ${formData.name || 'friend'}!` },
+                  { p: 2, t: 'Creating your habits' },
+                  { p: 3, t: 'Setting up wellness metrics' },
+                  { p: 4, t: 'Configuring AI companion' },
+                  { p: 5, t: 'Preparing dashboard' },
                 ].map((item) => (
                   <div
                     key={item.p}
@@ -671,7 +953,7 @@ export default function OnboardingPage() {
                 <motion.div
                   className="h-full bg-[#E2FF6F]"
                   initial={{ width: '0%' }}
-                  animate={{ width: `${(generationPhase / 4) * 100}%` }}
+                  animate={{ width: `${(generationPhase / 5) * 100}%` }}
                   transition={{ duration: 0.3 }}
                 />
               </div>

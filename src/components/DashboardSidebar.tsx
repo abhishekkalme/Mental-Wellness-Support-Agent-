@@ -9,7 +9,6 @@ import {
   Heart,
   BookText,
   Moon,
-  Brain,
   MessageSquare,
   Target,
   Users,
@@ -19,37 +18,17 @@ import {
   ChevronRight,
   LogOut,
   User,
+  CalendarDays,
+  Wind,
+  ListChecks,
+  Library,
+  Stethoscope,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession, signOut } from 'next-auth/react';
-import type { LucideIcon } from 'lucide-react';
-
-type NavItem = {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-  roles?: ('admin' | 'mentor')[];
-  badge?: string;
-};
-
-const primaryNavItems: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Insights', href: '/insights', icon: BarChart3 },
-];
-
-const wellnessNavItems: NavItem[] = [
-  { name: 'Mood', href: '/mood', icon: Heart },
-  { name: 'Journal', href: '/journal', icon: BookText },
-  { name: 'Meditate', href: '/meditation', icon: Brain },
-  { name: 'Sleep', href: '/sleep', icon: Moon },
-];
-
-const progressNavItems: NavItem[] = [{ name: 'Habits', href: '/habits', icon: Target }];
-
-const aiNavItems: NavItem[] = [{ name: 'AI Companion', href: '/agent-chat', icon: MessageSquare }];
-
-const socialNavItems: NavItem[] = [{ name: 'Community', href: '/community', icon: Users }];
+import { useStore } from '@/store/useStore';
+import { allNavItems, filterNavByRole, getNavBySection, type NavItem } from '@/config/navigation';
 
 interface NavSectionProps {
   items: NavItem[];
@@ -122,32 +101,8 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
   const { data: session } = useSession();
   const role = session?.user?.role ?? 'user';
 
-  const filteredSocialItems = useMemo(
-    () =>
-      socialNavItems.filter((item) => {
-        if (!item.roles?.length) return true;
-        return item.roles.includes(role as 'admin' | 'mentor');
-      }),
-    [role]
-  );
-
-  const filteredProgressItems = useMemo(
-    () =>
-      progressNavItems.filter((item) => {
-        if (!item.roles?.length) return true;
-        return item.roles.includes(role as 'admin' | 'mentor');
-      }),
-    [role]
-  );
-
-  const filteredAiItems = useMemo(
-    () =>
-      aiNavItems.filter((item) => {
-        if (!item.roles?.length) return true;
-        return item.roles.includes(role as 'admin' | 'mentor');
-      }),
-    [role]
-  );
+  const navItems = useMemo(() => filterNavByRole(allNavItems, role), [role]);
+  const sections = useMemo(() => getNavBySection(navItems), [navItems]);
 
   return (
     <motion.aside
@@ -180,37 +135,49 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-4 no-scrollbar">
-        <NavSection items={primaryNavItems} pathname={pathname} isExpanded={isExpanded} />
+        <NavSection items={sections.primary} pathname={pathname} isExpanded={isExpanded} />
 
-        <div className="h-px bg-white/5 mx-3" />
+        {sections.wellness.length > 0 && (
+          <>
+            <div className="h-px bg-white/5 mx-3" />
+            <NavSection items={sections.wellness} title="Wellness" pathname={pathname} isExpanded={isExpanded} />
+          </>
+        )}
 
-        <NavSection
-          items={wellnessNavItems}
-          title="Wellness"
-          pathname={pathname}
-          isExpanded={isExpanded}
-        />
+        {sections.progress.length > 0 && (
+          <>
+            <div className="h-px bg-white/5 mx-3" />
+            <NavSection items={sections.progress} title="Progress" pathname={pathname} isExpanded={isExpanded} />
+          </>
+        )}
 
-        <NavSection
-          items={filteredProgressItems}
-          title="Progress"
-          pathname={pathname}
-          isExpanded={isExpanded}
-        />
+        {sections.ai.length > 0 && (
+          <>
+            <div className="h-px bg-white/5 mx-3" />
+            <NavSection items={sections.ai} title="AI" pathname={pathname} isExpanded={isExpanded} />
+          </>
+        )}
 
-        <NavSection
-          items={filteredAiItems}
-          title="AI"
-          pathname={pathname}
-          isExpanded={isExpanded}
-        />
+        {sections.social.length > 0 && (
+          <>
+            <div className="h-px bg-white/5 mx-3" />
+            <NavSection items={sections.social} title="Social" pathname={pathname} isExpanded={isExpanded} />
+          </>
+        )}
 
-        <NavSection
-          items={filteredSocialItems}
-          title="Social"
-          pathname={pathname}
-          isExpanded={isExpanded}
-        />
+        {sections.tools.length > 0 && (
+          <>
+            <div className="h-px bg-white/5 mx-3" />
+            <NavSection items={sections.tools} title="Tools" pathname={pathname} isExpanded={isExpanded} />
+          </>
+        )}
+
+        {sections.more.length > 0 && (
+          <>
+            <div className="h-px bg-white/5 mx-3" />
+            <NavSection items={sections.more} title="More" pathname={pathname} isExpanded={isExpanded} />
+          </>
+        )}
       </nav>
 
       <div className="p-2 space-y-2 border-t border-white/5">
@@ -237,27 +204,39 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
         </Link>
 
         {(role === 'admin' || role === 'mentor') && (
-          <Link
-            href={role === 'admin' ? '/admin' : '/mentor'}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-              'text-white/40 hover:text-white hover:bg-white/5'
-            )}
-          >
-            <Settings className="w-5 h-5 shrink-0" />
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="whitespace-nowrap overflow-hidden"
-                >
-                  {role === 'admin' ? 'Admin' : 'Mentor'}
-                </motion.span>
+          <div className="group relative">
+            <Link
+              href={role === 'admin' ? '/admin' : '/mentor'}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
+                'text-white/40 hover:text-white hover:bg-white/5'
               )}
-            </AnimatePresence>
-          </Link>
+            >
+              <Settings className="w-5 h-5 shrink-0" />
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="whitespace-nowrap overflow-hidden"
+                  >
+                    {role === 'admin' ? 'Admin' : 'Mentor'}
+                    {role === 'mentor' && (
+                      <span className="ml-2 text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Soon
+                      </span>
+                    )}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
+            {role === 'mentor' && (
+              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-48 bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-xs text-white/60 shadow-xl z-50">
+                Mentor dashboard is under development.
+              </div>
+            )}
+          </div>
         )}
 
         {session?.user && (
@@ -283,7 +262,11 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
                       {session.user.name || session.user.email || 'User'}
                     </p>
                     <button
-                      onClick={() => signOut({ callbackUrl: '/' })}
+                      onClick={() => {
+                        useStore.getState().clearStore();
+                        useStore.getState().clearPersistedData();
+                        signOut({ callbackUrl: '/' });
+                      }}
                       className="text-white/40 hover:text-rose-400 text-xs flex items-center gap-1 mt-0.5"
                     >
                       <LogOut className="w-3 h-3" />
@@ -294,7 +277,11 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
               </AnimatePresence>
               {!isExpanded && (
                 <button
-                  onClick={() => signOut({ callbackUrl: '/' })}
+                  onClick={() => {
+                    useStore.getState().clearStore();
+                    useStore.getState().clearPersistedData();
+                    signOut({ callbackUrl: '/' });
+                  }}
                   className="ml-auto p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-rose-400 transition-colors"
                   title="Sign out"
                 >

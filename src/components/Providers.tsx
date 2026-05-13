@@ -3,7 +3,6 @@
 import { Suspense } from 'react';
 import { SessionProvider } from 'next-auth/react';
 import { LazyMotion, domMax, MotionConfig } from 'framer-motion';
-import { PageTransition } from './PageTransition';
 import { Analytics } from './Analytics';
 
 function AnalyticsWrapper() {
@@ -19,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <LazyMotion features={domMax}>
         <MotionConfig reducedMotion="user">
-          <PageTransition>{children}</PageTransition>
+          {children}
         </MotionConfig>
       </LazyMotion>
       <AnalyticsWrapper />

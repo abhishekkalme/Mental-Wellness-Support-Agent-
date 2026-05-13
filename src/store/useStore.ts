@@ -37,18 +37,33 @@ interface MindCareStore extends UserState {
     durationSeconds: number;
     pattern: string;
   }) => void;
+  addRescueCompletion: (moduleId: string) => void;
+  addExerciseCompletion: (exerciseType: string) => void;
   setSafeMode: (status: boolean) => void;
+  setPreferredLanguage: (lang: string) => void;
+  setAgentGender: (gender: 'male' | 'female' | 'neutral') => void;
   clearHistory: () => void;
-  syncRemoteData: () => Promise<void>;
+  clearStore: () => void;
+  clearPersistedData: () => void;
+  setLastSyncedUserId: (id: string) => void;
+  syncRemoteData: (userId?: string) => Promise<void>;
   syncStatus: 'idle' | 'syncing' | 'success' | 'error';
   setSyncStatus: (status: 'idle' | 'syncing' | 'success' | 'error') => void;
+lastSyncedAt: number;
+  preferredLanguage: string;
+  agentGender: 'male' | 'female' | 'neutral';
   _syncPending: Record<string, number>;
+  lastSyncedUserId: string;
 }
 
 const initialValues: UserState & {
   safeMode: boolean;
   syncStatus: 'idle' | 'syncing' | 'success' | 'error';
   _syncPending: Record<string, number>;
+  lastSyncedAt: number;
+  preferredLanguage: string;
+  agentGender: 'male' | 'female' | 'neutral';
+  lastSyncedUserId: string;
 } = {
   name: '',
   username: '',
@@ -64,10 +79,40 @@ const initialValues: UserState & {
   sleepHistory: [],
   wellnessMetrics: { mental: 0, emotional: 0, physical: 0, social: 0, sleep: 0, spiritual: 0 },
   breathingHistory: [],
+  completedRescueModules: [],
+  completedExercises: [],
   safeMode: false,
   syncStatus: 'idle',
   _syncPending: {},
+  lastSyncedAt: 0,
+  preferredLanguage: 'en',
+  agentGender: 'neutral' as const,
+  lastSyncedUserId: '',
 };
+
+function mergeByLatestTimestamp<T extends { id: string; timestamp?: string }>(
+  local: T[],
+  server: T[],
+  _idKey: keyof T
+): T[] {
+  const map = new Map<string, T>();
+  for (const item of local) {
+    map.set(item.id, item);
+  }
+  for (const item of server) {
+    const existing = map.get(item.id);
+    if (!existing) {
+      map.set(item.id, item);
+    } else {
+      const tsA = new Date(existing.timestamp || 0).getTime();
+      const tsB = new Date(item.timestamp || 0).getTime();
+      if (tsB > tsA) {
+        map.set(item.id, item);
+      }
+    }
+  }
+  return Array.from(map.values());
+}
 
 const SYNC_DEBOUNCE_MS = 5000;
 const syncTimers: Record<string, ReturnType<typeof setTimeout>> = {};
@@ -122,9 +167,14 @@ export const useStore = create<MindCareStore>()(
           onboardingData: { ...state.onboardingData, ...data } as OnboardingData,
         })),
       setSyncStatus: (status) => set({ syncStatus: status }),
-      addMoodEntry: (entry) => set((state) => ({ moodHistory: [...state.moodHistory, entry] })),
-      addJournalEntry: (entry) =>
-        set((state) => ({ journalEntries: [...state.journalEntries, entry] })),
+      addMoodEntry: (entry) => {
+        set((state) => ({ moodHistory: [...state.moodHistory, entry] }));
+        debouncedSync(`mood:${entry.id}`, '/api/mood', entry);
+      },
+      addJournalEntry: (entry) => {
+        set((state) => ({ journalEntries: [...state.journalEntries, entry] }));
+        debouncedSync(`journal:${entry.id}`, '/api/journal', entry);
+      },
       addChatMessage: (msg) =>
         set((state) => {
           const newHistory = [...state.chatHistory, msg];
@@ -168,46 +218,79 @@ export const useStore = create<MindCareStore>()(
         set((state) => ({ breathingHistory: [...state.breathingHistory, record] }));
         debouncedSync('breathing', '/api/breathing', record);
       },
+      addRescueCompletion: (moduleId) =>
+        set((state) => {
+          if (state.completedRescueModules.includes(moduleId)) return {};
+          return { completedRescueModules: [...state.completedRescueModules, moduleId] };
+        }),
+      addExerciseCompletion: (exerciseType) =>
+        set((state) => {
+          if (state.completedExercises.includes(exerciseType)) return {};
+          return { completedExercises: [...state.completedExercises, exerciseType] };
+        }),
       setSafeMode: (status) => set({ safeMode: status }),
-      clearHistory: () => set(initialValues),
-      syncRemoteData: async () => {
+      setPreferredLanguage: (lang) => set({ preferredLanguage: lang }),
+      setAgentGender: (gender) => set({ agentGender: gender }),
+      clearHistory: () => set({ ...initialValues, lastSyncedUserId: '' }),
+      clearStore: () => set({ ...initialValues, lastSyncedUserId: '' }),
+      clearPersistedData: () => {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('mindcare-storage');
+        }
+      },
+      setLastSyncedUserId: (id) => set({ lastSyncedUserId: id }),
+      syncRemoteData: async (userId?: string) => {
+        const now = Date.now();
+        if (now - get().lastSyncedAt < 30000) return;
         const current = get().syncStatus;
         if (current === 'syncing') return;
         set({ syncStatus: 'syncing' });
         try {
-          const [moods, journals, habits, sleep, breathing] = await Promise.all([
-            fetch('/api/mood', { credentials: 'include' })
-              .then((r) => (r.ok ? (r.json() as Promise<unknown[]>) : null))
+          const [moodRes, journalRes, habitsRes, sleepRes, breathingRes] = await Promise.all([
+            fetch('/api/mood?limit=100', { credentials: 'include' })
+              .then((r) => (r.ok ? r.json().catch(() => null) : null))
               .catch(() => null),
-            fetch('/api/journal', { credentials: 'include' })
-              .then((r) => (r.ok ? (r.json() as Promise<unknown[]>) : null))
+            fetch('/api/journal?limit=50', { credentials: 'include' })
+              .then((r) => (r.ok ? r.json().catch(() => null) : null))
               .catch(() => null),
-            fetch('/api/habits', { credentials: 'include' })
-              .then((r) => (r.ok ? (r.json() as Promise<unknown[]>) : null))
+            fetch('/api/habits?limit=100', { credentials: 'include' })
+              .then((r) => (r.ok ? r.json().catch(() => null) : null))
               .catch(() => null),
-            fetch('/api/sleep', { credentials: 'include' })
-              .then((r) => (r.ok ? (r.json() as Promise<unknown[]>) : null))
+            fetch('/api/sleep?limit=100', { credentials: 'include' })
+              .then((r) => (r.ok ? r.json().catch(() => null) : null))
               .catch(() => null),
-            fetch('/api/breathing', { credentials: 'include' })
-              .then((r) => (r.ok ? (r.json() as Promise<unknown[]>) : null))
+            fetch('/api/breathing?limit=50', { credentials: 'include' })
+              .then((r) => (r.ok ? r.json().catch(() => null) : null))
               .catch(() => null),
           ]);
-          set((state) => ({
+
+          const serverMood = moodRes?.data || [];
+          const serverJournal = journalRes?.data || [];
+          const serverHabits = habitsRes?.data || [];
+          const serverSleep = sleepRes?.data || [];
+          const serverBreathing = breathingRes?.data || [];
+
+          const localMood = get().moodHistory;
+          const localJournal = get().journalEntries;
+          const localHabits = get().habits;
+          const localSleep = get().sleepHistory;
+          const localBreathing = get().breathingHistory;
+
+          const mergedMood = mergeByLatestTimestamp(localMood, serverMood, 'id');
+          const mergedJournal = mergeByLatestTimestamp(localJournal, serverJournal, 'id');
+          const mergedHabits = mergeByLatestTimestamp(localHabits, serverHabits, 'id');
+          const mergedSleep = mergeByLatestTimestamp(localSleep, serverSleep, 'id');
+          const mergedBreathing = mergeByLatestTimestamp(localBreathing, serverBreathing, 'id');
+
+          set({
             syncStatus: 'success',
-            moodHistory:
-              Array.isArray(moods) && moods.length ? (moods as MoodEntry[]) : state.moodHistory,
-            journalEntries:
-              Array.isArray(journals) && journals.length
-                ? (journals as JournalEntry[])
-                : state.journalEntries,
-            habits: Array.isArray(habits) && habits.length ? (habits as Habit[]) : state.habits,
-            sleepHistory:
-              Array.isArray(sleep) && sleep.length ? (sleep as SleepEntry[]) : state.sleepHistory,
-            breathingHistory:
-              Array.isArray(breathing) && breathing.length
-                ? (breathing as BreathingRecord[])
-                : state.breathingHistory,
-          }));
+            lastSyncedAt: now,
+            moodHistory: mergedMood.slice(-100),
+            journalEntries: mergedJournal.slice(-50),
+            habits: mergedHabits,
+            sleepHistory: mergedSleep.slice(-100),
+            breathingHistory: mergedBreathing.slice(-50),
+          });
           setTimeout(() => set({ syncStatus: 'idle' }), 3000);
         } catch {
           set({ syncStatus: 'error' });
@@ -229,6 +312,8 @@ export const useStore = create<MindCareStore>()(
           'goals',
           'sleepHistory',
           'breathingHistory',
+          'completedRescueModules',
+          'completedExercises',
         ];
 
         keys.forEach((key) => {
@@ -246,7 +331,7 @@ export const useStore = create<MindCareStore>()(
       },
       name: 'mindcare-storage',
       storage: encryptedStorage,
-      partialize: (state: UserState & { safeMode: boolean }): any => ({
+      partialize: (state: UserState & { safeMode: boolean; lastSyncedAt: number; lastSyncedUserId: string }): any => ({
         name: state.name,
         username: state.username,
         isOnboarded: state.isOnboarded,
@@ -261,7 +346,13 @@ export const useStore = create<MindCareStore>()(
         sleepHistory: (state.sleepHistory || []).slice(-100),
         wellnessMetrics: state.wellnessMetrics,
         breathingHistory: (state.breathingHistory || []).slice(-50),
+        completedRescueModules: state.completedRescueModules || [],
+        completedExercises: state.completedExercises || [],
         safeMode: state.safeMode,
+        preferredLanguage: (state as any).preferredLanguage || 'en',
+        agentGender: (state as any).agentGender || 'neutral',
+        lastSyncedAt: state.lastSyncedAt || 0,
+        lastSyncedUserId: (state as any).lastSyncedUserId || '',
       }),
     }
   )

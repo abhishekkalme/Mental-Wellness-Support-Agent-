@@ -4,7 +4,7 @@ import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
@@ -14,19 +14,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isOnboarding = pathname === '/onboarding';
   const syncRemoteData = useStore((state) => state.syncRemoteData);
+  const clearStore = useStore((state) => state.clearStore);
+  const clearPersistedData = useStore((state) => state.clearPersistedData);
+  const lastSyncedUserId = useStore((state) => state.lastSyncedUserId);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [hasHydrated, setHasHydrated] = useState(false);
-  const { status } = useSession();
-
-  const isSessionLoading = status === 'loading';
+  const { data: session, status: sessionStatus } = useSession();
+  const status = session ? 'authenticated' : 'unauthenticated';
+  const isSessionLoading = sessionStatus === 'loading';
+  const prevStatusRef = useRef(status);
 
   useEffect(() => {
-    // Check if store already hydrated
     if (useStore.persist.hasHydrated()) {
       setHasHydrated(true);
     } else {
       const unsub = useStore.persist.onFinishHydration(() => setHasHydrated(true));
-      // Safety timeout: Ensure we force render within 3.5s if hydration hangs
       const timer = setTimeout(() => setHasHydrated(true), 3500);
       return () => {
         unsub();
@@ -36,10 +38,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hasHydrated && status === 'authenticated') {
-      syncRemoteData();
+    if (prevStatusRef.current === 'authenticated' && status === 'unauthenticated') {
+      clearStore();
+      clearPersistedData();
     }
-  }, [syncRemoteData, hasHydrated, status]);
+    prevStatusRef.current = status;
+  }, [status, clearStore, clearPersistedData]);
+
+  useEffect(() => {
+    if (hasHydrated && status === 'authenticated') {
+      const currentUserId = session?.user?.id || '';
+      if (currentUserId && currentUserId !== lastSyncedUserId) {
+        clearStore();
+        useStore.setState({ lastSyncedAt: 0, lastSyncedUserId: currentUserId });
+        syncRemoteData(currentUserId);
+      } else if (!lastSyncedUserId) {
+        useStore.setState({ lastSyncedAt: 0 });
+        syncRemoteData(currentUserId);
+      }
+    }
+  }, [hasHydrated, status, session?.user?.id]);
 
   if (isOnboarding) {
     return (

@@ -2,11 +2,13 @@
 
 import { motion } from 'framer-motion';
 import { useStore } from '@/store/useStore';
-import { Moon, Heart, Brain, TrendingUp } from 'lucide-react';
+import { Moon, Heart, Brain, TrendingUp, Sun, MoonStar, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export function WellbeingSummary() {
   const store = useStore();
+  const onboardingData = store.onboardingData as any;
 
   const sleepHistoryList = store.sleepHistory || [];
   const lastSleep = sleepHistoryList[sleepHistoryList.length - 1];
@@ -34,15 +36,19 @@ export function WellbeingSummary() {
       .reduce((acc, r) => acc + (r.durationSeconds || 0), 0) / 60
   );
 
+  const isNewUser = !sleepHours && !moodScore && !breathingMinutes;
+  const sleepSchedule = onboardingData.sleepSchedule;
+
   const metrics = [
     {
       id: 'sleep',
       label: 'Sleep',
-      value: sleepHours > 0 ? `${sleepHours.toFixed(1)}h` : '--',
-      icon: Moon,
+      value: sleepHours > 0 ? `${sleepHours.toFixed(1)}h` : isNewUser ? '--' : '--',
+      icon: sleepSchedule === 'night-owl' ? MoonStar : sleepSchedule === 'early-bird' ? Sun : Moon,
       color: 'text-indigo-400',
       bgColor: 'bg-indigo-500/10',
       progress: sleepHours > 0 ? Math.min(100, (sleepHours / 8) * 100) : 0,
+      hint: isNewUser && sleepSchedule ? getSleepHint(sleepSchedule) : null,
     },
     {
       id: 'mood',
@@ -69,18 +75,25 @@ export function WellbeingSummary() {
     ? Math.round(activeMetrics.reduce((acc, m) => acc + (m.progress || 0), 0) / activeMetrics.length)
     : 0;
 
+  const metricsToShow = metrics.map((m) => ({
+    ...m,
+    hint: m.hint || (isNewUser && m.progress === 0 ? getDefaultHint(m.id, onboardingData) : null),
+  }));
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider">Wellbeing</h3>
         <div className="flex items-center gap-1.5">
           <TrendingUp className="w-3 h-3 text-[#E2FF6F]" />
-          <span className="text-xs text-[#E2FF6F] font-medium">{overallScore}% this week</span>
+          <span className="text-xs text-[#E2FF6F] font-medium">
+            {overallScore > 0 ? `${overallScore}% this week` : 'Getting started'}
+          </span>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        {metrics.map((metric, index) => (
+        {metricsToShow.map((metric, index) => (
           <motion.div
             key={metric.id}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -92,18 +105,38 @@ export function WellbeingSummary() {
               'hover:border-white/10 transition-all duration-300'
             )}
           >
-            <div
-              className={cn(
-                'w-8 h-8 rounded-xl flex items-center justify-center mb-3',
-                metric.bgColor
-              )}
-            >
-              <metric.icon className={cn('w-4 h-4', metric.color)} />
-            </div>
-            <p className="text-xl font-bold text-white">{metric.value}</p>
-            <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1">
-              {metric.label}
-            </p>
+            {metric.hint ? (
+              <Link href={metric.hint.href} className="block">
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-xl flex items-center justify-center mb-3',
+                    metric.bgColor
+                  )}
+                >
+                  <metric.icon className={cn('w-4 h-4', metric.color)} />
+                </div>
+                <p className="text-[10px] text-[#E2FF6F] font-medium mb-1">{metric.hint.label}</p>
+                <p className="text-xl font-bold text-white">{metric.value}</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1">
+                  {metric.label}
+                </p>
+              </Link>
+            ) : (
+              <>
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-xl flex items-center justify-center mb-3',
+                    metric.bgColor
+                  )}
+                >
+                  <metric.icon className={cn('w-4 h-4', metric.color)} />
+                </div>
+                <p className="text-xl font-bold text-white">{metric.value}</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1">
+                  {metric.label}
+                </p>
+              </>
+            )}
 
             <div className="mt-3 h-1.5 bg-white/5 rounded-full overflow-hidden">
               <motion.div
@@ -156,4 +189,46 @@ export function WellbeingSummary() {
       )}
     </div>
   );
+}
+
+function getSleepHint(schedule: string) {
+  switch (schedule) {
+    case 'early-bird':
+      return { label: 'Rise & shine early', href: '/sleep' };
+    case 'night-owl':
+      return { label: 'Own the night hours', href: '/sleep' };
+    case 'regular':
+      return { label: 'Consistency is your strength', href: '/sleep' };
+    case 'irregular':
+      return { label: 'Find your rhythm', href: '/sleep' };
+    default:
+      return null;
+  }
+}
+
+function getDefaultHint(metricId: string, onboardingData: any) {
+  const priorities = onboardingData.priorities || [];
+  const biggestChallenge = onboardingData.biggestChallenge || '';
+
+  if (metricId === 'mood') {
+    if (priorities.includes('emotional') || priorities.includes('anxiety') || biggestChallenge === 'overthinking' || biggestChallenge === 'self-doubt') {
+      return { label: 'Track your emotions', href: '/mood' };
+    }
+    if (priorities.includes('energy') || biggestChallenge === 'burnout' || biggestChallenge === 'motivation') {
+      return { label: 'Check in with yourself', href: '/mood' };
+    }
+    return { label: 'Log your first mood', href: '/mood' };
+  }
+
+  if (metricId === 'mindfulness') {
+    if (priorities.includes('focus') || priorities.includes('clarity')) {
+      return { label: 'Train your focus', href: '/breathing' };
+    }
+    if (biggestChallenge === 'overthinking' || biggestChallenge === 'anxiety') {
+      return { label: 'Calm your mind', href: '/breathing' };
+    }
+    return { label: 'Start breathing', href: '/breathing' };
+  }
+
+  return null;
 }

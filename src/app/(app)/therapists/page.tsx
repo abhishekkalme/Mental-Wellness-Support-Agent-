@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Therapist } from '@/lib/types';
 import {
@@ -60,7 +60,32 @@ export default function TherapistPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Therapist | null>(null);
   const [booked, setBooked] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookError, setBookError] = useState<string | null>(null);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    online: false,
+    inPerson: false,
+    slidingScale: false,
+    crisisReady: false,
+  });
+
+  const filteredTherapists = useMemo(() => {
+    if (!searchQuery.trim() && !Object.values(filters).some(Boolean)) {
+      return therapists;
+    }
+    const query = searchQuery.toLowerCase();
+    return therapists.filter((t) => {
+      const matchesSearch = searchQuery.trim()
+        ? t.name.toLowerCase().includes(query) ||
+          t.specialty.toLowerCase().includes(query) ||
+          t.tags.some((tag) => tag.toLowerCase().includes(query))
+        : true;
+      return matchesSearch;
+    });
+  }, [therapists, searchQuery, filters]);
 
   const fetchTherapists = async () => {
     try {
@@ -90,6 +115,10 @@ export default function TherapistPage() {
     }
   };
 
+  const toggleFilter = useCallback((key: keyof typeof filters) => {
+    setFilters((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
   useEffect(() => {
     fetchTherapists();
   }, []);
@@ -111,6 +140,8 @@ export default function TherapistPage() {
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by specialty, name..."
             className="w-full pl-10 pr-4 h-12 rounded-2xl glass-panel bg-background/50 border-border focus:ring-2 focus:ring-rose-400 outline-none text-sm transition-all"
           />
@@ -122,16 +153,32 @@ export default function TherapistPage() {
           <div className="glass-panel p-8 bg-rose-400/5 border-rose-400/20 space-y-6">
             <h3 className="font-bold text-lg">Filter Specialists</h3>
             <div className="space-y-4">
-              {['Online Sessions', 'In-person', 'Sliding Scale', 'Crisis Ready'].map((f) => (
-                <label key={f} className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-5 h-5 rounded-md border-2 border-border group-hover:border-rose-400 transition-colors" />
-                  <span className="text-sm font-medium text-foreground/80">{f}</span>
+              {[
+                { key: 'online' as const, label: 'Online Sessions' },
+                { key: 'inPerson' as const, label: 'In-person' },
+                { key: 'slidingScale' as const, label: 'Sliding Scale' },
+                { key: 'crisisReady' as const, label: 'Crisis Ready' },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-3 cursor-pointer group">
+                  <div
+                    onClick={() => toggleFilter(key)}
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${filters[key] ? 'bg-rose-400 border-rose-400' : 'border-border group-hover:border-rose-400'}`}
+                  >
+                    {filters[key] && <CheckCircle2 className="w-3.5 h-3.5 text-black" />}
+                  </div>
+                  <span className="text-sm font-medium text-foreground/80">{label}</span>
                 </label>
               ))}
             </div>
-            <Button className="w-full bg-rose-400 hover:bg-rose-500 text-white">
-              Apply Filters
-            </Button>
+            {(searchQuery || Object.values(filters).some(Boolean)) && (
+              <Button
+                variant="ghost"
+                className="w-full text-rose-400 hover:text-rose-500 hover:bg-rose-400/10"
+                onClick={() => { setSearchQuery(''); setFilters({ online: false, inPerson: false, slidingScale: false, crisisReady: false }); }}
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
 
           <div className="glass-panel p-8 border-dashed border-2 border-border text-center space-y-4">
@@ -148,11 +195,39 @@ export default function TherapistPage() {
 
         <div className="lg:col-span-3">
           {loading ? (
-            <div className="h-[400px] flex flex-col items-center justify-center gap-4 text-rose-400">
-              <Loader2 className="w-12 h-12 animate-spin" />
-              <p className="font-bold tracking-widest uppercase text-xs">
-                Connecting to Specialists...
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2, 3, 4].map((idx) => (
+                <div key={idx} className="glass-panel p-8 space-y-6 animate-pulse">
+                  <div className="flex items-start justify-between">
+                    <div className="text-5xl w-20 h-20 glass-panel flex items-center justify-center bg-white/5 rounded-xl">
+                      <div className="w-12 h-12 bg-white/10 rounded-lg" />
+                    </div>
+                    <div className="text-right space-y-2">
+                      <div className="h-4 w-16 bg-white/10 rounded" />
+                      <div className="h-3 w-20 bg-white/5 rounded" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-6 w-48 bg-white/10 rounded" />
+                    <div className="h-4 w-32 bg-white/5 rounded" />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-6 w-16 bg-white/5 rounded" />
+                    <div className="h-6 w-20 bg-white/5 rounded" />
+                    <div className="h-6 w-14 bg-white/5 rounded" />
+                  </div>
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                      <div className="h-3 w-20 bg-white/5 rounded" />
+                      <div className="h-4 w-24 bg-white/10 rounded" />
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="h-3 w-20 bg-white/5 rounded" />
+                      <div className="h-5 w-12 bg-white/10 rounded" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : therapists.length === 0 ? (
             <div className="glass-panel p-20 text-center flex flex-col items-center justify-center border-rose-400/10 bg-rose-400/5 shadow-2xl relative overflow-hidden rounded-[40px]">
@@ -180,9 +255,20 @@ export default function TherapistPage() {
                 Initialize Directory
               </Button>
             </div>
+          ) : filteredTherapists.length === 0 ? (
+            <div className="glass-panel p-20 text-center border-rose-400/10 bg-rose-400/5 rounded-[40px]">
+              <p className="text-white/40 text-lg mb-4">No specialists match your search.</p>
+              <button
+                onClick={() => { setSearchQuery(''); setFilters({ online: false, inPerson: false, slidingScale: false, crisisReady: false }); }}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#E2FF6F]/10 border border-[#E2FF6F]/30 text-[#E2FF6F] font-bold text-sm hover:bg-[#E2FF6F]/20 transition-all"
+              >
+                <Search className="w-4 h-4" />
+                Clear Filters
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {therapists.map((t) => (
+              {filteredTherapists.map((t) => (
                 <motion.div
                   key={t.id}
                   whileHover={{ y: -5 }}
@@ -257,6 +343,8 @@ export default function TherapistPage() {
                 onClick={() => {
                   setSelected(null);
                   setBooked(false);
+                  setSelectedSlot(null);
+                  setBookError(null);
                 }}
                 className="absolute top-6 right-6 p-2 hover:bg-secondary rounded-full transition-colors"
               >
@@ -269,38 +357,49 @@ export default function TherapistPage() {
                     <div className="text-7xl w-32 h-32 glass-panel flex items-center justify-center bg-rose-400/5 shrink-0">
                       {selected.img}
                     </div>
-                    <div className="space-y-4">
-                      <div className="space-y-1">
-                        <h2 className="text-3xl font-bold">{selected.name}</h2>
-                        <p className="text-lg text-rose-500 font-bold">{selected.specialty}</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        &quot;I specialize in helping students navigate the complexities of
-                        university life, focusing on burnout prevention and anxiety management using
-                        evidence-based CBT techniques.&quot;
-                      </p>
-                      <div className="flex gap-4 justify-center md:justify-start">
-                        <div className="flex items-center gap-2 text-xs font-bold uppercase">
-                          <MapPin className="w-4 h-4 text-primary" /> Online Session
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <h2 className="text-3xl font-bold">{selected.name}</h2>
+                          <p className="text-lg text-rose-500 font-bold">{selected.specialty}</p>
                         </div>
-                        <div className="flex items-center gap-2 text-xs font-bold uppercase">
-                          <ShieldCheck className="w-4 h-4 text-emerald-500" /> Verified Expert
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {selected.reviews > 0
+                            ? `A verified specialist with ${selected.reviews} reviews and a ${selected.rating} rating. Specializes in ${selected.specialty.toLowerCase()}.`
+                            : `Specializes in ${selected.specialty.toLowerCase()}. Ready to support your wellness journey.`}
+                        </p>
+                        <div className="flex gap-4 justify-center md:justify-start">
+                          <div className="flex items-center gap-2 text-xs font-bold uppercase">
+                            <MapPin className="w-4 h-4 text-primary" /> Online Session
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-bold uppercase">
+                            <ShieldCheck className="w-4 h-4 text-emerald-500" /> Verified Expert
+                          </div>
                         </div>
                       </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Select a Time Slot</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {['Mon 10am', 'Tue 2pm', 'Wed 11am', 'Fri 4pm'].map((slot) => (
+                        <button
+                          key={slot}
+                          onClick={() => setSelectedSlot(slot)}
+                          className={`p-4 rounded-2xl text-sm font-bold transition-all ${
+                            selectedSlot === slot
+                              ? 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/20'
+                              : 'glass-panel hover:bg-rose-400/20 hover:text-rose-400 border-transparent'
+                          }`}
+                        >
+                          {slot}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {['Mon 10am', 'Tue 2pm', 'Wed 11am', 'Fri 4pm'].map((slot) => (
-                      <button
-                        key={slot}
-                        className="p-4 rounded-2xl glass-panel text-sm font-bold hover:bg-rose-400 hover:text-white hover:border-rose-400 transition-all"
-                      >
-                        {slot}
-                      </button>
-                    ))}
-                  </div>
-
+                  {bookError && (
+                    <p className="text-sm text-rose-500 font-bold">{bookError}</p>
+                  )}
                   <div className="flex items-center justify-between pt-6 border-t border-border">
                     <div>
                       <p className="text-xs font-bold text-muted-foreground uppercase">
@@ -310,10 +409,41 @@ export default function TherapistPage() {
                     </div>
                     <Button
                       size="lg"
-                      className="px-12 bg-rose-500 text-white hover:bg-rose-600 rounded-2xl h-16"
-                      onClick={() => setBooked(true)}
+                      className="px-12 bg-rose-500 text-white hover:bg-rose-600 rounded-2xl h-16 disabled:opacity-40"
+                      onClick={async () => {
+                        setBookingLoading(true);
+                        try {
+                          const res = await fetch('/api/therapists/booking', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              therapistId: selected.id,
+                              therapistName: selected.name,
+                              date: selectedSlot!.split(' ')[0],
+                              time: selectedSlot!.split(' ')[1],
+                            }),
+                          });
+                          if (res.status === 409) {
+                            setBookError('This slot is already booked. Please choose another.');
+                            setBookingLoading(false);
+                            return;
+                          }
+                          setBooked(true);
+                        } catch {
+                          setBookError('Failed to book. Please try again.');
+                        } finally {
+                          setBookingLoading(false);
+                        }
+                      }}
+                      disabled={!selectedSlot || bookingLoading}
                     >
-                      Book Session
+                      {bookingLoading ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" /> Booking...
+                        </span>
+                      ) : (
+                        'Book Session'
+                      )}
                     </Button>
                   </div>
                 </>
@@ -325,8 +455,7 @@ export default function TherapistPage() {
                   <div className="space-y-2">
                     <h2 className="text-3xl font-bold">Session Requested!</h2>
                     <p className="text-muted-foreground">
-                      Dr. {selected.name.split(' ').pop()} will review your request and confirm via
-                      email within 2 hours.
+                      Your session with {selected.name} on <strong>{selectedSlot}</strong> has been submitted. You will receive a confirmation email within 2 hours.
                     </p>
                   </div>
                   <Button
@@ -335,6 +464,7 @@ export default function TherapistPage() {
                     onClick={() => {
                       setSelected(null);
                       setBooked(false);
+                      setSelectedSlot(null);
                     }}
                   >
                     Return to Directory

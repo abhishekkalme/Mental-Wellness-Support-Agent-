@@ -205,8 +205,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
-            <Link href="/crisis" id="ftue-sos">
+            <Link href="/crisis">
               <Button
+                id="ftue-sos"
                 variant="outline"
                 size="sm"
                 className="bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20 gap-2 rounded-full h-9 px-3 md:px-4"

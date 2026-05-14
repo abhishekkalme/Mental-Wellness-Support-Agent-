@@ -40,6 +40,8 @@ export const authConfig = {
 
         user.id = String(existingUser._id);
         user.username = existingUser.username;
+        user.onboarded = existingUser.onboarded ?? false;
+        user.role = existingUser.role ?? 'user';
       }
       return true;
     },
@@ -58,12 +60,15 @@ export const authConfig = {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.username = user.username ?? '';
         token.role = (user.role as MindCareRole) ?? 'user';
         token.onboarded = user.onboarded ?? false;
+      }
+      if (trigger === 'update' && session?.onboarded !== undefined) {
+        token.onboarded = session.onboarded;
       }
       return token;
     },

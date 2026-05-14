@@ -57,6 +57,12 @@ export default auth((req) => {
     return NextResponse.redirect(signInUrl);
   }
 
+  // Redirect to onboarding if not completed (protects all routes except onboarding itself)
+  if (!session?.user?.onboarded && pathname !== '/onboarding') {
+    const onboardingUrl = new URL('/onboarding', req.url);
+    return NextResponse.redirect(onboardingUrl);
+  }
+
   // Admin protection
   if (pathname.startsWith('/admin') && session.user?.role !== 'admin') {
     return NextResponse.redirect(new URL('/dashboard', req.url));

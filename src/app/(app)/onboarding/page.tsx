@@ -213,7 +213,7 @@ function clearProgress() {
 export default function OnboardingPage() {
   const router = useRouter();
   const store = useStore();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
 
   const storedProgress = getStoredProgress();
   const [currentStep, setCurrentStep] = useState(storedProgress?.step ?? 0);
@@ -234,8 +234,28 @@ export default function OnboardingPage() {
     saveProgress(currentStep, formData);
   }, [currentStep, formData]);
 
+  const initialOnboardedRef = useRef<boolean | null>(null);
+
   useEffect(() => {
     if (!session?.user) return;
+
+    if (initialOnboardedRef.current === null) {
+      initialOnboardedRef.current = session.user.onboarded ?? false;
+    }
+
+    const sessionName = session.user.name || session.user.username || '';
+    if (sessionName && formData.name === '') {
+      setFormData((prev) => ({ ...prev, name: sessionName }));
+    }
+
+    if (session.user.onboarded) {
+      clearProgress();
+      if (initialOnboardedRef.current === true) {
+        store.dismissFtue();
+      }
+      router.replace('/dashboard');
+      return;
+    }
 
     const checkOnboardingStatus = async () => {
       try {
@@ -244,6 +264,7 @@ export default function OnboardingPage() {
           const data = await res.json();
           if (data.onboarded) {
             clearProgress();
+            store.dismissFtue();
             router.replace('/dashboard');
           }
         } else if (res.status === 401) {
@@ -405,7 +426,7 @@ export default function OnboardingPage() {
     };
 
     store.setName(formData.name);
-    store.setUsername(formData.name || username);
+    store.setUsername(username || formData.name);
     store.setOnboardingData(onboardingData);
 
     const metrics = getWellnessMetricsFromFeeling();
@@ -430,9 +451,8 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ onboardingData, wellnessMetrics: metrics }),
       });
+      await update({ onboarded: true });
     } catch {}
-
-    router.push('/dashboard');
   };
 
   const nextStep = () => {
@@ -447,22 +467,31 @@ export default function OnboardingPage() {
   const completeOnboardingRef = useRef(completeOnboarding);
   useEffect(() => {
     completeOnboardingRef.current = completeOnboarding;
+  });
+
+  useEffect(() => {
     if (currentStep === steps.length - 1) {
+      setGenerationPhase(0);
       const interval = setInterval(() => {
         setGenerationPhase((p) => {
-          const next = p + 1;
-          if (next >= 5) {
-            clearInterval(interval);
-            completeOnboardingRef.current();
-            return next;
-          }
-          return next;
+          if (p >= 5) return p;
+          return p + 1;
         });
       }, 600);
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        setGenerationPhase(0);
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, steps.length]);
+
+  useEffect(() => {
+    if (generationPhase >= 5) {
+      completeOnboardingRef.current();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generationPhase]);
 
   return (
     <div className="min-h-screen bg-[#0A0D08] flex flex-col items-center justify-center p-4 md:p-6 relative overflow-hidden">

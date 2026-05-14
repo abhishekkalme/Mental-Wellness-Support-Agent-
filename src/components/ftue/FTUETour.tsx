@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { CoachMark } from './CoachMark';
 
@@ -47,31 +47,39 @@ export function FTUETour() {
   const ftueDismissed = useStore((s) => (s as any).ftueDismissed ?? false);
   const setFtueStep = useStore((s) => (s as any).setFtueStep);
   const dismissFtue = useStore((s) => (s as any).dismissFtue);
+  const [ready, setReady] = useState(false);
+  const [validSteps, setValidSteps] = useState<typeof STEPS>([]);
 
   useEffect(() => {
-    if (ftueDismissed || ftueStep === 0) return;
-    const step = STEPS[ftueStep - 1];
-    if (step && typeof document !== 'undefined' && !document.getElementById(step.targetId)) {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    const existing = STEPS.filter((s) => document.getElementById(s.targetId));
+    setValidSteps(existing.length > 0 ? existing : STEPS);
+  }, [ready]);
+
+  const currentStep = validSteps[ftueStep - 1] ?? null;
+  const totalSteps = validSteps.length;
+
+  useEffect(() => {
+    if (!ready || ftueDismissed || ftueStep === 0 || !currentStep) return;
+    if (typeof document !== 'undefined' && !document.getElementById(currentStep.targetId)) {
       if (ftueStep < STEPS.length) {
         setFtueStep(ftueStep + 1);
       } else {
         dismissFtue();
       }
     }
-  }, [ftueStep, ftueDismissed, setFtueStep, dismissFtue]);
+  }, [ftueStep, ftueDismissed, ready, currentStep, setFtueStep, dismissFtue]);
 
-  if (ftueDismissed || ftueStep === 0 || ftueStep > STEPS.length) return null;
-
-  const currentStep = STEPS[ftueStep - 1];
-  if (!currentStep) return null;
-
-  if (typeof document !== 'undefined' && !document.getElementById(currentStep.targetId)) {
-    return null;
-  }
+  if (ftueDismissed || ftueStep === 0 || !ready || !currentStep) return null;
 
   const handleNext = () => {
     const next = ftueStep + 1;
-    if (next > STEPS.length) {
+    if (next > totalSteps || next > STEPS.length) {
       dismissFtue();
     } else {
       setFtueStep(next);
@@ -91,7 +99,7 @@ export function FTUETour() {
   return (
     <CoachMark
       step={ftueStep}
-      total={STEPS.length}
+      total={totalSteps}
       title={currentStep.title}
       description={currentStep.description}
       targetId={currentStep.targetId}

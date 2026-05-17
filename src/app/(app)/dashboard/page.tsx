@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const journalEntries = useStore((s) => s.journalEntries);
   const breathingHistory = useStore((s) => s.breathingHistory);
   const lastSyncedAt = useStore((s) => s.lastSyncedAt);
+  const syncStatus = useStore((s) => s.syncStatus);
   const addMoodEntry = useStore((s) => s.addMoodEntry);
   const syncRemoteData = useStore((s) => s.syncRemoteData);
 
@@ -64,10 +65,17 @@ export default function DashboardPage() {
     }
   }, []);
 
+  const [initialSyncDone, setInitialSyncDone] = useState(false);
+
   useEffect(() => {
     if (!hydrated) return;
-    if (Date.now() - (lastSyncedAt || 0) <= 60000) return;
-    syncRemoteData().catch(() => toast.error('Sync failed. Your data may not be up to date.'));
+    if (Date.now() - (lastSyncedAt || 0) <= 60000) {
+      setInitialSyncDone(true);
+      return;
+    }
+    syncRemoteData()
+      .catch(() => toast.error('Sync failed. Your data may not be up to date.'))
+      .finally(() => setInitialSyncDone(true));
   }, [hydrated, lastSyncedAt, syncRemoteData]);
 
   const wellbeing = useMemo(
@@ -154,6 +162,17 @@ export default function DashboardPage() {
         >
           <DashboardHeader />
         </motion.div>
+
+        {syncStatus === 'syncing' && !initialSyncDone && (
+          <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-[#E2FF6F] rounded-full"
+              initial={{ width: '0%' }}
+              animate={{ width: '100%' }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </div>
+        )}
 
         {!hasData ? (
           <WelcomeZeroState name={name} onboardingData={onboardingData} />

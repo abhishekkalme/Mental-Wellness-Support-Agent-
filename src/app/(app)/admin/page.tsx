@@ -355,6 +355,8 @@ function UsersTab() {
   const [onboardedFilter, setOnboardedFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const pageSize = 15;
 
   const fetchUsers = useCallback(
@@ -409,6 +411,24 @@ function UsersTab() {
       fetchUsers(page);
     } catch {}
     setSavingId(null);
+  };
+
+  const deleteUser = async (userId: string) => {
+    setDeletingId(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('User deleted');
+        fetchUsers(page);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to delete user');
+      }
+    } catch {
+      toast.error('Failed to delete user');
+    }
+    setDeletingId(null);
+    setConfirmDelete(null);
   };
 
   return (
@@ -567,6 +587,38 @@ function UsersTab() {
                             <Zap className="w-3.5 h-3.5" />
                           )}
                         </button>
+                        {confirmDelete === u._id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => deleteUser(u._id)}
+                              disabled={deletingId === u._id}
+                              className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-all disabled:opacity-50"
+                              title="Confirm delete"
+                            >
+                              {deletingId === u._id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDelete(null)}
+                              className="p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white transition-all"
+                              title="Cancel"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDelete(u._id)}
+                            disabled={u.role === 'admin'}
+                            className="p-1.5 rounded-lg hover:bg-rose-500/10 text-white/30 hover:text-rose-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={u.role === 'admin' ? 'Cannot delete admin' : 'Delete user'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -178,31 +178,6 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
           </AnimatePresence>
         </Link>
 
-        {role === 'admin' && (
-          <div className="group relative">
-            <Link
-              href="/admin"
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                'text-white/60 hover:text-white hover:bg-white/5'
-              )}
-            >
-              <Settings className="w-5 h-5 shrink-0" />
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="whitespace-nowrap overflow-hidden"
-                  >
-                    Admin
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Link>
-          </div>
-        )}
 
         {session?.user && (
           <div className="pt-2 border-t border-white/5">

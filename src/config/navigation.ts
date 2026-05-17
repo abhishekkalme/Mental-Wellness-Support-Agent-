@@ -13,7 +13,7 @@ import {
   Settings,
   ShieldAlert,
   Music,
-  Dumbbell,
+  ShieldUser,
   CalendarDays,
   ListChecks,
   LayoutDashboard,
@@ -42,7 +42,7 @@ export const allNavItems: NavItem[] = [
   { name: 'Academic Calendar', href: '/academic-calendar', icon: CalendarDays, section: 'tools' },
   { name: 'Crisis Support', href: '/crisis', icon: ShieldAlert, section: 'support' },
   { name: 'Settings', href: '/settings', icon: Settings, section: 'more' },
-  { name: 'Admin', href: '/admin', icon: Settings, roles: ['admin'], section: 'more' },
+  { name: 'Admin', href: '/admin', icon: ShieldUser, roles: ['admin'], section: 'more' },
   {
     name: 'Therapist Admin',
     href: '/therapist-admin/dashboard',

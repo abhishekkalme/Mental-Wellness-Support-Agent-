@@ -320,6 +320,59 @@ function EmptySleepState({ onLogSleep }: { onLogSleep: () => void }) {
   );
 }
 
+function SleepHistoryList() {
+  const sleepHistory = useStore((s) => s.sleepHistory);
+
+  const sorted = useMemo(
+    () => [...sleepHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [sleepHistory]
+  );
+
+  if (sorted.length === 0) return null;
+
+  return (
+    <motion.div variants={itemVariants} className="surface-card p-6 md:p-8 space-y-5">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C8B6FF]/20 to-[#E2FF6F]/20 flex items-center justify-center">
+          <ListChecks className="w-4 h-4 text-[#E2FF6F]" />
+        </div>
+        <h3 className="font-bold text-white text-lg">Past Sleep Entries</h3>
+        <span className="text-xs text-white/30 ml-auto">{sorted.length} total</span>
+      </div>
+      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {sorted.map((entry) => {
+          const qLabel = qualityLabels[entry.quality as keyof typeof qualityLabels];
+          return (
+            <motion.div
+              key={entry.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-[#E2FF6F]/10 flex items-center justify-center">
+                  <Moon className="w-5 h-5 text-[#E2FF6F]" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">
+                    {format(new Date(entry.date), 'MMM d, yyyy')}
+                  </p>
+                  <p className="text-xs text-white/40">
+                    {entry.durationHours}h · {qLabel?.label || 'Unknown'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <QualityDots value={entry.quality} />
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
 function SleepStatsGrid({
   displayHours,
   displayMinutes,
@@ -622,6 +675,8 @@ function TrackingTab({
         />
 
         <SleepInsightCard insights={sleepInsights} />
+
+        <SleepHistoryList />
       </motion.div>
     </motion.div>
   );

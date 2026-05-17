@@ -11,7 +11,7 @@ import mongoose from 'mongoose';
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'therapist') {
+    if (!session?.user?.id || !session.user.roles?.includes('therapist')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

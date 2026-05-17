@@ -25,14 +25,14 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const role = searchParams.get('role') || session.user.role;
+    const role = searchParams.get('role') || session.user.roles?.[0] || 'user';
     const status = searchParams.get('status') || '';
     const limit = Math.min(100, parseInt(searchParams.get('limit') || '50'));
 
     await connectDB();
 
     let bookings;
-    if (session.user.role === 'therapist' || role === 'therapist') {
+    if (session.user.roles?.includes('therapist') || role === 'therapist') {
       const profile = await TherapistProfile.findOne({ userId: session.user.id });
       if (!profile) {
         return NextResponse.json({ error: 'Therapist profile not found' }, { status: 404 });
@@ -83,7 +83,7 @@ export async function PATCH(req: Request) {
     const session = await auth();
     if (
       !session?.user?.id ||
-      (session.user.role !== 'therapist' && session.user.role !== 'admin')
+      !session.user.roles?.some((r) => r === 'therapist' || r === 'admin')
     ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -98,7 +98,7 @@ export async function PATCH(req: Request) {
     await connectDB();
 
     const profile = await TherapistProfile.findOne({ userId: session.user.id });
-    if (!profile && session.user.role !== 'admin') {
+    if (!profile && !session.user.roles?.includes('admin')) {
       return NextResponse.json({ error: 'Therapist profile not found' }, { status: 404 });
     }
 
@@ -108,7 +108,7 @@ export async function PATCH(req: Request) {
     if (cancelReason) updateData.cancelReason = cancelReason;
 
     const filter: Record<string, unknown> = { _id: bookingId };
-    if (session.user.role !== 'admin' && profile) {
+    if (!session.user.roles?.includes('admin') && profile) {
       filter.therapistProfileId = profile._id;
     }
 

@@ -20,7 +20,7 @@ const noteSchema = z.object({
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'therapist') {
+    if (!session?.user?.id || !session.user.roles?.includes('therapist')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'therapist') {
+    if (!session?.user?.id || !session.user.roles?.includes('therapist')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

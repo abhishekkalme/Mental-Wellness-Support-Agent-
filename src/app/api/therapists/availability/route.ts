@@ -22,7 +22,7 @@ export async function GET() {
     const session = await auth();
     if (
       !session?.user?.id ||
-      (session.user.role !== 'therapist' && session.user.role !== 'admin')
+      !session.user.roles?.some((r) => r === 'therapist' || r === 'admin')
     ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const session = await auth();
     if (
       !session?.user?.id ||
-      (session.user.role !== 'therapist' && session.user.role !== 'admin')
+      !session.user.roles?.some((r) => r === 'therapist' || r === 'admin')
     ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -94,7 +94,7 @@ export async function DELETE(req: Request) {
     const session = await auth();
     if (
       !session?.user?.id ||
-      (session.user.role !== 'therapist' && session.user.role !== 'admin')
+      !session.user.roles?.some((r) => r === 'therapist' || r === 'admin')
     ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

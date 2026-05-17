@@ -10,7 +10,7 @@ export async function GET() {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    if (session.user.role !== 'therapist' && session.user.role !== 'admin') {
+    if (!session.user.roles?.some((r) => r === 'therapist' || r === 'admin')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -19,7 +19,7 @@ export async function GET() {
       .populate('userId', 'name email image')
       .lean();
 
-    if (!profile && session.user.role === 'admin') {
+    if (!profile && session.user.roles?.includes('admin')) {
       return NextResponse.json({ error: 'No therapist profile found' }, { status: 404 });
     }
 
@@ -53,7 +53,7 @@ export async function PUT(req: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    if (session.user.role !== 'therapist' && session.user.role !== 'admin') {
+    if (!session.user.roles?.some((r) => r === 'therapist' || r === 'admin')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

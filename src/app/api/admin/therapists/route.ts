@@ -10,7 +10,7 @@ import mongoose from 'mongoose';
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
     const [profiles, total] = await Promise.all([
       TherapistProfile.find(filter)
-        .populate('userId', 'name email image role')
+        .populate('userId', 'name email image roles')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

@@ -6,7 +6,7 @@ import Report from '@/lib/db/models/Report';
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
     const [posts, total, pendingReports] = await Promise.all([
       CommunityPost.find(filter)
-        .populate('author', 'name username image role')
+        .populate('author', 'name username image roles')
         .sort({ reportCount: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -101,7 +101,7 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

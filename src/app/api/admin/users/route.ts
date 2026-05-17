@@ -5,7 +5,7 @@ import User from '@/lib/db/models/User';
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
         { username: { $regex: search, $options: 'i' } },
       ];
     }
-    if (role) filter.role = role;
+    if (role) filter.roles = { $in: [role] };
     if (onboarded === 'true') filter.onboarded = true;
     else if (onboarded === 'false') filter.onboarded = false;
 
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 
     const [users, total] = await Promise.all([
       User.find(filter)
-        .select('name username email role onboarded isPremium createdAt updatedAt')
+        .select('name username email roles onboarded isPremium createdAt updatedAt')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

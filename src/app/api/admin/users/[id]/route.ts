@@ -6,14 +6,14 @@ import CommunityPost from '@/lib/db/models/CommunityPost';
 import { z } from 'zod';
 
 const UpdateSchema = z.object({
-  role: z.enum(['user', 'admin', 'therapist']).optional(),
+  roles: z.array(z.enum(['user', 'admin', 'therapist'])).optional(),
   isPremium: z.boolean().optional(),
   onboarded: z.boolean().optional(),
 });
 
 async function ensureAdmin() {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return null;
@@ -33,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     await connectDB();
     const user = await User.findByIdAndUpdate(id, { $set: parsed.data }, { new: true })
-      .select('name username email role onboarded isPremium')
+      .select('name username email roles onboarded isPremium')
       .lean();
 
     if (!user) {
@@ -55,12 +55,12 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params;
 
     await connectDB();
-    const user = await User.findById(id).select('_id role').lean();
+    const user = await User.findById(id).select('_id roles').lean();
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (user.role === 'admin') {
+    if (user.roles?.includes('admin')) {
       return NextResponse.json({ error: 'Cannot delete admin users' }, { status: 403 });
     }
 

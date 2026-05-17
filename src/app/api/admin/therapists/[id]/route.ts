@@ -17,7 +17,7 @@ const verifySchema = z.object({
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -30,7 +30,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     await connectDB();
 
     const profile = await TherapistProfile.findById(id)
-      .populate('userId', 'name email image role createdAt')
+      .populate('userId', 'name email image roles createdAt')
       .lean();
 
     if (!profile) {
@@ -63,7 +63,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -110,7 +110,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (parsed.data.verificationStatus === 'verified') {
       const user = await User.findByIdAndUpdate(
         (profile.userId as Record<string, unknown>)?._id || profile.userId,
-        { $set: { role: 'therapist' } },
+        { $addToSet: { roles: 'therapist' } },
         { new: true }
       );
     }

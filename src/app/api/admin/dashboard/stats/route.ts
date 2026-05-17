@@ -8,7 +8,7 @@ import Therapist from '@/lib/db/models/Therapist';
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!session?.user || !session.user.roles?.includes('admin')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -30,7 +30,10 @@ export async function GET() {
     ] = await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ updatedAt: { $gte: sevenDaysAgo } }),
-      User.aggregate([{ $group: { _id: '$role', count: { $sum: 1 } } }]),
+      User.aggregate([
+        { $unwind: { path: '$roles', preserveNullAndEmptyArrays: true } },
+        { $group: { _id: '$roles', count: { $sum: 1 } } },
+      ]),
       User.countDocuments({ onboarded: true }),
       CommunityPost.countDocuments({ deletedAt: null }),
       CommunityPost.countDocuments({ reports: { $gt: 0 }, deletedAt: null }),

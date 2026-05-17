@@ -7,14 +7,14 @@ declare module 'next-auth' {
     user: {
       id: string;
       username: string;
-      role: MindCareRole;
+      roles: MindCareRole[];
       onboarded: boolean;
     } & DefaultSession['user'];
   }
 
   interface User {
     username?: string;
-    role?: MindCareRole;
+    roles?: MindCareRole[];
     onboarded?: boolean;
   }
 }
@@ -23,7 +23,7 @@ declare module '@auth/core/jwt' {
   interface JWT {
     id?: string;
     username?: string;
-    role?: MindCareRole;
+    roles?: MindCareRole[];
     onboarded?: boolean;
   }
 }

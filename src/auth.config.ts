@@ -32,7 +32,7 @@ export const authConfig = {
             email: email.toLowerCase(),
             emailVerified: true,
             image: profile?.image || user.image,
-            role: 'user',
+            roles: ['user'],
           });
         } else if (!existingUser.image && profile?.image) {
           await User.updateOne({ _id: existingUser._id }, { image: profile.image });
@@ -41,14 +41,14 @@ export const authConfig = {
         user.id = String(existingUser._id);
         user.username = existingUser.username;
         user.onboarded = existingUser.onboarded ?? false;
-        user.role = existingUser.role ?? 'user';
+        user.roles = existingUser.roles ?? ['user'];
       }
       return true;
     },
     async authorized({ auth, request }) {
       const path = request.nextUrl.pathname;
       if (path.startsWith('/admin')) {
-        if (!auth?.user || auth.user.role !== 'admin') {
+        if (!auth?.user || !auth.user.roles?.includes('admin')) {
           return NextResponse.redirect(new URL('/dashboard', request.url));
         }
       }
@@ -58,7 +58,7 @@ export const authConfig = {
       if (user) {
         token.id = user.id;
         token.username = user.username ?? '';
-        token.role = (user.role as MindCareRole) ?? 'user';
+        token.roles = (user.roles as MindCareRole[]) ?? ['user'];
         token.onboarded = user.onboarded ?? false;
       }
       if (trigger === 'update' && session?.onboarded !== undefined) {
@@ -70,7 +70,7 @@ export const authConfig = {
       if (session.user) {
         session.user.id = (token.id as string) ?? session.user.id ?? '';
         session.user.username = (token.username as string) ?? '';
-        session.user.role = (token.role as MindCareRole) ?? 'user';
+        session.user.roles = (token.roles as MindCareRole[]) ?? ['user'];
         session.user.onboarded = (token.onboarded as boolean) ?? false;
       }
       return session;

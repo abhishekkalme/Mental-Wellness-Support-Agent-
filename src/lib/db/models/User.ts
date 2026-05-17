@@ -9,7 +9,7 @@ export interface IUser extends Document {
   passwordHash?: string;
   emailVerified: boolean;
   image?: string;
-  role: UserRole;
+  roles: UserRole[];
   preferredLanguage: string;
   agentGender: 'male' | 'female' | 'neutral';
   isPremium: boolean;
@@ -31,10 +31,10 @@ const UserSchema: Schema = new Schema(
     passwordHash: { type: String, select: false },
     emailVerified: { type: Boolean, default: false },
     image: { type: String },
-    role: {
-      type: String,
+    roles: {
+      type: [String],
       enum: ['user', 'admin', 'therapist'],
-      default: 'user',
+      default: ['user'],
     },
     preferredLanguage: { type: String, default: 'en' },
     agentGender: {

@@ -54,10 +54,10 @@ export const allNavItems: NavItem[] = [
 
 export const mobilePrimaryItems: string[] = ['/dashboard', '/mood', '/chat', '/crisis'];
 
-export function filterNavByRole(items: NavItem[], role: string): NavItem[] {
+export function filterNavByRole(items: NavItem[], roles: string[]): NavItem[] {
   return items.filter((item) => {
     if (!item.roles?.length) return true;
-    return item.roles.includes(role as 'admin' | 'therapist');
+    return item.roles.some((r) => roles.includes(r));
   });
 }
 

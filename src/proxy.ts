@@ -64,15 +64,14 @@ export default auth((req) => {
   }
 
   // Admin protection
-  if (pathname.startsWith('/admin') && session.user?.role !== 'admin') {
+  if (pathname.startsWith('/admin') && !session.user?.roles?.includes('admin')) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   // Therapist admin protection
   if (
     pathname.startsWith('/therapist-admin') &&
-    session.user?.role !== 'therapist' &&
-    session.user?.role !== 'admin'
+    !session.user?.roles?.some((r) => r === 'therapist' || r === 'admin')
   ) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }

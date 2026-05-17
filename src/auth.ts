@@ -4,10 +4,9 @@ import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 import { authConfig } from '@/auth.config';
 import type { MindCareRole } from '@/types/next-auth-augmentation';
-import { logEnvIssues, checkProductionReadiness } from '@/lib/validateEnv';
+import { validateEnv } from '@/lib/validateEnv';
 
-logEnvIssues();
-if (process.env.NODE_ENV === 'production') checkProductionReadiness();
+validateEnv();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,

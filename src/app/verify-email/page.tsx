@@ -5,10 +5,10 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 function VerifyEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'invalid'>('loading');
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -29,14 +29,15 @@ function VerifyEmailContent() {
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          setError(data.error || 'Verification failed');
+          toast.error(data.error || 'Verification failed');
           setStatus('error');
           return;
         }
 
+        toast.success('Email verified successfully!');
         setStatus('success');
       } catch {
-        setError('Something went wrong');
+        toast.error('Something went wrong');
         setStatus('error');
       }
     };
@@ -123,7 +124,7 @@ function VerifyEmailContent() {
               <div className="space-y-2">
                 <h1 className="text-2xl font-semibold tracking-tight">Verification failed</h1>
                 <p className="text-sm text-muted-foreground">
-                  {error || 'Something went wrong. Please try again.'}
+                  Something went wrong. Please try again.
                 </p>
               </div>
 

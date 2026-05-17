@@ -122,7 +122,7 @@ function mergeByLatestTimestamp<T extends { id: string; timestamp?: string }>(
   return Array.from(map.values());
 }
 
-const SYNC_DEBOUNCE_MS = 5000;
+const SYNC_DEBOUNCE_MS = 2000;
 const syncTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 
 function debouncedSync(key: string, url: string, data: unknown) {
@@ -194,7 +194,10 @@ export const useStore = create<MindCareStore>()(
         }),
       updateLastActive: () => set({ lastActive: new Date().toISOString() }),
       setWellnessGoals: (goals) => set({ wellnessGoals: goals }),
-      addHabit: (habit) => set((state) => ({ habits: [...state.habits, habit] })),
+      addHabit: (habit) => {
+        set((state) => ({ habits: [...state.habits, habit] }));
+        debouncedSync(`habit:${habit.id}`, '/api/habits', habit);
+      },
       deleteHabit: (habitId) =>
         set((state) => ({ habits: state.habits.filter((h) => h.id !== habitId) })),
       toggleHabit: (habitId, date) => {
@@ -223,7 +226,10 @@ export const useStore = create<MindCareStore>()(
         set((state) => ({
           goals: state.goals.map((g) => (g.id === goalId ? { ...g, completed: !g.completed } : g)),
         })),
-      addSleepEntry: (entry) => set((state) => ({ sleepHistory: [...state.sleepHistory, entry] })),
+      addSleepEntry: (entry) => {
+        set((state) => ({ sleepHistory: [...state.sleepHistory, entry] }));
+        debouncedSync(`sleep:${entry.id}`, '/api/sleep', entry);
+      },
       updateWellnessMetrics: (metrics) =>
         set((state) => ({ wellnessMetrics: { ...state.wellnessMetrics, ...metrics } })),
       addBreathingRecord: (record) => {
@@ -253,7 +259,7 @@ export const useStore = create<MindCareStore>()(
       setLastSyncedUserId: (id) => set({ lastSyncedUserId: id }),
       syncRemoteData: async (userId?: string) => {
         const now = Date.now();
-        if (now - get().lastSyncedAt < 30000) return;
+        if (now - get().lastSyncedAt < 5000) return;
         const current = get().syncStatus;
         if (current === 'syncing') return;
         set({ syncStatus: 'syncing' });

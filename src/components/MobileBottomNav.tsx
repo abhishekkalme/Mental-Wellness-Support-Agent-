@@ -7,18 +7,19 @@ import {
   Home,
   Heart,
   BookText,
-  Brain,
-  Wind,
   Moon,
-  BarChart3,
   MessageSquare,
-  Sparkles,
-  Library,
+  Target,
   Users,
-  Stethoscope,
+  ShieldAlert,
   Settings,
+  Wind,
   MoreHorizontal,
   X,
+  Stethoscope,
+  CalendarDays,
+  ListChecks,
+  LayoutDashboard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
@@ -41,8 +42,9 @@ export function MobileBottomNav() {
   const primaryLabels: Record<string, string> = {
     '/': 'Home',
     '/dashboard': 'Dashboard',
-    '/agent-chat': 'AI',
     '/mood': 'Check-in',
+    '/chat': 'AI',
+    '/crisis': 'SOS',
   };
 
   return (
@@ -72,15 +74,10 @@ export function MobileBottomNav() {
                 href={item.href}
                 className={cn(
                   'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all',
-                  isActive(item.href) ? 'text-[#E2FF6F]' : 'text-white/40 hover:text-white'
+                  isActive(item.href) ? 'text-[#E2FF6F]' : 'text-white/50 hover:text-white'
                 )}
               >
-                <item.icon
-                  className={cn(
-                    'w-5 h-5 transition-transform',
-                    isActive(item.href) ? 'scale-110' : ''
-                  )}
-                />
+                <item.icon className={cn('w-5 h-5', isActive(item.href) ? 'scale-110' : '')} />
                 <span className="text-[10px] font-medium">
                   {primaryLabels[item.href] || item.name}
                 </span>
@@ -90,7 +87,7 @@ export function MobileBottomNav() {
               onClick={() => setIsMoreOpen(true)}
               className={cn(
                 'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all',
-                isActive('') ? 'text-[#E2FF6F]' : 'text-white/40 hover:text-white'
+                'text-white/50 hover:text-white'
               )}
             >
               <MoreHorizontal className="w-5 h-5" />
@@ -112,7 +109,7 @@ export function MobileBottomNav() {
                 <h3 className="text-white font-bold text-lg">More</h3>
                 <button
                   onClick={() => setIsMoreOpen(false)}
-                  className="p-2 text-white/40 hover:text-white"
+                  className="p-2 text-white/50 hover:text-white"
                 >
                   <X className="w-5 h-5" />
                 </button>

@@ -68,10 +68,10 @@ export default auth((req) => {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  // Mentor protection
+  // Therapist admin protection
   if (
-    pathname.startsWith('/mentor') &&
-    session.user?.role !== 'mentor' &&
+    pathname.startsWith('/therapist-admin') &&
+    session.user?.role !== 'therapist' &&
     session.user?.role !== 'admin'
   ) {
     return NextResponse.redirect(new URL('/dashboard', req.url));

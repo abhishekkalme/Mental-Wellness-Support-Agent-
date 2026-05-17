@@ -27,8 +27,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
-type TabId = 'overview' | 'users' | 'ai' | 'community' | 'crisis' | 'system';
+type TabId = 'overview' | 'users' | 'ai' | 'community' | 'crisis' | 'system' | 'therapists';
 
 interface PlatformStats {
   totalUsers: number;
@@ -70,12 +71,14 @@ interface AISettings {
 
 interface ReportedPost {
   _id: string;
-  user: string;
-  time: string;
+  author: { _id: string; name: string; username: string; image?: string; role: string } | null;
+  title: string;
   content: string;
-  reports: number;
-  likes: number;
-  comments: number;
+  type: string;
+  createdAt: string;
+  reportCount: number;
+  stats: { likes: number; comments: number; saves: number };
+  tags: string[];
 }
 
 interface ModerationResponse {
@@ -87,6 +90,7 @@ interface ModerationResponse {
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'therapists', label: 'Therapists', icon: Stethoscope },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'ai', label: 'AI Config', icon: Brain },
   { id: 'community', label: 'Community', icon: MessageSquare },
@@ -134,6 +138,8 @@ export default function AdminPage() {
     switch (activeTab) {
       case 'overview':
         return <OverviewTab />;
+      case 'therapists':
+        return <AdminTherapistsTab />;
       case 'users':
         return <UsersTab />;
       case 'ai':
@@ -238,7 +244,7 @@ function OverviewTab() {
 
   const roleColors: Record<string, string> = {
     admin: 'bg-rose-500/10 text-rose-400',
-    mentor: 'bg-sky-500/10 text-sky-400',
+    therapist: 'bg-purple-500/10 text-purple-400',
     user: 'bg-emerald-500/10 text-emerald-400',
   };
 
@@ -289,8 +295,8 @@ function OverviewTab() {
                       'w-2 h-2 rounded-full',
                       role === 'admin'
                         ? 'bg-rose-400'
-                        : role === 'mentor'
-                          ? 'bg-sky-400'
+                        : role === 'therapist'
+                          ? 'bg-purple-400'
                           : 'bg-emerald-400'
                     )}
                   />
@@ -424,8 +430,8 @@ function UsersTab() {
         >
           <option value="">All Roles</option>
           <option value="user">User</option>
+          <option value="therapist">Therapist</option>
           <option value="admin">Admin</option>
-          <option value="mentor">Mentor</option>
         </select>
         <select
           className="h-10 px-4 rounded-xl bg-black/40 border border-white/10 text-sm text-white outline-none focus:border-[#E2FF6F]/50"
@@ -501,8 +507,8 @@ function UsersTab() {
                           'text-[10px] font-bold px-2 py-1 rounded-md border appearance-none cursor-pointer',
                           u.role === 'admin'
                             ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                            : u.role === 'mentor'
-                              ? 'bg-sky-500/10 text-sky-400 border-sky-500/20'
+                            : u.role === 'therapist'
+                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                               : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         )}
                         value={u.role}
@@ -512,8 +518,8 @@ function UsersTab() {
                         <option value="user" className="bg-[#0A0D08]">
                           user
                         </option>
-                        <option value="mentor" className="bg-[#0A0D08]">
-                          mentor
+                        <option value="therapist" className="bg-[#0A0D08]">
+                          therapist
                         </option>
                         <option value="admin" className="bg-[#0A0D08]">
                           admin
@@ -610,9 +616,13 @@ function AIConfigTab() {
       try {
         const res = await fetch('/api/admin/settings/ai');
         if (res.ok) setSettings(await res.json());
-        else setError('Failed to load AI settings');
+        else {
+          setError('Failed to load AI settings');
+          toast.error('Failed to load AI settings');
+        }
       } catch {
         setError('Failed to load AI settings');
+        toast.error('Failed to load AI settings');
       }
       setLoading(false);
     }
@@ -633,10 +643,16 @@ function AIConfigTab() {
           model: typeof next.model === 'string' ? next.model : undefined,
         }),
       });
-      if (res.ok) setSettings(await res.json());
-      else setError('Failed to save');
+      if (res.ok) {
+        setSettings(await res.json());
+        toast.success('AI settings saved');
+      } else {
+        setError('Failed to save');
+        toast.error('Failed to save AI settings');
+      }
     } catch {
       setError('Failed to save');
+      toast.error('Failed to save AI settings');
     }
     setSaving(false);
   }
@@ -806,36 +822,55 @@ function CommunityTab() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white/60">{post.user}</span>
+                    <span className="text-xs font-bold text-white/60">
+                      {post.author?.name || 'Unknown'}
+                    </span>
+                    <span className="text-[10px] text-white/20">•</span>
+                    <span className="text-[10px] text-white/30 capitalize">{post.type}</span>
                     <span className="text-[10px] text-white/20">•</span>
                     <span className="text-[10px] text-white/30">
-                      {new Date(post.time).toLocaleDateString()}
+                      {new Date(post.createdAt).toLocaleDateString()}
                     </span>
                     <div className="flex items-center gap-1 text-amber-400/80 text-[10px] font-bold ml-auto">
                       <AlertTriangle className="w-3 h-3" />
-                      {post.reports} report{post.reports !== 1 ? 's' : ''}
+                      {post.reportCount} report{post.reportCount !== 1 ? 's' : ''}
                     </div>
                   </div>
+                  <p className="text-sm font-bold text-white/80">{post.title}</p>
                   <p className="text-sm text-white/70 line-clamp-3 leading-relaxed">
                     {post.content}
                   </p>
+                  {post.tags?.length > 0 && (
+                    <div className="flex gap-1.5 flex-wrap">
+                      {post.tags.map((t: string) => (
+                        <span
+                          key={t}
+                          className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-white/40"
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 text-[10px] text-white/30">
-                    <span>❤️ {post.likes}</span>
-                    <span>💬 {post.comments}</span>
+                    <span>❤️ {post.stats?.likes || 0}</span>
+                    <span>💬 {post.stats?.comments || 0}</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => deletePost(post._id)}
-                  disabled={deleting === post._id}
-                  className="shrink-0 p-2 rounded-lg hover:bg-rose-500/10 text-white/30 hover:text-rose-400 transition-all disabled:opacity-50"
-                  title="Delete post"
-                >
-                  {deleting === post._id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </button>
+                <div className="flex flex-col gap-1.5 shrink-0">
+                  <button
+                    onClick={() => deletePost(post._id)}
+                    disabled={deleting === post._id}
+                    className="p-2 rounded-lg hover:bg-rose-500/10 text-white/30 hover:text-rose-400 transition-all disabled:opacity-50"
+                    title="Delete post"
+                  >
+                    {deleting === post._id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -921,6 +956,262 @@ function CrisisTab() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function AdminTherapistsTab() {
+  const [therapists, setTherapists] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const fetchTherapists = useCallback(
+    async (p: number) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set('page', String(p));
+        params.set('limit', '20');
+        if (statusFilter) params.set('status', statusFilter);
+        if (search) params.set('search', search);
+        const res = await fetch(`/api/admin/therapists?${params}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTherapists(data.therapists || []);
+          setTotal(data.total);
+          setPage(data.page);
+          setTotalPages(data.totalPages);
+        }
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    },
+    [statusFilter, search]
+  );
+
+  useEffect(() => {
+    fetchTherapists(1);
+  }, [fetchTherapists]);
+
+  const updateVerification = async (id: string, status: string, notes?: string) => {
+    setUpdatingId(id);
+    try {
+      await fetch(`/api/admin/therapists/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verificationStatus: status, verificationNotes: notes || '' }),
+      });
+      fetchTherapists(page);
+    } catch {
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          <input
+            className="w-full h-10 pl-10 pr-4 rounded-xl bg-black/40 border border-white/10 text-sm text-white outline-none focus:border-[#E2FF6F]/50 placeholder-white/20"
+            placeholder="Search by name, specialty..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <select
+          className="h-10 px-4 rounded-xl bg-black/40 border border-white/10 text-sm text-white outline-none focus:border-[#E2FF6F]/50"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="verified">Verified</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
+      <div className="rounded-2xl border border-white/5 bg-white/5 overflow-hidden backdrop-blur-md">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                <th className="text-left p-4 text-[10px] font-bold uppercase text-white/30">
+                  Therapist
+                </th>
+                <th className="text-left p-4 text-[10px] font-bold uppercase text-white/30 hidden md:table-cell">
+                  Specialties
+                </th>
+                <th className="text-left p-4 text-[10px] font-bold uppercase text-white/30">
+                  Status
+                </th>
+                <th className="text-left p-4 text-[10px] font-bold uppercase text-white/30 hidden sm:table-cell">
+                  Rating
+                </th>
+                <th className="text-left p-4 text-[10px] font-bold uppercase text-white/30 hidden lg:table-cell">
+                  Bookings
+                </th>
+                <th className="text-right p-4 text-[10px] font-bold uppercase text-white/30">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td colSpan={6} className="p-4">
+                      <div className="h-8 bg-white/5 rounded animate-pulse" />
+                    </td>
+                  </tr>
+                ))
+              ) : therapists.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-white/20 text-sm">
+                    No therapists found
+                  </td>
+                </tr>
+              ) : (
+                therapists.map((t: any) => (
+                  <tr key={t._id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-xs font-bold text-purple-400 shrink-0">
+                          {t.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">
+                            {t.user?.name || 'Unknown'}
+                          </p>
+                          <p className="text-[10px] text-white/30">{t.title || 'Therapist'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 hidden md:table-cell">
+                      <div className="flex gap-1 flex-wrap">
+                        {(t.specializations || []).slice(0, 2).map((s: string) => (
+                          <span
+                            key={s}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/50"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                        {(t.specializations?.length || 0) > 2 && (
+                          <span className="text-[10px] text-white/30">
+                            +{t.specializations.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`text-[10px] font-bold px-2 py-1 rounded-md ${
+                          t.verificationStatus === 'verified'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : t.verificationStatus === 'rejected'
+                              ? 'bg-rose-500/10 text-rose-400'
+                              : 'bg-amber-500/10 text-amber-400'
+                        }`}
+                      >
+                        {t.verificationStatus || 'pending'}
+                      </span>
+                    </td>
+                    <td className="p-4 hidden sm:table-cell">
+                      <span className="text-xs text-white">
+                        {t.averageRating > 0 ? `${t.averageRating.toFixed(1)} ⭐` : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="p-4 hidden lg:table-cell">
+                      <span className="text-xs text-white/60">{t.totalBookings || 0}</span>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {t.verificationStatus !== 'verified' && (
+                          <button
+                            onClick={() => updateVerification(t._id, 'verified')}
+                            disabled={updatingId === t._id}
+                            className="p-1.5 rounded-lg hover:bg-emerald-500/10 text-white/30 hover:text-emerald-400 transition-all disabled:opacity-50"
+                            title="Verify"
+                          >
+                            {updatingId === t._id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
+                        {t.verificationStatus !== 'rejected' && (
+                          <button
+                            onClick={() => updateVerification(t._id, 'rejected')}
+                            disabled={updatingId === t._id}
+                            className="p-1.5 rounded-lg hover:bg-rose-500/10 text-white/30 hover:text-rose-400 transition-all disabled:opacity-50"
+                            title="Reject"
+                          >
+                            {updatingId === t._id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <XCircle className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
+                        {t.verificationStatus !== 'pending' && (
+                          <button
+                            onClick={() => updateVerification(t._id, 'pending')}
+                            disabled={updatingId === t._id}
+                            className="p-1.5 rounded-lg hover:bg-amber-500/10 text-white/30 hover:text-amber-400 transition-all disabled:opacity-50"
+                            title="Reset to pending"
+                          >
+                            {updatingId === t._id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-white/30">
+            {total} therapist{total !== 1 ? 's' : ''}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchTherapists(page - 1)}
+              disabled={page <= 1}
+              className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white disabled:opacity-30"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs text-white/50 font-mono">
+              {page} / {totalPages}
+            </span>
+            <button
+              onClick={() => fetchTherapists(page + 1)}
+              disabled={page >= totalPages}
+              className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white disabled:opacity-30"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

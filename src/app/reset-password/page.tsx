@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Brain, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [validating, setValidating] = useState(true);
@@ -31,15 +31,14 @@ function ResetPasswordForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      toast.error('Password must be at least 8 characters');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
 
@@ -52,12 +51,13 @@ function ResetPasswordForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || 'Something went wrong');
+        toast.error(data.error || 'Something went wrong');
         return;
       }
+      toast.success('Password reset successfully!');
       setSuccess(true);
     } catch {
-      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -143,12 +143,6 @@ function ResetPasswordForm() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="w-full space-y-4 text-left">
-              {error && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-destructive">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <p className="text-sm">{error}</p>
-                </div>
-              )}
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium ml-1">
                   New password

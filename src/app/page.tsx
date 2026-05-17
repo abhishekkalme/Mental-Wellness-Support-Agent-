@@ -20,12 +20,14 @@ import {
   LogOut,
   Users,
   Star,
+  ArrowLeft,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useStore } from '@/store/useStore';
+import toast from 'react-hot-toast';
 
 function FloatingTag({
   label,
@@ -44,16 +46,11 @@ function FloatingTag({
         initial={{ x: 50, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ delay, duration: 0.8, ease: 'easeOut' }}
-        whileHover={{
-          x: -8,
-          backgroundColor: 'rgba(226, 255, 111, 0.15)',
-          borderColor: 'rgba(226, 255, 111, 0.3)',
-        }}
-        className="flex items-center gap-3 px-6 py-4 border border-white/10 rounded-full backdrop-blur-md bg-white/5 cursor-pointer whitespace-nowrap group transition-all"
+        className="flex items-center gap-3 px-6 py-4 border border-white/10 rounded-full backdrop-blur-md bg-white/5 cursor-pointer whitespace-nowrap group transition-colors hover:bg-white/[0.08] hover:border-white/20"
       >
-        <Icon className="w-4 h-4 text-[#E2FF6F] group-hover:scale-110 transition-transform" />
+        <Icon className="w-4 h-4 text-[#E2FF6F]" />
         <span className="text-white font-medium">{label}</span>
-        <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
+        <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
       </motion.div>
     </Link>
   );
@@ -83,9 +80,10 @@ const HeroActions = () => {
             onClick={() => {
               useStore.getState().clearStore();
               useStore.getState().clearPersistedData();
+              toast.success('Signed out');
               signOut({ callbackUrl: '/' });
             }}
-            className="w-full sm:w-auto text-white/60 border-white/10 h-14 px-8 text-lg font-bold flex items-center justify-center gap-2 hover:bg-white/5 hover:text-red-400 rounded-full"
+            className="w-full sm:w-auto text-white/70 border-white/10 h-14 px-8 text-lg font-bold flex items-center justify-center gap-2 hover:bg-white/5 hover:text-red-400 rounded-full"
           >
             <LogOut className="w-5 h-5" />
             Logout
@@ -115,7 +113,7 @@ const HeroActions = () => {
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden selection:bg-[#E2FF6F] selection:text-black scroll-smooth">
+    <div className="relative min-h-screen bg-black overflow-hidden scroll-smooth">
       <Navbar />
 
       {/* Hero */}
@@ -155,22 +153,14 @@ export default function LandingPage() {
               </svg>
             </div>
 
-            <div className="space-y-[-10px] md:space-y-[-40px]">
+            <div>
               <motion.h1
                 initial={{ opacity: 0, x: -100 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 1 }}
-                className="text-[36px] sm:text-[80px] md:text-[200px] font-bold text-white leading-none tracking-tighter"
+                className="text-[40px] sm:text-[72px] md:text-[120px] font-bold text-white leading-none tracking-tight"
               >
-                wellness &
-              </motion.h1>
-              <motion.h1
-                initial={{ opacity: 0, x: -100 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4, duration: 1 }}
-                className="text-[36px] sm:text-[80px] md:text-[200px] font-bold text-white leading-none tracking-tighter"
-              >
-                meditation
+                wellness & meditation
               </motion.h1>
             </div>
           </motion.div>
@@ -179,7 +169,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 1 }}
-            className="text-white/60 text-lg md:text-2xl mt-12 max-w-xl leading-relaxed font-medium"
+            className="text-white/70 text-lg md:text-2xl mt-10 max-w-xl leading-relaxed font-medium"
           >
             AI-powered wellness companion that understands you. Track your mood, build habits, and
             find peace — all in one place.
@@ -195,30 +185,34 @@ export default function LandingPage() {
           <FloatingTag label="Sleep & Recovery" href="/sleep" delay={1.6} icon={Moon} />
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-12 left-12 flex items-center gap-4 text-white/40 text-xs font-bold z-20"
-        >
-          <div className="w-[1px] h-12 bg-white/20 relative">
-            <motion.div
-              animate={{ y: [0, 48, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-full h-4 bg-[#E2FF6F]"
-            />
-          </div>
-          <span>(SCROLL DOWN)</span>
-        </motion.div>
+        <div className="absolute bottom-12 left-12 flex items-center gap-4 text-white/50 text-xs font-bold z-20">
+          <div className="w-[1px] h-12 bg-white/20" />
+          <span>SCROLL DOWN</span>
+        </div>
       </main>
 
       {/* Stats */}
       <section className="relative z-10 bg-black py-16 md:py-32 px-6 md:px-12 lg:px-24 border-y border-white/5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {[
-            { label: 'Active Sessions', value: '10k+', color: 'text-[#E2FF6F]' },
-            { label: 'Stress Reduction', value: '85%', color: 'text-white' },
-            { label: 'Community Members', value: '50k+', color: 'text-[#E2FF6F]' },
+            {
+              label: 'AI-Powered Sessions',
+              value: '1:1',
+              color: 'text-[#E2FF6F]',
+              desc: 'Personalized wellness companion',
+            },
+            {
+              label: 'Data Privacy First',
+              value: '100%',
+              color: 'text-white',
+              desc: 'Your data stays yours',
+            },
+            {
+              label: 'Always Free',
+              value: '$0',
+              color: 'text-[#E2FF6F]',
+              desc: 'No premium tiers, ever',
+            },
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -231,9 +225,10 @@ export default function LandingPage() {
               <h2 className={`text-6xl md:text-8xl font-bold tracking-tighter ${stat.color}`}>
                 {stat.value}
               </h2>
-              <p className="text-white/40 font-bold uppercase tracking-widest text-sm">
+              <p className="text-white/60 font-bold uppercase tracking-widest text-sm">
                 {stat.label}
               </p>
+              <p className="text-white/40 text-sm">{stat.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -249,7 +244,7 @@ export default function LandingPage() {
             <h2 className="text-5xl md:text-8xl font-bold text-white tracking-tighter leading-none">
               Everything for your <br /> <span className="text-[#E2FF6F]">inner peace.</span>
             </h2>
-            <p className="text-white/60 max-w-sm text-lg font-medium">
+            <p className="text-white/70 max-w-sm text-lg font-medium">
               We&apos;ve built a multi-sensory platform designed to help you reconnect with your
               most grounded self.
             </p>
@@ -306,16 +301,15 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -8 }}
-                className="glass-panel p-8 md:p-10 bg-white/5 border-white/10 hover:border-[#E2FF6F]/30 transition-all group"
+                className="surface-interactive p-8 md:p-10"
               >
                 <div
-                  className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
+                  className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center mb-6`}
                 >
                   <f.icon className={`w-6 h-6 ${f.color}`} />
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-3">{f.title}</h3>
-                <p className="text-white/50 leading-relaxed text-sm md:text-base">{f.desc}</p>
+                <p className="text-white/70 leading-relaxed text-sm md:text-base">{f.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -327,7 +321,6 @@ export default function LandingPage() {
         id="workflow"
         className="relative z-10 bg-black py-24 md:py-48 px-6 md:px-24 border-t border-white/5 overflow-hidden"
       >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#E2FF6F]/5 blur-[200px] rounded-full pointer-events-none" />
         <div className="max-w-7xl mx-auto space-y-24 md:space-y-32">
           <h2 className="text-5xl md:text-9xl font-bold text-white tracking-tighter text-center leading-none">
             The path is <br /> <span className="text-[#E2FF6F]">simple.</span>
@@ -370,7 +363,7 @@ export default function LandingPage() {
                   {s.step}
                 </span>
                 <h3 className="text-3xl font-bold text-white">{s.title}</h3>
-                <p className="text-white/40 leading-relaxed max-w-xs mx-auto">{s.desc}</p>
+                <p className="text-white/60 leading-relaxed max-w-xs mx-auto">{s.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -384,7 +377,7 @@ export default function LandingPage() {
             <h2 className="text-5xl md:text-8xl font-bold text-white tracking-tighter leading-none">
               Your peace is our <br /> <span className="text-[#E2FF6F]">mission.</span>
             </h2>
-            <p className="text-white/60 text-lg md:text-xl font-medium leading-relaxed">
+            <p className="text-white/70 text-lg md:text-xl font-medium leading-relaxed">
               More than just an app, MindCare AI is a movement towards mental clarity in a chaotic
               world.
             </p>
@@ -397,7 +390,7 @@ export default function LandingPage() {
               </Link>
               <div className="flex flex-col">
                 <div className="flex text-[#E2FF6F] font-bold text-lg">★★★★★</div>
-                <p className="text-white/40 text-xs font-bold uppercase tracking-widest">
+                <p className="text-white/60 text-xs font-bold uppercase tracking-widest">
                   4.9/5 from 2k+ reviews
                 </p>
               </div>
@@ -422,7 +415,7 @@ export default function LandingPage() {
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="glass-panel p-8 md:p-10 bg-white/5 border-white/10 rounded-2xl"
+                className="surface-card p-8 md:p-10"
               >
                 <div className="flex gap-1 text-[#E2FF6F] mb-4">
                   {[1, 2, 3, 4, 5].map((s) => (
@@ -434,7 +427,7 @@ export default function LandingPage() {
                 </p>
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-[#E2FF6F]/20 flex items-center justify-center font-bold text-[#E2FF6F] text-sm">
-                    {t.name[0]}
+                    {(t.name || '?')[0]}
                   </div>
                   <span className="text-white font-bold tracking-tight">{t.name}</span>
                 </div>
@@ -446,9 +439,6 @@ export default function LandingPage() {
 
       {/* CTA Banner */}
       <section className="relative z-10 bg-black py-24 md:py-32 px-6 md:px-24">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#E2FF6F]/10 blur-[200px] rounded-full" />
-        </div>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -458,7 +448,7 @@ export default function LandingPage() {
           <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter leading-none">
             Ready to find <br /> <span className="text-[#E2FF6F]">your calm?</span>
           </h2>
-          <p className="text-white/50 text-lg md:text-xl max-w-xl mx-auto font-medium">
+          <p className="text-white/70 text-lg md:text-xl max-w-xl mx-auto font-medium">
             Join thousands of others who&apos;ve transformed their mental wellness journey with
             AI-powered guidance.
           </p>
@@ -491,7 +481,7 @@ export default function LandingPage() {
               </div>
               <span className="text-xl font-bold tracking-tight text-white">MindCare</span>
             </Link>
-            <p className="text-white/30 text-sm max-w-xs leading-relaxed">
+            <p className="text-white/60 text-sm max-w-xs leading-relaxed">
               Empowering individuals through AI-driven mental wellness. Built for the modern mind.
             </p>
           </div>
@@ -499,7 +489,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-12 md:gap-16">
             <div className="space-y-4">
               <p className="text-white font-bold text-sm uppercase tracking-[0.2em]">Product</p>
-              <ul className="space-y-2 text-white/40 text-sm">
+              <ul className="space-y-2 text-white/60 text-sm">
                 <li>
                   <Link href="/dashboard" className="hover:text-white transition-colors">
                     Dashboard
@@ -524,55 +514,39 @@ export default function LandingPage() {
             </div>
             <div className="space-y-4">
               <p className="text-white font-bold text-sm uppercase tracking-[0.2em]">Company</p>
-              <ul className="space-y-2 text-white/40 text-sm">
+              <ul className="space-y-2 text-white/60 text-sm">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    About
-                  </a>
+                  <span className="cursor-default">About</span>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Blog
-                  </a>
+                  <span className="cursor-default">Blog</span>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Privacy
-                  </a>
+                  <span className="cursor-default">Privacy</span>
                 </li>
               </ul>
             </div>
             <div className="space-y-4">
               <p className="text-white font-bold text-sm uppercase tracking-[0.2em]">Social</p>
-              <ul className="space-y-2 text-white/40 text-sm">
+              <ul className="space-y-2 text-white/60 text-sm">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Instagram
-                  </a>
+                  <span className="cursor-default">Instagram</span>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    X / Twitter
-                  </a>
+                  <span className="cursor-default">X / Twitter</span>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    LinkedIn
-                  </a>
+                  <span className="cursor-default">LinkedIn</span>
                 </li>
               </ul>
             </div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-16 md:mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-white/20">
+        <div className="max-w-7xl mx-auto mt-16 md:mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-white/40">
           <span>&copy; 2026 MindCare AI. All rights reserved.</span>
           <span>Crafted for serenity.</span>
         </div>
       </footer>
-
-      {/* Decorative Blur */}
-      <div className="fixed top-1/4 -left-32 w-96 h-96 bg-green-500/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="fixed bottom-1/4 -right-32 w-96 h-96 bg-[#E2FF6F]/5 blur-[120px] rounded-full pointer-events-none" />
     </div>
   );
 }

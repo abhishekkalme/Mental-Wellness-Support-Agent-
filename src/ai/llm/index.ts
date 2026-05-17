@@ -16,6 +16,8 @@ const PROVIDER_PRIORITY: Array<{
 }> = [
   { provider: 'groq', model: 'llama-3.1-8b-instant', maxTokens: 768 },
   { provider: 'gemini', model: 'gemini-1.5-flash', maxTokens: 512 },
+  { provider: 'openrouter', model: 'meta-llama/llama-3.1-8b-instruct', maxTokens: 768 },
+  { provider: 'ollama', model: 'llama3.1:8b', maxTokens: 512 },
 ];
 
 async function tryProvider(

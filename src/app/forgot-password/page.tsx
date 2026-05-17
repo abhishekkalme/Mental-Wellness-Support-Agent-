@@ -7,17 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Brain, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -27,12 +26,13 @@ function ForgotPasswordForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || 'Something went wrong');
+        toast.error(data.error || 'Something went wrong');
         return;
       }
+      toast.success('Reset link sent! Check your email.');
       setSuccess(true);
     } catch {
-      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -98,12 +98,6 @@ function ForgotPasswordForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="w-full space-y-4 text-left">
-            {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-destructive">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <p className="text-sm">{error}</p>
-              </div>
-            )}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium ml-1">
                 Email address

@@ -1,28 +1,34 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/mongoose';
 import CommunityPost from '@/lib/db/models/CommunityPost';
-import CommunityGroup from '@/lib/db/models/CommunityGroup';
+import User from '@/lib/db/models/User';
 
 export async function GET() {
   try {
     await connectDB();
-    const [posts, groups] = await Promise.all([
-      CommunityPost.find({ deletedAt: null }),
-      CommunityGroup.find({}),
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const [totalPosts, activeUsers, totalUsers] = await Promise.all([
+      CommunityPost.countDocuments({ deletedAt: null, moderationStatus: { $ne: 'removed' } }),
+      User.countDocuments({ updatedAt: { $gte: twentyFourHoursAgo } }),
+      User.countDocuments({}),
     ]);
 
-    const totalMembers = groups.reduce((sum, g) => sum + (parseInt(g.members) || 0), 0);
-    const activeNow = Math.max(1, Math.floor(totalMembers * 0.12));
-    const totalDiscussions = posts.length;
+    const discussionsToday = await CommunityPost.countDocuments({
+      deletedAt: null,
+      createdAt: { $gte: twentyFourHoursAgo },
+    });
 
     return NextResponse.json({
-      totalMembers,
-      activeNow,
-      totalDiscussions,
+      totalMembers: totalUsers,
+      activeNow: Math.max(1, Math.round(activeUsers * 0.15)),
+      totalDiscussions: totalPosts,
+      discussionsToday,
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { error: error instanceof Error ? error.message : 'Failed to fetch stats' },
       { status: 500 }
     );
   }

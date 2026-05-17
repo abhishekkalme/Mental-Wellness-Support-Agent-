@@ -33,32 +33,26 @@
 }
 
 :root {
-  --background: #0a0c0b; /* Deep Forest Charcoal */
+  --background: #0a0c0b;
   --foreground: #ffffff;
   --card: #141716;
   --card-foreground: #ffffff;
   --popover: #141716;
   --popover-foreground: #ffffff;
-  --primary: #e2ff6f; /* Neon Wellness Yellow */
+  --primary: #e2ff6f;
   --primary-foreground: #000000;
-  --secondary: #1c2321; /* Dark Slate Green */
+  --secondary: #1c2321;
   --secondary-foreground: #e2ff6f;
-  --muted: #1a1d1b; /* Surface Deep Green */
-  --muted-foreground: #4b5e57;
-  --accent: #c8b6ff; /* Soft Lavender for Balance */
+  --muted: #1a1d1b;
+  --muted-foreground: #8a9e95;
+  --accent: #c8b6ff;
   --accent-foreground: #000000;
   --destructive: #ff4d4d;
   --destructive-foreground: #ffffff;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.1);
   --ring: #e2ff6f;
   --radius: 1.5rem;
-}
-
-.dark {
-  --background: #0a0c0b;
-  --foreground: #ffffff;
-  /* Dark is same as root now for unification */
 }
 
 @layer base {
@@ -83,17 +77,30 @@
     font-family: var(--font-heading);
     @apply font-medium tracking-tight;
   }
+  ::selection {
+    background-color: rgba(226, 255, 111, 0.3);
+    color: #000000;
+  }
+}
+
+.surface-card {
+  @apply rounded-[24px] border border-white/[0.08] bg-[#141716];
+}
+
+.surface-elevated {
+  @apply rounded-[24px] border border-white/[0.10] bg-[#1a1d1b];
+}
+
+.surface-interactive {
+  @apply rounded-[24px] border border-white/[0.06] bg-[#141716] hover:bg-[#1c2321] hover:border-white/[0.12] transition-all duration-200;
 }
 
 .glass-panel {
-  @apply rounded-[32px] border border-white/10 bg-white/[0.06] backdrop-blur-3xl;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  @apply rounded-[32px] border border-white/10 bg-white/[0.04] backdrop-blur-2xl;
 }
 
 .emotion-card {
-  @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[28px] p-6 cursor-pointer transition-all duration-300 hover:bg-white/10 hover:border-primary/20 active:scale-98;
+  @apply bg-white/5 border border-white/10 rounded-[28px] p-6 cursor-pointer transition-all duration-200 hover:bg-white/10 hover:border-primary/20 active:scale-[0.98];
 }
 
 @layer utilities {
@@ -101,11 +108,10 @@
     display: none;
   }
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
-  /* Custom scrollbar to fix default browser styling overlaps */
   .custom-scroll::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -114,7 +120,7 @@
     background: transparent;
   }
   .custom-scroll::-webkit-scrollbar-thumb {
-    background: rgba(226, 255, 111, 0.2); /* Muted primary color */
+    background: rgba(226, 255, 111, 0.2);
     border-radius: 10px;
   }
   .custom-scroll::-webkit-scrollbar-thumb:hover {
@@ -123,5 +129,13 @@
   .custom-scroll {
     scrollbar-width: thin;
     scrollbar-color: rgba(226, 255, 111, 0.2) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

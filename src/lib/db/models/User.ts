@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type UserRole = 'user' | 'admin' | 'mentor';
+export type UserRole = 'user' | 'admin' | 'therapist';
 
 export interface IUser extends Document {
   name: string;
@@ -33,7 +33,7 @@ const UserSchema: Schema = new Schema(
     image: { type: String },
     role: {
       type: String,
-      enum: ['user', 'admin', 'mentor'],
+      enum: ['user', 'admin', 'therapist'],
       default: 'user',
     },
     preferredLanguage: { type: String, default: 'en' },

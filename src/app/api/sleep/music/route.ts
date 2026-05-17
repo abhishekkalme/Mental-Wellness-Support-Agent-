@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/mongoose';
 import SleepMusic from '@/lib/db/models/SleepMusic';
 import { z } from 'zod';
+import { auth } from '@/auth';
 
 const MusicSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -12,7 +13,17 @@ const MusicSchema = z.object({
 
 const BulkMusicSchema = z.array(MusicSchema);
 
+async function requireAuth() {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  return null;
+}
+
 export async function GET() {
+  const authError = await requireAuth();
+  if (authError) return authError;
   try {
     await connectDB();
     const music = await SleepMusic.find({});
@@ -26,6 +37,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  const authError = await requireAuth();
+  if (authError) return authError;
   try {
     await connectDB();
     const data = await req.json();
@@ -47,6 +60,8 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const authError = await requireAuth();
+  if (authError) return authError;
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
@@ -66,6 +81,8 @@ export async function DELETE(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const authError = await requireAuth();
+  if (authError) return authError;
   try {
     await connectDB();
     const data = await req.json();

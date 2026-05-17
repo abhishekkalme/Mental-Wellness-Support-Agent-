@@ -86,12 +86,6 @@ export async function POST(req: Request) {
       role: 'user',
     });
 
-    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[EMAIL VERIFICATION] Token for ${email}: ${verificationToken}`);
-      console.log(`[EMAIL VERIFICATION] Verify URL: ${verifyUrl}`);
-    }
-
     return NextResponse.json({
       ok: true,
       verified: false,

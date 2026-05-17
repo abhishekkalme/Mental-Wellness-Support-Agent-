@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useStore } from '@/store/useStore';
-import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+
 import {
   User,
   Mail,
@@ -52,10 +53,6 @@ export default function SettingsPage() {
   const [preferredLanguage, setPreferredLanguage] = useState(store.preferredLanguage || 'en');
   const [agentGender, setAgentGender] = useState(store.agentGender || 'neutral');
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -108,7 +105,6 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    setSaveMessage(null);
 
     try {
       const res = await fetch('/api/admin/settings', {
@@ -129,17 +125,16 @@ export default function SettingsPage() {
         store.setPreferredLanguage(data.preferredLanguage);
         store.setAgentGender(data.agentGender);
         await updateSession({ name: data.name });
-        setSaveMessage({ type: 'success', text: 'Settings saved successfully!' });
+        toast.success('Settings saved successfully!');
         setIsEditingName(false);
       } else {
         const error = await res.json();
-        setSaveMessage({ type: 'error', text: error.error || 'Failed to save settings' });
+        toast.error(error.error || 'Failed to save settings');
       }
     } catch {
-      setSaveMessage({ type: 'error', text: 'An error occurred while saving' });
+      toast.error('An error occurred while saving');
     } finally {
       setIsSaving(false);
-      setTimeout(() => setSaveMessage(null), 3000);
     }
   };
 
@@ -185,12 +180,8 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
+      <main id="main-content" className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
+        <div className="space-y-6">
           <section className="p-4 md:p-6 rounded-2xl bg-white/5 border border-white/5">
             <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
               <User className="w-5 h-5 text-[#E2FF6F]" />
@@ -355,25 +346,6 @@ export default function SettingsPage() {
                 <p className="text-xs text-white/40">Enable safe mode for the AI companion</p>
               </div>
 
-              {saveMessage && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex items-center gap-2 p-3 rounded-xl ${
-                    saveMessage.type === 'success'
-                      ? 'bg-green-500/10 text-green-400'
-                      : 'bg-red-500/10 text-red-400'
-                  }`}
-                >
-                  {saveMessage.type === 'success' ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4" />
-                  )}
-                  <span className="text-sm">{saveMessage.text}</span>
-                </motion.div>
-              )}
-
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
@@ -456,6 +428,7 @@ export default function SettingsPage() {
               onClick={() => {
                 store.clearStore();
                 store.clearPersistedData();
+                toast.success('Signed out. See you soon!');
                 signOut({ callbackUrl: '/' });
               }}
               variant="destructive"
@@ -465,7 +438,7 @@ export default function SettingsPage() {
               Sign Out
             </Button>
           </section>
-        </motion.div>
+        </div>
       </main>
     </div>
   );

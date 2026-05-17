@@ -5,7 +5,7 @@ import User from '@/lib/db/models/User';
 import { z } from 'zod';
 
 const UpdateSchema = z.object({
-  role: z.enum(['user', 'admin', 'mentor']).optional(),
+  role: z.enum(['user', 'admin', 'therapist']).optional(),
   isPremium: z.boolean().optional(),
   onboarded: z.boolean().optional(),
 });

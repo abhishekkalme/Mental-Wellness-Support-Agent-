@@ -52,12 +52,6 @@ export const authConfig = {
           return NextResponse.redirect(new URL('/dashboard', request.url));
         }
       }
-      if (path.startsWith('/mentor')) {
-        const role = auth?.user?.role;
-        if (!auth?.user || (role !== 'mentor' && role !== 'admin')) {
-          return NextResponse.redirect(new URL('/dashboard', request.url));
-        }
-      }
       return true;
     },
     async jwt({ token, user, trigger, session }) {

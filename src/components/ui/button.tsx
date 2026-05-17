@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-interface ButtonProps extends HTMLMotionProps<'button'> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
   size?: 'sm' | 'md' | 'lg' | 'icon';
 }
@@ -12,7 +11,7 @@ interface ButtonProps extends HTMLMotionProps<'button'> {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', children, ...props }, ref) => {
     const baseClass =
-      'inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none ring-offset-background';
+      'inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none ring-offset-background active:scale-[0.97]';
 
     const variants = {
       primary: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
@@ -30,15 +29,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     return (
-      <motion.button
+      <button
         ref={ref}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
         className={cn(baseClass, variants[variant], sizes[size], className)}
         {...props}
       >
         {children}
-      </motion.button>
+      </button>
     );
   }
 );

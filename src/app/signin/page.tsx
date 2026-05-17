@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Brain, ArrowRight, Mail, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
@@ -48,17 +48,16 @@ function SignInForm() {
 
   const handleOAuth = (provider: 'google' | 'github') => {
     signIn(provider, { callbackUrl: '/onboarding' }).catch(() => {
-      setError(`Failed to sign in with ${provider}. Please try again.`);
+      toast.error(`Failed to sign in with ${provider}. Please try again.`);
     });
   };
 
   const handleResendVerification = async () => {
     if (!email.trim()) {
-      setError('Please enter your email address first');
+      toast.error('Please enter your email address first');
       return;
     }
     setResending(true);
-    setError(null);
     try {
       const res = await fetch('/api/auth/resend-verification', {
         method: 'POST',
@@ -67,12 +66,13 @@ function SignInForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || 'Failed to resend verification email');
+        toast.error(data.error || 'Failed to resend verification email');
         return;
       }
+      toast.success('Verification email sent!');
       setResent(true);
     } catch {
-      setError('Failed to resend verification email');
+      toast.error('Failed to resend verification email');
     } finally {
       setResending(false);
     }
@@ -80,7 +80,6 @@ function SignInForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       const result = await signIn('credentials', {
@@ -89,10 +88,11 @@ function SignInForm() {
         redirect: false,
       });
       if (result?.error) {
-        setError('Invalid email or password.');
+        toast.error('Invalid email or password.');
         return;
       }
       if (result?.ok) {
+        toast.success('Welcome back!');
         await checkOnboarding();
       }
     } finally {
@@ -209,11 +209,6 @@ function SignInForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="w-full space-y-4 text-left">
-            {error && (
-              <p className="text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            )}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium ml-1">
                 Email

@@ -51,12 +51,6 @@ export async function POST(req: Request) {
       }
     );
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[PASSWORD RESET] Token for ${email}: ${resetToken}`);
-      console.log(`[PASSWORD RESET] Reset URL: ${resetUrl}`);
-    }
-
     return NextResponse.json({
       ok: true,
       message: 'If that email exists, we sent a reset link',

@@ -40,10 +40,8 @@ export class MemoryService {
     if (cached) return cached;
 
     if (!config.huggingfaceApiKey) {
-      const fallback = Array(VECTOR_DIM)
-        .fill(0)
-        .map(() => Math.random());
-      return fallback;
+      console.warn('[Memory] No HuggingFace API key. Embedding generation unavailable.');
+      throw new Error('Embedding generation requires HUGGINGFACE_API_KEY');
     }
     try {
       const output = (await this.hf.featureExtraction({
@@ -54,9 +52,7 @@ export class MemoryService {
       return output;
     } catch (err) {
       console.error('[Memory] Embedding generation failed:', err);
-      return Array(VECTOR_DIM)
-        .fill(0)
-        .map(() => Math.random());
+      throw new Error('Embedding generation failed');
     }
   }
 

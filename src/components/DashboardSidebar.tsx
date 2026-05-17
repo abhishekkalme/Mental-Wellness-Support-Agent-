@@ -21,7 +21,6 @@ import {
   CalendarDays,
   Wind,
   ListChecks,
-  Library,
   Stethoscope,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,24 +31,13 @@ import { allNavItems, filterNavByRole, getNavBySection, type NavItem } from '@/c
 
 interface NavSectionProps {
   items: NavItem[];
-  title?: string;
   pathname: string;
   isExpanded: boolean;
 }
 
-function NavSection({ items, title, pathname, isExpanded }: NavSectionProps) {
+function NavSection({ items, pathname, isExpanded }: NavSectionProps) {
   return (
-    <div className="space-y-1">
-      {title && isExpanded && (
-        <div
-          className={cn(
-            'px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/20',
-            'transition-opacity duration-200'
-          )}
-        >
-          {title}
-        </div>
-      )}
+    <div className="space-y-0.5">
       {items.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
@@ -60,7 +48,7 @@ function NavSection({ items, title, pathname, isExpanded }: NavSectionProps) {
               'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all relative',
               isActive
                 ? 'bg-[#E2FF6F]/10 text-[#E2FF6F]'
-                : 'text-white/40 hover:text-white hover:bg-white/5'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
             )}
           >
             {isActive && (
@@ -70,7 +58,7 @@ function NavSection({ items, title, pathname, isExpanded }: NavSectionProps) {
               />
             )}
             <item.icon
-              className={cn('w-5 h-5 shrink-0', isActive ? 'text-[#E2FF6F]' : 'text-white/40')}
+              className={cn('w-5 h-5 shrink-0', isActive ? 'text-[#E2FF6F]' : 'text-white/50')}
             />
             <AnimatePresence>
               {isExpanded && (
@@ -134,63 +122,25 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-4 no-scrollbar">
+      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5 no-scrollbar">
         <NavSection items={sections.primary} pathname={pathname} isExpanded={isExpanded} />
 
-        {sections.wellness.length > 0 && (
+        {sections.wellness.length + sections.progress.length > 0 && (
           <>
-            <div className="h-px bg-white/5 mx-3" />
+            <div className="h-px bg-white/5 mx-3 my-2" />
             <NavSection
-              items={sections.wellness}
-              title="Wellness"
+              items={[...sections.wellness, ...sections.progress]}
               pathname={pathname}
               isExpanded={isExpanded}
             />
           </>
         )}
 
-        {sections.progress.length > 0 && (
+        {sections.ai.length + sections.social.length + sections.tools.length > 0 && (
           <>
-            <div className="h-px bg-white/5 mx-3" />
+            <div className="h-px bg-white/5 mx-3 my-2" />
             <NavSection
-              items={sections.progress}
-              title="Progress"
-              pathname={pathname}
-              isExpanded={isExpanded}
-            />
-          </>
-        )}
-
-        {sections.ai.length > 0 && (
-          <>
-            <div className="h-px bg-white/5 mx-3" />
-            <NavSection
-              items={sections.ai}
-              title="AI"
-              pathname={pathname}
-              isExpanded={isExpanded}
-            />
-          </>
-        )}
-
-        {sections.social.length > 0 && (
-          <>
-            <div className="h-px bg-white/5 mx-3" />
-            <NavSection
-              items={sections.social}
-              title="Social"
-              pathname={pathname}
-              isExpanded={isExpanded}
-            />
-          </>
-        )}
-
-        {sections.tools.length > 0 && (
-          <>
-            <div className="h-px bg-white/5 mx-3" />
-            <NavSection
-              items={sections.tools}
-              title="Tools"
+              items={[...sections.ai, ...sections.social, ...sections.tools]}
               pathname={pathname}
               isExpanded={isExpanded}
             />
@@ -199,13 +149,8 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
 
         {sections.more.length > 0 && (
           <>
-            <div className="h-px bg-white/5 mx-3" />
-            <NavSection
-              items={sections.more}
-              title="More"
-              pathname={pathname}
-              isExpanded={isExpanded}
-            />
+            <div className="h-px bg-white/5 mx-3 my-2" />
+            <NavSection items={sections.more} pathname={pathname} isExpanded={isExpanded} />
           </>
         )}
       </nav>
@@ -233,13 +178,13 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
           </AnimatePresence>
         </Link>
 
-        {(role === 'admin' || role === 'mentor') && (
+        {role === 'admin' && (
           <div className="group relative">
             <Link
-              href={role === 'admin' ? '/admin' : '/mentor'}
+              href="/admin"
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                'text-white/40 hover:text-white hover:bg-white/5'
+                'text-white/60 hover:text-white hover:bg-white/5'
               )}
             >
               <Settings className="w-5 h-5 shrink-0" />
@@ -251,21 +196,11 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
                     exit={{ opacity: 0, width: 0 }}
                     className="whitespace-nowrap overflow-hidden"
                   >
-                    {role === 'admin' ? 'Admin' : 'Mentor'}
-                    {role === 'mentor' && (
-                      <span className="ml-2 text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                        Soon
-                      </span>
-                    )}
+                    Admin
                   </motion.span>
                 )}
               </AnimatePresence>
             </Link>
-            {role === 'mentor' && (
-              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-48 bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-xs text-white/60 shadow-xl z-50">
-                Mentor dashboard is under development.
-              </div>
-            )}
           </div>
         )}
 
@@ -297,7 +232,7 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
                         useStore.getState().clearPersistedData();
                         signOut({ callbackUrl: '/' });
                       }}
-                      className="text-white/40 hover:text-rose-400 text-xs flex items-center gap-1 mt-0.5"
+                      className="text-white/50 hover:text-rose-400 text-xs flex items-center gap-1 mt-0.5"
                     >
                       <LogOut className="w-3 h-3" />
                       Sign out
@@ -312,7 +247,7 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
                     useStore.getState().clearPersistedData();
                     signOut({ callbackUrl: '/' });
                   }}
-                  className="ml-auto p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-rose-400 transition-colors"
+                  className="ml-auto p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-rose-400 transition-colors"
                   title="Sign out"
                 >
                   <LogOut className="w-4 h-4" />
@@ -328,7 +263,7 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
         className={cn(
           'absolute -right-3 top-20 w-6 h-6 rounded-full',
           'bg-[#E2FF6F] text-black flex items-center justify-center',
-          'hover:scale-110 transition-transform shadow-lg',
+          'transition-transform shadow-lg',
           'hidden md:flex'
         )}
         aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}

@@ -3,7 +3,6 @@ type RateLimitEntry = {
   resetAt: number;
 };
 
-// In-memory store with automatic cleanup
 const inMemoryStore = new Map<string, RateLimitEntry>();
 const CLEANUP_INTERVAL = 60_000;
 let lastCleanup = Date.now();
@@ -43,7 +42,10 @@ function inMemoryRateLimit(
   return { success: entry.count <= max, remaining, resetIn };
 }
 
-// Redis-backed rate limiter — supports Upstash REST and standard Redis
+function nonEmpty(val: string | undefined): val is string {
+  return typeof val === 'string' && val.length > 0;
+}
+
 async function redisRateLimit(
   key: string,
   interval: number,
@@ -53,83 +55,61 @@ async function redisRateLimit(
   const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
   const redisUrl = process.env.REDIS_URL;
 
-  // In production, Redis/Upstash is required.
-  if (process.env.NODE_ENV === 'production' && !redisUrl && (!upstashUrl || !upstashToken)) {
-    console.error(
-      '[RateLimit] REDIS_URL or UPSTASH_REDIS_REST_URL/TOKEN is required in production. ' +
-        'Falling back to in-memory store.'
-    );
+  const hasUpstash = nonEmpty(upstashUrl) && nonEmpty(upstashToken);
+  const hasRedis = nonEmpty(redisUrl);
+
+  if (!hasUpstash && !hasRedis) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(
+        '[RateLimit] No Redis/Upstash configured — using in-memory fallback (not suitable for multi-instance deployment)'
+      );
+    }
     return inMemoryRateLimit(key, interval, max);
   }
 
-  // Case 1: Upstash REST (Preferred)
-  if (upstashUrl && upstashToken) {
+  if (hasUpstash) {
     try {
       const { Redis } = await import('@upstash/redis');
-      const redis = new Redis({
-        url: upstashUrl,
-        token: upstashToken,
-      });
-
+      const redis = new Redis({ url: upstashUrl!, token: upstashToken! });
       const now = Date.now();
       const resetAt = now + interval;
-
-      // Simple INCR + EXPIRE via REST
       const count = await redis.incr(key);
       await redis.expireat(key, Math.ceil(resetAt / 1000));
-
       const remaining = Math.max(0, max - count);
       const resetIn = Math.ceil((resetAt - now) / 1000);
-
       return { success: count <= max, remaining, resetIn };
     } catch (error) {
-      console.error('[RateLimit] Upstash REST error:', error);
+      console.error('[RateLimit] Upstash error:', error);
       return inMemoryRateLimit(key, interval, max);
     }
   }
 
-  // Case 2: Standard Redis (ioredis)
-  if (redisUrl) {
-    const isLocalhost = redisUrl.includes('localhost') || redisUrl.includes('127.0.0.1');
-    if (process.env.NODE_ENV === 'production' && isLocalhost) {
-      console.error('[RateLimit] REDIS_URL cannot be localhost in production.');
-      return inMemoryRateLimit(key, interval, max);
-    }
-
+  if (hasRedis) {
     try {
       const { default: Redis } = await import('ioredis');
-      const redis = new Redis(redisUrl, {
+      const redis = new Redis(redisUrl!, {
         maxRetriesPerRequest: 1,
         lazyConnect: true,
         retryStrategy: () => null,
       });
-
       await redis.connect().catch(() => {});
-
       const now = Date.now();
       const resetAt = now + interval;
       const multi = redis.multi();
       multi.incr(key);
       multi.expireat(key, Math.ceil(resetAt / 1000));
       const results = await multi.exec();
-
       await redis.quit().catch(() => {});
-
-      if (!results) {
-        return inMemoryRateLimit(key, interval, max);
-      }
-
+      if (!results) return inMemoryRateLimit(key, interval, max);
       const count = results[0][1] as number;
       const remaining = Math.max(0, count <= max ? max - count : 0);
       const resetIn = Math.ceil((resetAt - now) / 1000);
-
       return { success: count <= max, remaining, resetIn };
     } catch {
       return inMemoryRateLimit(key, interval, max);
     }
   }
 
-  // Fallback to in-memory
   return inMemoryRateLimit(key, interval, max);
 }
 
@@ -148,15 +128,11 @@ export function getClientIdentifier(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
   const cfConnectingIp = request.headers.get('cf-connecting-ip');
-
   const ip = cfConnectingIp || realIp || (forwarded ? forwarded.split(',')[0].trim() : null);
-
   const authHeader = request.headers.get('authorization');
   const cookieHeader = request.headers.get('cookie');
-
   const sessionId = authHeader || cookieHeader || '';
   const combined = (ip || 'unknown') + (sessionId.slice(0, 32) || '');
-
   return hashString(combined);
 }
 
@@ -171,5 +147,5 @@ function hashString(str: string): string {
 }
 
 export const chatRateLimit = rateLimit({ interval: 60_000, max: 20, keyPrefix: 'chat' });
-export const dataRateLimit = rateLimit({ interval: 60_000, max: 60, keyPrefix: 'data' });
+export const dataRateLimit = rateLimit({ interval: 60_000, max: 120, keyPrefix: 'data' });
 export const authRateLimit = rateLimit({ interval: 15 * 60_000, max: 10, keyPrefix: 'auth' });

@@ -89,26 +89,3 @@ export function useKeyboardNav(
 
   return handleKeyDown;
 }
-
-export const LiveRegion = ({
-  message,
-  level = 'polite',
-}: {
-  message: string;
-  level?: 'polite' | 'assertive';
-}) => (
-  <div aria-live={level} aria-atomic="true" className="sr-only" role="status">
-    {message}
-  </div>
-);
-
-export function SkipLink({ targetId, children }: { targetId: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={`#${targetId}`}
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:bg-[#E2FF6F] focus:text-black focus:px-6 focus:py-3 focus:rounded-xl focus:font-bold focus:text-sm focus:shadow-xl"
-    >
-      {children}
-    </a>
-  );
-}

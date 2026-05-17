@@ -1,20 +1,15 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { useStore } from '@/store/useStore';
-import { SleepEntry } from '@/lib/types';
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Moon,
   Music,
   Eye,
   ChevronRight,
-  ChevronLeft,
-  Loader2,
   Plus,
-  Calendar,
-  Zap,
+  Target,
+  Clock,
   Activity,
   Award,
   CloudRain,
@@ -26,52 +21,51 @@ import {
   VolumeX,
   Play,
   Pause,
-  Target,
-  Clock,
+  Sparkles,
+  CheckCircle2,
+  Lightbulb,
+  AlertTriangle,
+  BarChart3,
+  Star,
+  Zap,
+  ListChecks,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+  ReferenceLine,
+} from 'recharts';
 import { format, subDays, isSameDay } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { useStore } from '@/store/useStore';
+import { SleepEntry } from '@/lib/types';
+import toast from 'react-hot-toast';
+import { useSoundMixer, useSleepMetrics, type SoundId } from './hooks';
 
-const seedMusic = [
-  {
-    title: 'Deep Forest',
-    category: 'Binaural Beats',
-    bpm: '60',
-    audioUrl: '/assets/Birds Singing In A Forest.mp3',
-  },
-  {
-    title: 'Ocean Dreams',
-    category: 'Lofi Ambient',
-    bpm: '55',
-    audioUrl: '/assets/Heart Of The Ocean.mp3',
-  },
-  {
-    title: 'Rain Sound And Rainforest',
-    category: 'Sound Bath',
-    bpm: '50',
-    audioUrl: '/assets/Rain Sound And Rainforest.mp3',
-  },
-  {
-    title: 'Nature Ambience',
-    category: 'Nature Sounds',
-    bpm: '65',
-    audioUrl: '/assets/nature.mp3',
-  },
-  { title: 'Ocean Waves', category: 'Ethereal Drone', bpm: '40', audioUrl: '/assets/ocean.mp3' },
-  { title: 'Stormy Sea', category: 'Relaxation', bpm: '58', audioUrl: '/assets/stormy sea.mp3' },
-];
-
-type SoundAsset = {
-  id: string;
-  name: string;
-  icon: any;
-  color: string;
-  gradient: string;
-  benefit: string;
+type SleepMusicTrack = {
+  _id?: string;
+  title: string;
+  category: string;
+  bpm: string;
+  audioUrl: string;
 };
 
-const soundAssets: SoundAsset[] = [
+type WellbeingItem = {
+  _id?: string;
+  title: string;
+  description: string;
+  category: string;
+  iconName?: string;
+};
+
+const soundAssets = [
   {
-    id: 'rain',
+    id: 'rain' as SoundId,
     name: 'Rainfall',
     icon: CloudRain,
     color: 'text-blue-400',
@@ -79,7 +73,7 @@ const soundAssets: SoundAsset[] = [
     benefit: 'improved sleep quality and reduced anxiety',
   },
   {
-    id: 'forest',
+    id: 'forest' as SoundId,
     name: 'Forest Birds',
     icon: Trees,
     color: 'text-emerald-400',
@@ -87,7 +81,7 @@ const soundAssets: SoundAsset[] = [
     benefit: 'enhanced focus and cognitive restoration',
   },
   {
-    id: 'ocean',
+    id: 'ocean' as SoundId,
     name: 'Ocean Waves',
     icon: Waves,
     color: 'text-sky-400',
@@ -95,7 +89,7 @@ const soundAssets: SoundAsset[] = [
     benefit: 'deep relaxation and stress relief',
   },
   {
-    id: 'wind',
+    id: 'wind' as SoundId,
     name: 'Soft Wind',
     icon: Wind,
     color: 'text-slate-400',
@@ -103,7 +97,7 @@ const soundAssets: SoundAsset[] = [
     benefit: 'mental clarity and gentle background ambiance',
   },
   {
-    id: 'fire',
+    id: 'fire' as SoundId,
     name: 'Crackling Fire',
     icon: Flame,
     color: 'text-orange-400',
@@ -112,80 +106,974 @@ const soundAssets: SoundAsset[] = [
   },
 ];
 
-interface SleepMusicTrack {
-  _id?: string;
-  title: string;
-  category: string;
-  bpm: string;
-  audioUrl: string;
-}
-interface WellbeingItem {
-  _id?: string;
-  title: string;
-  description: string;
-  category: string;
-  iconName?: string;
+const tabs = [
+  { id: 'tracking' as const, label: 'Tracking', icon: BarChart3 },
+  { id: 'music' as const, label: 'Music', icon: Music },
+  { id: 'mixer' as const, label: 'Mixer', icon: Volume2 },
+  { id: 'wellbeing' as const, label: 'Wellbeing', icon: Eye },
+];
+
+const sleepTips = [
+  { text: 'Cool room (18&deg;C/65&deg;F) improves deep sleep', icon: '🌡️' },
+  { text: 'No screens 60 minutes before bed', icon: '📱' },
+  { text: 'Consistent wake times (even weekends)', icon: '⏰' },
+  { text: 'No caffeine after 2 PM', icon: '☕' },
+  { text: '15 min reading replaces scrolling', icon: '📖' },
+];
+
+type InsightType = 'positive' | 'warning' | 'tip';
+
+function InsightIcon({ type }: { type: InsightType }) {
+  if (type === 'positive') return <CheckCircle2 className="w-4 h-4 text-[#4ade80]" />;
+  if (type === 'warning') return <AlertTriangle className="w-4 h-4 text-[#fbbf24]" />;
+  return <Lightbulb className="w-4 h-4 text-[#C8B6FF]" />;
 }
 
-type SoundNode = {
-  source: AudioBufferSourceNode | null;
-  gainNode: GainNode | null;
-  buffer: AudioBuffer | null;
-  isPlaying: boolean;
+function InsightBg({ type }: { type: InsightType }) {
+  if (type === 'positive') return 'bg-[#4ade80]/10 border-[#4ade80]/20';
+  if (type === 'warning') return 'bg-[#fbbf24]/10 border-[#fbbf24]/20';
+  return 'bg-[#C8B6FF]/10 border-[#C8B6FF]/20';
+}
+
+const tabVariants = {
+  enter: { opacity: 0, y: 12 },
+  center: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -12 },
 };
 
-function createPinkNoise(bufferSize: number): Float32Array {
-  const buffer = new Float32Array(bufferSize);
-  let b0 = 0,
-    b1 = 0,
-    b2 = 0,
-    b3 = 0,
-    b4 = 0,
-    b5 = 0,
-    b6 = 0;
-  for (let i = 0; i < bufferSize; i++) {
-    const white = Math.random() * 2 - 1;
-    b0 = 0.99886 * b0 + white * 0.0555179;
-    b1 = 0.99332 * b1 + white * 0.0750759;
-    b2 = 0.969 * b2 + white * 0.153852;
-    b3 = 0.8665 * b3 + white * 0.3104856;
-    b4 = 0.55 * b4 + white * 0.5329522;
-    b5 = -0.7616 * b5 - white * 0.016898;
-    buffer[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
-    b6 = white * 0.115926;
-  }
-  return buffer;
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0 },
+};
+
+const qualityLabels: Record<number, { label: string; color: string }> = {
+  1: { label: 'Poor', color: 'bg-red-500' },
+  2: { label: 'Fair', color: 'bg-orange-400' },
+  3: { label: 'Good', color: 'bg-yellow-400' },
+  4: { label: 'Great', color: 'bg-lime-400' },
+  5: { label: 'Excellent', color: 'bg-[#4ade80]' },
+};
+
+function QualityDots({ value, max = 5 }: { value: number; max?: number }) {
+  return (
+    <div className="flex gap-1.5" role="img" aria-label={`Quality ${value} out of ${max}`}>
+      {Array.from({ length: max }, (_, i) => (
+        <div
+          key={i}
+          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+            i < value
+              ? qualityLabels[value as keyof typeof qualityLabels]?.color || 'bg-[#E2FF6F]'
+              : 'bg-white/10'
+          }`}
+        />
+      ))}
+    </div>
+  );
 }
 
-function createBrownNoise(bufferSize: number): Float32Array {
-  const buffer = new Float32Array(bufferSize);
-  let lastOut = 0;
-  for (let i = 0; i < bufferSize; i++) {
-    const white = Math.random() * 2 - 1;
-    buffer[i] = (lastOut + 0.02 * white) / 1.02;
-    lastOut = buffer[i];
-    buffer[i] *= 3.5;
-  }
-  return buffer;
+function SleepLogForm({
+  logDate,
+  logDuration,
+  logQuality,
+  saving,
+  saved,
+  onDateChange,
+  onDurationChange,
+  onQualityChange,
+  onSave,
+  onCancel,
+}: {
+  logDate: string;
+  logDuration: number;
+  logQuality: 1 | 2 | 3 | 4 | 5;
+  saving: boolean;
+  saved: boolean;
+  onDateChange: (d: string) => void;
+  onDurationChange: (d: number) => void;
+  onQualityChange: (q: 1 | 2 | 3 | 4 | 5) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      className="surface-card p-6 space-y-5"
+    >
+      <div className="flex items-center justify-between">
+        <h4 className="font-bold text-white text-lg">Log Sleep</h4>
+        <button
+          onClick={onCancel}
+          className="text-sm text-white/40 hover:text-white transition-colors font-medium"
+        >
+          Cancel
+        </button>
+      </div>
+      <div>
+        <label className="text-xs text-white/50 font-medium mb-2 block">Date</label>
+        <input
+          type="date"
+          value={logDate}
+          onChange={(e) => onDateChange(e.target.value)}
+          className="w-full h-11 px-4 rounded-xl bg-black/30 border border-white/[0.08] text-white text-sm focus:border-[#E2FF6F]/50 focus:outline-none transition-all"
+        />
+      </div>
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-xs text-white/50 font-medium">Duration</label>
+          <span className="text-sm font-bold text-[#E2FF6F] tabular-nums">{logDuration}h</span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={14}
+          value={logDuration}
+          onChange={(e) => onDurationChange(Number(e.target.value))}
+          aria-label="Sleep duration in hours"
+          aria-valuenow={logDuration}
+          aria-valuemin={1}
+          aria-valuemax={14}
+          className="slider-accent w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#E2FF6F] [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-[#E2FF6F]/30 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#E2FF6F] [&::-moz-range-thumb]:border-0"
+        />
+        <div className="flex justify-between text-[10px] text-white/30 mt-1.5">
+          <span>1h</span>
+          <span>7h</span>
+          <span>14h</span>
+        </div>
+      </div>
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-xs text-white/50 font-medium">Quality</label>
+          <span className="text-sm font-bold text-[#C8B6FF] tabular-nums">{logQuality}/5</span>
+        </div>
+        <div className="flex gap-2" role="radiogroup" aria-label="Sleep quality rating">
+          {([1, 2, 3, 4, 5] as const).map((q) => (
+            <button
+              key={q}
+              onClick={() => onQualityChange(q)}
+              role="radio"
+              aria-checked={logQuality === q}
+              aria-label={`Quality ${q}`}
+              className={`flex-1 h-10 rounded-xl text-xs font-bold transition-all ${
+                logQuality === q
+                  ? 'bg-[#E2FF6F] text-black shadow-lg shadow-[#E2FF6F]/20'
+                  : 'bg-white/[0.04] text-white/40 hover:bg-white/10 hover:text-white/70'
+              }`}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
+      <AnimatePresence>
+        {saved && (
+          <motion.p
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="text-xs text-[#4ade80] text-center font-medium flex items-center justify-center gap-1.5"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" /> Saved!
+          </motion.p>
+        )}
+      </AnimatePresence>
+      <Button
+        onClick={onSave}
+        disabled={saving}
+        className="w-full bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold rounded-xl h-11 shadow-lg shadow-[#E2FF6F]/20"
+      >
+        {saving ? 'Saving...' : 'Save Entry'}
+      </Button>
+    </motion.div>
+  );
 }
 
-function createWhiteNoise(bufferSize: number): Float32Array {
-  const buffer = new Float32Array(bufferSize);
-  for (let i = 0; i < bufferSize; i++) buffer[i] = Math.random() * 2 - 1;
-  return buffer;
+function EmptySleepState({ onLogSleep }: { onLogSleep: () => void }) {
+  return (
+    <motion.div
+      variants={itemVariants}
+      className="flex flex-col items-center justify-center text-center py-16 px-6"
+    >
+      <div className="w-20 h-20 rounded-full bg-[#E2FF6F]/10 flex items-center justify-center mb-6">
+        <Moon className="w-9 h-9 text-[#E2FF6F]" />
+      </div>
+      <h3 className="text-xl font-bold text-white mb-2">No Sleep Data Yet</h3>
+      <p className="text-white/50 text-sm max-w-xs mb-8 leading-relaxed">
+        Start tracking your sleep to unlock personalized insights, trends, and recommendations.
+      </p>
+      <Button
+        onClick={onLogSleep}
+        className="bg-[#E2FF6F] hover:bg-[#d4f056] text-black font-bold rounded-xl h-11 px-6 shadow-lg shadow-[#E2FF6F]/20"
+      >
+        <Plus className="w-4 h-4 mr-2" /> Log Your First Night
+      </Button>
+    </motion.div>
+  );
 }
 
-function createCracklingNoise(bufferSize: number): Float32Array {
-  const buffer = new Float32Array(bufferSize);
-  let lastCrackle = 0;
-  for (let i = 0; i < bufferSize; i++) {
-    const white = Math.random();
-    if (white > 0.997) lastCrackle = (Math.random() * 2 - 1) * 0.8;
-    else if (white > 0.99) lastCrackle = (Math.random() * 2 - 1) * 0.4;
-    else lastCrackle *= 0.995;
-    buffer[i] = lastCrackle + (Math.random() * 2 - 1) * 0.05;
-  }
-  return buffer;
+function SleepStatsGrid({
+  displayHours,
+  displayMinutes,
+  score,
+  sleepTarget,
+}: {
+  displayHours: number;
+  displayMinutes: number;
+  score: number;
+  sleepTarget: number;
+}) {
+  const stats = [
+    {
+      icon: Clock,
+      label: 'Slept',
+      value: `${displayHours}h ${displayMinutes}m`,
+      color: 'text-white',
+    },
+    { icon: Target, label: 'Goal', value: `${sleepTarget}h`, color: 'text-white' },
+    { icon: Star, label: 'Score', value: `${score}%`, color: 'text-[#E2FF6F]' },
+  ];
+
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {stats.map((stat) => (
+        <motion.div
+          key={stat.label}
+          variants={itemVariants}
+          className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]"
+        >
+          <stat.icon className="w-4 h-4 text-white/30" />
+          <span className="text-[11px] text-white/40 font-medium uppercase tracking-wider">
+            {stat.label}
+          </span>
+          <span className={`text-lg font-bold tabular-nums ${stat.color}`}>{stat.value}</span>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function SleepProgressBar({ percent }: { percent: number }) {
+  return (
+    <div className="relative h-10 bg-white/[0.06] rounded-2xl overflow-hidden">
+      <motion.div
+        className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#C8B6FF] to-[#E2FF6F] rounded-2xl"
+        initial={{ width: 0 }}
+        animate={{ width: `${Math.min(percent, 100)}%` }}
+        transition={{ duration: 1, ease: 'easeOut' }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-sm font-bold text-black drop-shadow-sm">{Math.round(percent)}%</span>
+      </div>
+    </div>
+  );
+}
+
+function WeeklyChart({
+  data,
+  sleepTarget,
+}: {
+  data: { day: string; hours: number; quality: number; color: string; hasData: boolean }[];
+  sleepTarget: number;
+}) {
+  return (
+    <div className="w-full">
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+          <XAxis
+            dataKey="day"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 12, fontWeight: 600 }}
+          />
+          <YAxis
+            domain={[0, 12]}
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 11 }}
+            tickFormatter={(v: number) => `${v}h`}
+          />
+          <Tooltip
+            content={({ active, payload }: any) => {
+              if (!active || !payload?.length) return null;
+              const d = payload[0].payload;
+              if (!d.hasData) return null;
+              return (
+                <div className="bg-[#1a1d1b] border border-white/10 rounded-xl px-4 py-3 shadow-xl">
+                  <p className="text-white font-bold text-sm mb-1">{d.day}</p>
+                  <p className="text-white/70 text-xs">
+                    {d.hours > 0 ? `${d.hours}h slept` : 'No data'}
+                  </p>
+                  {d.quality > 0 && (
+                    <p className="text-white/50 text-xs mt-0.5">Quality: {d.quality}/5</p>
+                  )}
+                </div>
+              );
+            }}
+          />
+          <ReferenceLine
+            y={sleepTarget}
+            stroke="#E2FF6F"
+            strokeDasharray="6 4"
+            strokeWidth={1.5}
+            label={{
+              value: 'Goal',
+              fill: '#E2FF6F',
+              fontSize: 11,
+              position: 'insideTopRight',
+            }}
+          />
+          <Bar dataKey="hours" radius={[6, 6, 0, 0]} maxBarSize={36}>
+            {data.map((entry, idx) => (
+              <Cell key={idx} fill={entry.color} className="transition-all duration-300" />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function SleepChartCard({
+  weeklyChartData,
+  sleepTarget,
+  sleepView,
+  onViewChange,
+}: {
+  weeklyChartData: {
+    day: string;
+    hours: number;
+    quality: number;
+    color: string;
+    hasData: boolean;
+  }[];
+  sleepTarget: number;
+  sleepView: 'daily' | 'weekly';
+  onViewChange: (v: 'daily' | 'weekly') => void;
+}) {
+  return (
+    <div className="surface-card p-6 md:p-8 space-y-5">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-white text-lg">Sleep Trend</h3>
+        <div
+          className="flex gap-1 p-0.5 bg-white/5 rounded-xl"
+          role="tablist"
+          aria-label="Sleep view toggle"
+        >
+          {(['daily', 'weekly'] as const).map((v) => (
+            <button
+              key={v}
+              role="tab"
+              aria-selected={sleepView === v}
+              onClick={() => onViewChange(v)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
+                sleepView === v
+                  ? 'bg-[#E2FF6F] text-black shadow-sm'
+                  : 'text-white/40 hover:text-white'
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+      </div>
+      {weeklyChartData.some((d) => d.hasData) ? (
+        <WeeklyChart data={weeklyChartData} sleepTarget={sleepTarget} />
+      ) : (
+        <div className="h-[220px] flex items-center justify-center text-white/30 text-sm">
+          No data this week
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SleepInsightCard({
+  insights,
+}: {
+  insights: { type: InsightType; title: string; description: string }[];
+}) {
+  if (insights.length === 0) return null;
+
+  return (
+    <motion.div variants={itemVariants} className="surface-card p-6 md:p-8 space-y-5">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C8B6FF]/20 to-[#E2FF6F]/20 flex items-center justify-center">
+          <Sparkles className="w-4 h-4 text-[#E2FF6F]" />
+        </div>
+        <h3 className="font-bold text-white text-lg">AI Sleep Insights</h3>
+      </div>
+      <div className="space-y-3">
+        {insights.map((insight, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className={`flex gap-3 p-4 rounded-2xl border ${InsightBg({ type: insight.type })}`}
+          >
+            <div className="mt-0.5 shrink-0">
+              <InsightIcon type={insight.type} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white">{insight.title}</h4>
+              <p className="text-xs text-white/60 leading-relaxed">{insight.description}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function TrackingTab({
+  sleepProgress,
+  sleepMetrics,
+  weeklyChartData,
+  sleepInsights,
+  sleepView,
+  sleepTarget,
+  onViewChange,
+  onLogSleep,
+}: {
+  sleepProgress: {
+    displayHours: number;
+    displayMinutes: number;
+    score: number;
+    progressPercent: number;
+    recordCount: number;
+  };
+  sleepMetrics: { consistency: number; daysLogged: number };
+  weeklyChartData: {
+    day: string;
+    hours: number;
+    quality: number;
+    color: string;
+    hasData: boolean;
+  }[];
+  sleepInsights: { type: InsightType; title: string; description: string }[];
+  sleepView: 'daily' | 'weekly';
+  sleepTarget: number;
+  onViewChange: (v: 'daily' | 'weekly') => void;
+  onLogSleep: () => void;
+}) {
+  return (
+    <motion.div
+      key="tracking"
+      variants={tabVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
+    >
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="space-y-6"
+      >
+        <motion.div variants={itemVariants} className="surface-card p-6 md:p-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h3 className="font-bold text-white text-lg">Sleep Progress</h3>
+              <p className="text-xs text-white/40">
+                {sleepView === 'daily' ? "Today's sleep" : 'Weekly average'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/30">{sleepMetrics.daysLogged}/7 days</span>
+            </div>
+          </div>
+
+          <SleepProgressBar percent={sleepProgress.progressPercent} />
+
+          <SleepStatsGrid
+            displayHours={sleepProgress.displayHours}
+            displayMinutes={sleepProgress.displayMinutes}
+            score={sleepProgress.score}
+            sleepTarget={sleepTarget}
+          />
+
+          <motion.div variants={itemVariants}>
+            <Button
+              onClick={onLogSleep}
+              variant="outline"
+              className="border-[#E2FF6F]/30 text-[#E2FF6F] hover:bg-[#E2FF6F]/10 hover:border-[#E2FF6F]/50 rounded-xl w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Log Sleep
+            </Button>
+          </motion.div>
+        </motion.div>
+
+        <SleepChartCard
+          weeklyChartData={weeklyChartData}
+          sleepTarget={sleepTarget}
+          sleepView={sleepView}
+          onViewChange={onViewChange}
+        />
+
+        <SleepInsightCard insights={sleepInsights} />
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function MusicTab({
+  music,
+  playingTrackId,
+  onPlayTrack,
+}: {
+  music: SleepMusicTrack[];
+  playingTrackId: string | null;
+  onPlayTrack: (id: string | null) => void;
+}) {
+  const currentTrack = music.find((m) => m._id === playingTrackId);
+
+  return (
+    <motion.div
+      key="music"
+      variants={tabVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C8B6FF]/20 to-[#E2FF6F]/10 flex items-center justify-center">
+          <Music className="w-5 h-5 text-[#C8B6FF]" />
+        </div>
+        <div>
+          <h3 className="font-bold text-white text-lg">Sleep Music Library</h3>
+          <p className="text-xs text-white/40">Calming tracks for deep rest</p>
+        </div>
+      </div>
+
+      {currentTrack?.audioUrl && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="surface-card p-4 flex items-center gap-4 border-[#C8B6FF]/20"
+        >
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => onPlayTrack(null)}
+            className="rounded-full shrink-0 text-[#C8B6FF] hover:bg-[#C8B6FF]/10"
+          >
+            <Moon className="w-4 h-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <audio controls autoPlay className="w-full h-9">
+              <source src={currentTrack.audioUrl} type="audio/mpeg" />
+            </audio>
+          </div>
+          <span className="text-sm font-medium text-white shrink-0 truncate max-w-[120px]">
+            {currentTrack.title}
+          </span>
+        </motion.div>
+      )}
+
+      {music.length === 0 ? (
+        <div className="surface-card p-12 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-full bg-white/[0.04] flex items-center justify-center mb-4">
+            <Music className="w-7 h-7 text-white/20" />
+          </div>
+          <p className="text-white/40 text-sm">No music tracks available yet</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {music.map((m, i) => (
+            <motion.div
+              key={m._id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+              className={`surface-card p-5 text-center space-y-4 group hover:bg-white/[0.06] transition-all duration-300 cursor-pointer border-2 ${
+                playingTrackId === m._id
+                  ? 'border-[#C8B6FF]/40 bg-[#C8B6FF]/[0.04]'
+                  : 'border-white/[0.06] hover:border-white/20'
+              }`}
+            >
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#C8B6FF]/10 to-[#E2FF6F]/10 flex items-center justify-center mx-auto">
+                <Music className="w-7 h-7 text-[#C8B6FF]" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-bold text-white text-base">{m.title}</h4>
+                <p className="text-xs text-white/40 flex items-center justify-center gap-2">
+                  <span>{m.category}</span>
+                  <span className="w-1 h-1 rounded-full bg-white/20" />
+                  <span>{m.bpm} BPM</span>
+                </p>
+              </div>
+              <Button
+                variant={playingTrackId === m._id ? 'primary' : 'outline'}
+                size="sm"
+                className={`w-full rounded-xl ${
+                  playingTrackId === m._id
+                    ? 'bg-[#C8B6FF] hover:bg-[#b8a6ff] text-black'
+                    : 'border-white/[0.08] hover:bg-white/10 text-white'
+                }`}
+                onClick={() => onPlayTrack(playingTrackId === m._id ? null : m._id!)}
+              >
+                {playingTrackId === m._id ? (
+                  <>
+                    <Pause className="w-3.5 h-3.5 mr-1.5" /> Stop
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 mr-1.5" /> Play
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function MixerTab({
+  mixerVolumes,
+  setVolume,
+  mixerPlaying,
+  togglePlay,
+  stopAll,
+  activeSoundIds,
+}: {
+  mixerVolumes: Record<SoundId, number>;
+  setVolume: (id: SoundId, val: number) => void;
+  mixerPlaying: boolean;
+  togglePlay: () => void;
+  stopAll: () => void;
+  activeSoundIds: SoundId[];
+}) {
+  const mixerTip = useMemo(() => {
+    if (activeSoundIds.length === 0)
+      return 'Start mixing sounds to create your perfect sleep atmosphere.';
+    const activeSounds = activeSoundIds.map((id) => soundAssets.find((s) => s.id === id)!);
+    if (activeSounds.length === 1) {
+      const s = activeSounds[0];
+      return `${s.name} at ${mixerVolumes[s.id]}% promotes ${s.benefit}.`;
+    }
+    const names = activeSounds.map((s) => s.name).join(', ');
+    return `Your blend of ${names} creates a ${
+      activeSounds.length > 2 ? 'rich layered' : 'dual-layered'
+    } soundscape for deep relaxation.`;
+  }, [activeSoundIds, mixerVolumes]);
+
+  return (
+    <motion.div
+      key="mixer"
+      variants={tabVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400/20 to-blue-400/10 flex items-center justify-center">
+            <Volume2 className="w-5 h-5 text-cyan-400" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-lg">Sound Mixer</h3>
+            <p className="text-xs text-white/40">Create your perfect ambient atmosphere</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="icon"
+            variant={mixerPlaying ? 'primary' : 'outline'}
+            className={`rounded-full h-11 w-11 transition-all ${
+              mixerPlaying
+                ? 'bg-cyan-400 hover:bg-cyan-500 text-black shadow-lg shadow-cyan-400/30'
+                : 'border-white/20 hover:bg-white/10 hover:border-cyan-400/40'
+            }`}
+            onClick={togglePlay}
+            aria-label={mixerPlaying ? 'Pause mixer' : 'Play mixer'}
+          >
+            {mixerPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+          </Button>
+          <Button variant="ghost" onClick={stopAll} className="text-white/40 hover:text-white">
+            <VolumeX className="w-4 h-4 mr-1.5" /> Mute All
+          </Button>
+        </div>
+      </div>
+
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
+        {soundAssets.map((sound, i) => {
+          const vol = mixerVolumes[sound.id];
+          const isActive = vol > 0 && mixerPlaying;
+          return (
+            <motion.div
+              key={sound.id}
+              variants={itemVariants}
+              transition={{ delay: i * 0.04 }}
+              className={`surface-card p-5 space-y-4 relative overflow-hidden transition-all duration-300 border-2 ${
+                isActive
+                  ? 'border-cyan-400/40 bg-cyan-400/[0.04]'
+                  : 'border-white/[0.06] hover:border-white/20'
+              }`}
+            >
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${sound.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`}
+              />
+              <div className="flex items-center justify-between relative z-10">
+                <div className={`p-3 rounded-xl bg-white/[0.04] ${sound.color}`}>
+                  <sound.icon className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2 text-xs font-bold text-white/40 uppercase">
+                  {vol > 0 ? (
+                    <Volume2 className="w-3 h-3 text-cyan-400" />
+                  ) : (
+                    <VolumeX className="w-3 h-3" />
+                  )}
+                  {vol}%
+                </div>
+              </div>
+              <div className="space-y-3 relative z-10">
+                <h4 className="font-bold text-white">{sound.name}</h4>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={vol}
+                  onChange={(e) => setVolume(sound.id, parseInt(e.target.value))}
+                  aria-label={`${sound.name} volume`}
+                  aria-valuenow={vol}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-cyan-400 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-cyan-400/30 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-cyan-400 [&::-moz-range-thumb]:border-0"
+                />
+              </div>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+
+      <motion.div
+        variants={itemVariants}
+        className="surface-card p-5 flex items-center gap-4 border-cyan-500/20"
+      >
+        <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400 shrink-0">
+          <Volume2 className="w-6 h-6" />
+        </div>
+        <div className="min-w-0">
+          <h4 className="font-bold text-white text-sm">
+            {activeSoundIds.length === 0 ? 'Getting Started' : 'Your Mix'}
+          </h4>
+          <p className="text-sm text-white/40 leading-relaxed">{mixerTip}</p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function WellbeingTab({ wellbeing }: { wellbeing: WellbeingItem[] }) {
+  return (
+    <motion.div
+      key="wellbeing"
+      variants={tabVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E2FF6F]/20 to-[#C8B6FF]/10 flex items-center justify-center">
+          <Eye className="w-5 h-5 text-[#E2FF6F]" />
+        </div>
+        <div>
+          <h3 className="font-bold text-white text-lg">Digital Wellbeing</h3>
+          <p className="text-xs text-white/40">Tips for healthier screen habits</p>
+        </div>
+      </div>
+
+      {wellbeing.length === 0 ? (
+        <div className="surface-card p-12 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-full bg-white/[0.04] flex items-center justify-center mb-4">
+            <Eye className="w-7 h-7 text-white/20" />
+          </div>
+          <p className="text-white/40 text-sm">No wellbeing tips available yet</p>
+        </div>
+      ) : (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+        >
+          {wellbeing.map((item, i) => (
+            <motion.div
+              key={item._id}
+              variants={itemVariants}
+              transition={{ delay: i * 0.04 }}
+              className="surface-card p-5 space-y-3 hover:border-[#E2FF6F]/30 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#E2FF6F]/10 flex items-center justify-center">
+                {item.iconName === 'Moon' ? (
+                  <Moon className="w-5 h-5 text-[#E2FF6F]" />
+                ) : (
+                  <Eye className="w-5 h-5 text-[#E2FF6F]" />
+                )}
+              </div>
+              <h4 className="font-bold text-white">{item.title}</h4>
+              <p className="text-sm text-white/50 leading-relaxed">{item.description}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+
+      <motion.div variants={itemVariants} className="surface-card p-6 border-[#E2FF6F]/15">
+        <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+          <ListChecks className="w-4 h-4 text-[#E2FF6F]" /> Screen Time Strategy
+        </h4>
+        <ul className="space-y-3 text-sm text-white/50">
+          <li className="flex items-center gap-3">
+            <ChevronRight className="w-4 h-4 text-[#E2FF6F] shrink-0" /> Charge phone outside
+            bedroom
+          </li>
+          <li className="flex items-center gap-3">
+            <ChevronRight className="w-4 h-4 text-[#E2FF6F] shrink-0" /> Use traditional alarm clock
+          </li>
+          <li className="flex items-center gap-3">
+            <ChevronRight className="w-4 h-4 text-[#E2FF6F] shrink-0" /> Replace scrolling with 15m
+            reading
+          </li>
+          <li className="flex items-center gap-3">
+            <ChevronRight className="w-4 h-4 text-[#E2FF6F] shrink-0" /> Enable blue light filter
+            after sunset
+          </li>
+        </ul>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function Sidebar({
+  sleepMetrics,
+  sleepInsights,
+}: {
+  sleepMetrics: {
+    consistency: number;
+    extraHours: number;
+    daysLogged: number;
+    thisWeekAvg: number;
+    lastWeekAvg: number;
+  };
+  sleepInsights: { type: InsightType; title: string; description: string }[];
+}) {
+  return (
+    <aside className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="surface-card p-6 border-[#E2FF6F]/15 space-y-5"
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-white">Weekly Goal</h3>
+          <Award className="w-5 h-5 text-[#E2FF6F]" />
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-white/50 flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-[#E2FF6F]" /> Consistency
+            </span>
+            <span className="text-white font-bold tabular-nums">{sleepMetrics.consistency}%</span>
+          </div>
+          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-[#C8B6FF] to-[#E2FF6F] rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${sleepMetrics.consistency}%` }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+            />
+          </div>
+          <p className="text-[11px] text-white/40">
+            {sleepMetrics.daysLogged} of 7 days logged this week
+          </p>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+        className="surface-card p-6 space-y-4"
+      >
+        <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+          <Moon className="w-3.5 h-3.5" /> Sleep Tips
+        </h4>
+        <ul className="space-y-3">
+          {sleepTips.map((tip, i) => (
+            <li key={i} className="flex gap-3 text-xs text-white/50 group">
+              <span className="text-sm shrink-0 w-5 text-center">{tip.icon}</span>
+              <p className="leading-relaxed">{tip.text}</p>
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+
+      {sleepInsights.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.16 }}
+          className="surface-card p-6 space-y-4"
+        >
+          <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+            <Activity className="w-3.5 h-3.5" /> Quick Insights
+          </h4>
+          <div className="space-y-3">
+            {sleepInsights.slice(0, 2).map((insight, i) => (
+              <div
+                key={i}
+                className={`flex gap-2.5 p-3 rounded-xl border ${InsightBg({ type: insight.type })}`}
+              >
+                <InsightIcon type={insight.type} />
+                <p className="text-xs text-white/60 leading-relaxed">{insight.description}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </aside>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+      >
+        <Moon className="w-10 h-10 text-[#E2FF6F]/60" />
+      </motion.div>
+      <div className="text-center space-y-2">
+        <p className="text-white/40 font-medium animate-pulse">Preparing your sanctuary...</p>
+        <p className="text-white/20 text-xs">Loading sleep data</p>
+      </div>
+    </div>
+  );
 }
 
 export default function SleepPage() {
@@ -193,7 +1081,7 @@ export default function SleepPage() {
     'tracking'
   );
   const [sleepView, setSleepView] = useState<'daily' | 'weekly'>('daily');
-  const [sleepTarget, setSleepTarget] = useState(8);
+  const [sleepTarget] = useState(8);
   const [music, setMusic] = useState<SleepMusicTrack[]>([]);
   const [wellbeing, setWellbeing] = useState<WellbeingItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -205,89 +1093,12 @@ export default function SleepPage() {
   const [saved, setSaved] = useState(false);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
 
-  const [mixerVolumes, setMixerVolumes] = useState<Record<string, number>>({
-    rain: 0,
-    forest: 0,
-    ocean: 0,
-    wind: 0,
-    fire: 0,
-  });
-  const [mixerPlaying, setMixerPlaying] = useState(false);
-
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const soundNodesRef = useRef<Record<string, SoundNode>>({});
-  const masterGainRef = useRef<GainNode | null>(null);
-  const lfoOscillatorsRef = useRef<Record<string, OscillatorNode>>({});
-  const lfoGainsRef = useRef<Record<string, GainNode>>({});
-  const isInitializedRef = useRef(false);
-
   const store = useStore();
-
-  const currentTrack = music.find((m) => m._id === playingTrackId);
-  const overallScore = store.wellnessMetrics
-    ? Math.round(
-        (store.wellnessMetrics.physical +
-          store.wellnessMetrics.emotional +
-          store.wellnessMetrics.mental +
-          store.wellnessMetrics.sleep +
-          store.wellnessMetrics.spiritual +
-          store.wellnessMetrics.social) /
-          6
-      )
-    : 71;
-
-  const sleepMetrics = useMemo(() => {
-    const today = new Date();
-    const thisWeekRecords = store.sleepHistory.filter((r) => {
-      const d = new Date(r.date);
-      return d >= subDays(today, 6) && d <= today;
-    });
-    const lastWeekRecords = store.sleepHistory.filter((r) => {
-      const d = new Date(r.date);
-      return d >= subDays(today, 13) && d <= subDays(today, 7);
-    });
-    const thisWeekAvg =
-      thisWeekRecords.length > 0
-        ? thisWeekRecords.reduce((sum: number, r: SleepEntry) => sum + (r.durationHours || 0), 0) /
-          thisWeekRecords.length
-        : 0;
-    const lastWeekAvg =
-      lastWeekRecords.length > 0
-        ? lastWeekRecords.reduce((sum: number, r: SleepEntry) => sum + (r.durationHours || 0), 0) /
-          lastWeekRecords.length
-        : 0;
-    const extraHours = Math.max(0, thisWeekAvg - lastWeekAvg);
-    const daysLogged = thisWeekRecords.length;
-    const consistency = 7 > 0 ? Math.round((daysLogged / 7) * 100) : 0;
-    return { extraHours: Math.round(extraHours * 10) / 10, consistency };
-  }, [store.sleepHistory]);
-
-  const sleepProgress = useMemo(() => {
-    const today = new Date();
-    let records: SleepEntry[] = [];
-    if (sleepView === 'daily') {
-      records = store.sleepHistory.filter((r) => isSameDay(new Date(r.date), today));
-    } else {
-      records = store.sleepHistory.filter((r) => {
-        const d = new Date(r.date);
-        return d >= subDays(today, 6) && d <= today;
-      });
-    }
-    const totalHours = records.reduce((sum, r) => sum + (r.durationHours || 0), 0);
-    const avgHours = records.length > 0 ? totalHours / records.length : 0;
-    const displayHours = sleepView === 'daily' ? records[0]?.durationHours || 0 : avgHours;
-    const displayMinutes = Math.round((displayHours % 1) * 60);
-    const score =
-      sleepTarget > 0 ? Math.min(100, Math.round((displayHours / sleepTarget) * 100)) : 0;
-    const progressPercent = Math.min(100, (displayHours / sleepTarget) * 100);
-    return {
-      displayHours: Math.floor(displayHours),
-      displayMinutes,
-      score,
-      progressPercent,
-      recordCount: records.length,
-    };
-  }, [store.sleepHistory, sleepView, sleepTarget]);
+  const mixer = useSoundMixer();
+  const { sleepMetrics, sleepProgress, weeklyChartData, sleepInsights } = useSleepMetrics(
+    sleepView,
+    sleepTarget
+  );
 
   const fetchData = async () => {
     setLoading(true);
@@ -296,10 +1107,11 @@ export default function SleepPage() {
         fetch('/api/sleep/music'),
         fetch('/api/sleep/wellbeing'),
       ]);
-      setMusic(await musicRes.json());
-      setWellbeing(await wellbeingRes.json());
+      if (musicRes.ok) setMusic(await musicRes.json());
+      if (wellbeingRes.ok) setWellbeing(await wellbeingRes.json());
     } catch (err) {
       console.error('Failed to fetch sleep data', err);
+      toast.error('Failed to load sleep data');
     } finally {
       setLoading(false);
     }
@@ -322,659 +1134,131 @@ export default function SleepPage() {
     setShowLogForm(false);
     setSaving(false);
     setTimeout(() => setSaved(false), 3000);
+    toast.success('Sleep entry saved');
   };
 
-  const initializeMixerAudio = useCallback(() => {
-    if (isInitializedRef.current) return;
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContextRef.current = ctx;
-    const masterGain = ctx.createGain();
-    masterGain.connect(ctx.destination);
-    masterGainRef.current = masterGain;
-    const sampleRate = ctx.sampleRate;
-    const bufferDuration = 4;
-    const bufferSize = sampleRate * bufferDuration;
-    const rainBuffer = ctx.createBuffer(1, bufferSize, sampleRate);
-    rainBuffer.getChannelData(0).set(createPinkNoise(bufferSize));
-    const forestBuffer = ctx.createBuffer(1, bufferSize, sampleRate);
-    const brownForest = createBrownNoise(bufferSize);
-    const forestData = forestBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      const chirp = Math.sin((i / sampleRate) * 800 + Math.sin((i / sampleRate) * 3) * 10) * 0.15;
-      const birdLike =
-        Math.sin((i / sampleRate) * 1200 + Math.sin((i / sampleRate) * 7) * 15) * 0.1;
-      forestData[i] =
-        brownForest[i] +
-        chirp * (Math.random() > 0.995 ? 1 : 0) +
-        birdLike * (Math.random() > 0.997 ? 1 : 0);
-    }
-    const oceanBuffer = ctx.createBuffer(1, bufferSize, sampleRate);
-    oceanBuffer.getChannelData(0).set(createBrownNoise(bufferSize));
-    const windBuffer = ctx.createBuffer(1, bufferSize, sampleRate);
-    windBuffer.getChannelData(0).set(createWhiteNoise(bufferSize));
-    const fireBuffer = ctx.createBuffer(1, bufferSize, sampleRate);
-    fireBuffer.getChannelData(0).set(createCracklingNoise(bufferSize));
-    soundNodesRef.current = {
-      rain: { source: null, gainNode: null, buffer: rainBuffer, isPlaying: false },
-      forest: { source: null, gainNode: null, buffer: forestBuffer, isPlaying: false },
-      ocean: { source: null, gainNode: null, buffer: oceanBuffer, isPlaying: false },
-      wind: { source: null, gainNode: null, buffer: windBuffer, isPlaying: false },
-      fire: { source: null, gainNode: null, buffer: fireBuffer, isPlaying: false },
-    };
-    isInitializedRef.current = true;
-  }, []);
-
-  const startSound = useCallback((soundId: string, volume: number) => {
-    const ctx = audioContextRef.current;
-    const masterGain = masterGainRef.current;
-    const soundNode = soundNodesRef.current[soundId];
-    if (!ctx || !masterGain || !soundNode.buffer) return;
-    if (soundNode.source) {
-      try {
-        soundNode.source.stop();
-        soundNode.source.disconnect();
-      } catch (e) {}
-    }
-    if (soundNode.gainNode) soundNode.gainNode.disconnect();
-    const source = ctx.createBufferSource();
-    source.buffer = soundNode.buffer;
-    source.loop = true;
-    const gainNode = ctx.createGain();
-    gainNode.gain.setValueAtTime(0, ctx.currentTime);
-    source.connect(gainNode);
-    gainNode.connect(masterGain);
-    if (soundId === 'ocean') {
-      if (lfoOscillatorsRef.current[soundId]) {
-        lfoOscillatorsRef.current[soundId].stop();
-        lfoOscillatorsRef.current[soundId].disconnect();
-      }
-      if (lfoGainsRef.current[soundId]) lfoGainsRef.current[soundId].disconnect();
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      lfo.frequency.setValueAtTime(0.1, ctx.currentTime);
-      lfoGain.gain.setValueAtTime(0.4, ctx.currentTime);
-      lfo.connect(lfoGain);
-      lfoGain.connect(gainNode.gain);
-      lfo.start();
-      lfoOscillatorsRef.current[soundId] = lfo;
-      lfoGainsRef.current[soundId] = lfoGain;
-    }
-    if (soundId === 'wind') {
-      const lowpass = ctx.createBiquadFilter();
-      lowpass.type = 'lowpass';
-      lowpass.frequency.setValueAtTime(400, ctx.currentTime);
-      lowpass.Q.setValueAtTime(1, ctx.currentTime);
-      gainNode.disconnect();
-      source.disconnect();
-      source.connect(lowpass);
-      lowpass.connect(gainNode);
-      gainNode.connect(masterGain);
-    }
-    if (soundId === 'rain') {
-      const lowpass = ctx.createBiquadFilter();
-      lowpass.type = 'lowpass';
-      lowpass.frequency.setValueAtTime(2000, ctx.currentTime);
-      source.disconnect();
-      source.connect(lowpass);
-      lowpass.connect(gainNode);
-      gainNode.connect(masterGain);
-    }
-    source.start();
-    soundNode.source = source;
-    soundNode.gainNode = gainNode;
-    soundNode.isPlaying = true;
-    gainNode.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + 0.1);
-  }, []);
-
-  const stopSound = useCallback((soundId: string) => {
-    const ctx = audioContextRef.current;
-    const soundNode = soundNodesRef.current[soundId];
-    if (!ctx || !soundNode.gainNode || !soundNode.source) return;
-    const currentTime = ctx.currentTime;
-    soundNode.gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.5);
-    setTimeout(() => {
-      try {
-        soundNode.source?.stop();
-        soundNode.source?.disconnect();
-        soundNode.gainNode?.disconnect();
-      } catch (e) {}
-      if (lfoOscillatorsRef.current[soundId]) {
-        lfoOscillatorsRef.current[soundId].stop();
-        lfoOscillatorsRef.current[soundId].disconnect();
-        delete lfoOscillatorsRef.current[soundId];
-      }
-      if (lfoGainsRef.current[soundId]) {
-        lfoGainsRef.current[soundId].disconnect();
-        delete lfoGainsRef.current[soundId];
-      }
-      soundNode.source = null;
-      soundNode.gainNode = null;
-      soundNode.isPlaying = false;
-    }, 550);
-  }, []);
-
-  useEffect(() => {
-    initializeMixerAudio();
-  }, [initializeMixerAudio]);
-
-  useEffect(() => {
-    if (!isInitializedRef.current) return;
-    soundAssets.forEach((sound) => {
-      const vol = mixerVolumes[sound.id];
-      if (mixerPlaying && vol > 0) startSound(sound.id, vol);
-      else if (!mixerPlaying || vol === 0)
-        if (soundNodesRef.current[sound.id].isPlaying) stopSound(sound.id);
-    });
-  }, [mixerVolumes, mixerPlaying, startSound, stopSound]);
-
-  const activeSounds = useMemo(
-    () =>
-      soundAssets
-        .filter((s) => mixerVolumes[s.id] > 0)
-        .sort((a, b) => mixerVolumes[b.id] - mixerVolumes[a.id]),
-    [mixerVolumes]
-  );
-  const mixerTipText = useMemo(() => {
-    if (activeSounds.length === 0)
-      return 'Start mixing sounds to create your perfect sleep atmosphere.';
-    if (activeSounds.length === 1)
-      return `${activeSounds[0].name} at ${mixerVolumes[activeSounds[0].id]}% promotes ${activeSounds[0].benefit}.`;
-    const names = activeSounds.map((s) => s.name).join(', ');
-    return `Your blend of ${names} creates a ${activeSounds.length > 2 ? 'rich layered' : 'dual-layered'} soundscape.`;
-  }, [activeSounds, mixerVolumes]);
-
-  const handleMixerVolumeChange = (id: string, val: number) => {
-    setMixerVolumes((prev) => ({ ...prev, [id]: val }));
-    if (val > 0 && !mixerPlaying) setMixerPlaying(true);
+  const handleLogSleep = () => {
+    setLogDate(format(new Date(), 'yyyy-MM-dd'));
+    setLogDuration(7);
+    setLogQuality(3);
+    setShowLogForm(true);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-        <p className="text-white/40 animate-pulse font-medium">Preparing your sanctuary...</p>
-      </div>
-    );
-  }
-
-  if (music.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-6 py-20">
-        <Music className="w-16 h-16 text-indigo-400" />
-        <h3 className="text-xl font-bold text-white">No music tracks found</h3>
-        <Button
-          onClick={async () => {
-            await fetch('/api/sleep/music', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(seedMusic),
-            });
-            fetchData();
-          }}
-          className="bg-indigo-500 hover:bg-indigo-600"
-        >
-          <Plus className="w-4 h-4 mr-2" /> Load Music Tracks
-        </Button>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton />;
 
   return (
-    <main className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 relative">
-      {/* Ambient glow */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 blur-[150px] rounded-full" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[#E2FF6F]/5 blur-[150px] rounded-full" />
-      </div>
-
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
+    <main id="main-content" className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 relative">
+      <motion.header
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10"
+      >
         <div className="space-y-3">
           <div className="flex items-center gap-3 text-[#E2FF6F]">
             <Moon className="w-6 h-6" />
-            <span className="text-sm font-bold uppercase tracking-widest">
+            <span className="text-sm font-bold uppercase tracking-[0.15em]">
               Sleep &amp; Sound Wellness
             </span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
             Rest &amp; Recovery
           </h1>
-          <p className="text-white/40 text-lg">
+          <p className="text-white/40 text-base">
             Track sleep, mix ambient sounds, and discover calming music.
           </p>
         </div>
-        <div className="flex gap-1 p-1 bg-white/[0.04] rounded-2xl border border-white/[0.06]">
-          {(['tracking', 'music', 'mixer', 'wellbeing'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 md:px-5 py-2 rounded-xl text-sm font-bold capitalize transition-all duration-200 ${activeTab === tab ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white'}`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </header>
+      </motion.header>
+
+      <div
+        className="flex gap-1 p-1 bg-white/[0.04] rounded-2xl border border-white/[0.06] overflow-x-auto no-scrollbar"
+        role="tablist"
+        aria-label="Sleep page sections"
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl text-sm font-bold capitalize transition-all duration-200 whitespace-nowrap ${
+              activeTab === tab.id
+                ? 'bg-[#E2FF6F] text-black shadow-sm'
+                : 'text-white/40 hover:text-white hover:bg-white/[0.03]'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
-        <div className="lg:col-span-2 space-y-8">
-          {activeTab === 'tracking' && (
-            <div className="space-y-8">
-              <div className="glass-panel p-6 md:p-8 space-y-6 bg-white/[0.03] border-white/[0.06]">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-white tracking-tight">Sleep Progress</h3>
-                  <div className="flex items-center gap-2 p-0.5 bg-white/5 rounded-xl">
-                    <button
-                      onClick={() => setSleepView('daily')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${sleepView === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-white/40 hover:text-white'}`}
-                    >
-                      Day
-                    </button>
-                    <button
-                      onClick={() => setSleepView('weekly')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${sleepView === 'weekly' ? 'bg-indigo-500 text-white shadow-sm' : 'text-white/40 hover:text-white'}`}
-                    >
-                      Week
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-6">
-                  {sleepProgress.recordCount === 0 ? (
-                    <div className="min-h-[200px] flex flex-col items-center justify-center text-center space-y-4">
-                      {showLogForm ? (
-                        <div className="glass-panel p-6 rounded-2xl bg-black/40 border border-white/[0.08] space-y-4 w-full max-w-sm">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-bold text-white">Log Sleep</h4>
-                            <button
-                              onClick={() => setShowLogForm(false)}
-                              className="text-white/30 hover:text-white text-sm transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                          <div>
-                            <label className="text-xs text-white/50 font-medium mb-1.5 block">
-                              Date
-                            </label>
-                            <input
-                              type="date"
-                              value={logDate}
-                              onChange={(e) => setLogDate(e.target.value)}
-                              className="w-full h-10 px-3 rounded-xl bg-black/30 border border-white/[0.08] text-white text-sm focus:border-indigo-400/50 focus:outline-none transition-all"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs text-white/50 font-medium mb-1.5 block">
-                              Hours:{' '}
-                              <span className="text-indigo-400 font-bold">{logDuration}h</span>
-                            </label>
-                            <input
-                              type="range"
-                              min={1}
-                              max={14}
-                              value={logDuration}
-                              onChange={(e) => setLogDuration(Number(e.target.value))}
-                              className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-400 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-400 [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-indigo-400/30"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs text-white/50 font-medium mb-1.5 block">
-                              Quality:{' '}
-                              <span className="text-indigo-400 font-bold">{logQuality}/5</span>
-                            </label>
-                            <div className="flex gap-2">
-                              {([1, 2, 3, 4, 5] as const).map((q) => (
-                                <button
-                                  key={q}
-                                  onClick={() => setLogQuality(q)}
-                                  className={`flex-1 h-9 rounded-lg text-xs font-bold transition-all ${logQuality === q ? 'bg-indigo-400 text-black shadow-sm' : 'bg-white/[0.04] text-white/40 hover:bg-white/10'}`}
-                                >
-                                  {q}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          {saved && (
-                            <p className="text-xs text-[#E2FF6F] text-center font-medium">Saved!</p>
-                          )}
-                          <Button
-                            onClick={handleSaveSleep}
-                            disabled={saving}
-                            className="w-full bg-indigo-500 hover:bg-indigo-600 rounded-xl h-11 font-bold"
-                          >
-                            {saving ? 'Saving...' : 'Save Entry'}
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                            <Moon className="w-7 h-7 text-indigo-400" />
-                          </div>
-                          <div>
-                            <p className="text-white/40 text-sm">Log your first sleep entry</p>
-                          </div>
-                          <button
-                            onClick={() => setShowLogForm(true)}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-bold text-sm hover:bg-indigo-500/20 transition-all"
-                          >
-                            <Plus className="w-4 h-4" /> Log Sleep
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="relative h-8 bg-white/[0.06] rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${sleepProgress.progressPercent}%` }}
-                          transition={{ duration: 1, ease: 'easeOut' }}
-                          className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-bold text-white drop-shadow-lg">
-                            {Math.round(sleepProgress.progressPercent)}%
-                          </span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div className="flex flex-col items-center p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                          <Clock className="w-4 h-4 text-white/40 mb-1" />
-                          <span className="text-xs text-white/40">Slept</span>
-                          <span className="text-white font-bold">
-                            {sleepProgress.displayHours}h {sleepProgress.displayMinutes}m
-                          </span>
-                        </div>
-                        <div className="flex flex-col items-center p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                          <Target className="w-4 h-4 text-white/40 mb-1" />
-                          <span className="text-xs text-white/40">Goal</span>
-                          <span className="text-white font-bold">{sleepTarget}h</span>
-                        </div>
-                        <div className="flex flex-col items-center p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                          <Moon className="w-4 h-4 text-indigo-400 mb-1" />
-                          <span className="text-xs text-white/40">Score</span>
-                          <span className="text-[#E2FF6F] font-bold">{sleepProgress.score}%</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-3">
-                        <Button
-                          onClick={() => setShowLogForm(true)}
-                          size="sm"
-                          className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 rounded-xl"
-                        >
-                          <Plus className="w-4 h-4 mr-2" /> Add Entry
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+        <div className="lg:col-span-2 space-y-6">
+          <AnimatePresence mode="wait">
+            {showLogForm && (
+              <motion.div
+                initial={{ opacity: 0, y: -16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+              >
+                <SleepLogForm
+                  logDate={logDate}
+                  logDuration={logDuration}
+                  logQuality={logQuality}
+                  saving={saving}
+                  saved={saved}
+                  onDateChange={setLogDate}
+                  onDurationChange={setLogDuration}
+                  onQualityChange={setLogQuality}
+                  onSave={handleSaveSleep}
+                  onCancel={() => setShowLogForm(false)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              <div className="glass-panel p-6 md:p-8 bg-white/[0.03] border-white/[0.06] space-y-6">
-                <p className="text-xs font-bold uppercase tracking-widest text-white/30">
-                  Wellbeing Score
-                </p>
-                <div className="relative h-[200px] flex items-center justify-center">
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-sm font-medium text-white/40">Overall</span>
-                    <span className="text-6xl font-bold text-white tabular-nums">
-                      {overallScore}%
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-indigo-500/10 p-4 rounded-2xl border border-indigo-500/15">
-                  <p className="text-sm text-white/60">
-                    Sleep meditations can help you fall asleep easily so you can wake up fresh and
-                    energized.
-                  </p>
-                </div>
-              </div>
-            </div>
+          {activeTab === 'tracking' && sleepProgress.recordCount === 0 && !showLogForm ? (
+            <EmptySleepState onLogSleep={handleLogSleep} />
+          ) : (
+            <>
+              {activeTab === 'tracking' && (
+                <TrackingTab
+                  sleepProgress={sleepProgress}
+                  sleepMetrics={sleepMetrics}
+                  weeklyChartData={weeklyChartData}
+                  sleepInsights={sleepInsights}
+                  sleepView={sleepView}
+                  sleepTarget={sleepTarget}
+                  onViewChange={setSleepView}
+                  onLogSleep={handleLogSleep}
+                />
+              )}
+            </>
           )}
 
           {activeTab === 'music' && (
-            <div className="space-y-6">
-              <h3 className="font-bold text-xl flex items-center gap-2 text-white">
-                <Music className="w-5 h-5 text-indigo-400" /> Sleep Music Library
-              </h3>
-              {currentTrack?.audioUrl && (
-                <div className="glass-panel p-4 bg-indigo-400/10 border-indigo-400/20 flex items-center gap-4 rounded-2xl">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setPlayingTrackId(null)}
-                    className="rounded-full shrink-0 text-indigo-400 hover:bg-indigo-400/10"
-                  >
-                    <Moon className="w-4 h-4" />
-                  </Button>
-                  <audio controls autoPlay className="flex-1 h-8">
-                    <source src={currentTrack.audioUrl} type="audio/mpeg" />
-                  </audio>
-                  <span className="text-sm font-medium shrink-0 text-white">
-                    {currentTrack.title}
-                  </span>
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {music.map((m) => (
-                  <div
-                    key={m._id}
-                    className="glass-panel p-6 text-center space-y-4 group hover:border-indigo-400/40 hover:bg-white/[0.06] transition-all duration-300 cursor-pointer border-white/[0.06] bg-white/[0.03]"
-                  >
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-400/10 to-purple-400/10 flex items-center justify-center text-indigo-400 mx-auto group-hover:scale-110 transition-transform">
-                      <Music className="w-7 h-7" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-lg text-white">{m.title}</h4>
-                      <p className="text-xs text-white/40 mt-1">{m.category}</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-white/[0.08] hover:bg-white/10 text-white rounded-xl"
-                      onClick={() => setPlayingTrackId(playingTrackId === m._id ? null : m._id!)}
-                    >
-                      {playingTrackId === m._id ? 'Stop' : 'Play'}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <MusicTab
+              music={music}
+              playingTrackId={playingTrackId}
+              onPlayTrack={setPlayingTrackId}
+            />
           )}
 
           {activeTab === 'mixer' && (
-            <div className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                  <h3 className="font-bold text-xl flex items-center gap-2 text-white">
-                    <Volume2 className="w-5 h-5 text-cyan-400" /> Sound Mixer
-                  </h3>
-                  <p className="text-white/40 text-sm mt-1">
-                    Create your perfect ambient sleep atmosphere
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="rounded-full h-12 w-12 border-white/20 hover:bg-white/10 hover:border-cyan-400/40 transition-all"
-                    onClick={() => setMixerPlaying(!mixerPlaying)}
-                  >
-                    {mixerPlaying ? (
-                      <Pause className="w-5 h-5 text-white" />
-                    ) : (
-                      <Play className="w-5 h-5 text-white ml-1" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setMixerVolumes({ rain: 0, forest: 0, ocean: 0, wind: 0, fire: 0 });
-                      setMixerPlaying(false);
-                    }}
-                    className="text-white/40 hover:text-white"
-                  >
-                    Mute All
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {soundAssets.map((sound) => {
-                  const vol = mixerVolumes[sound.id];
-                  const isActive = vol > 0 && mixerPlaying;
-                  return (
-                    <motion.div
-                      key={sound.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`glass-panel p-6 space-y-4 relative overflow-hidden group transition-all duration-300 border-2 ${isActive ? 'border-cyan-400/40 bg-cyan-400/[0.06]' : 'border-white/[0.06] hover:border-white/20'}`}
-                    >
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-br ${sound.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                      />
-                      <div className="flex items-center justify-between relative z-10">
-                        <div className={`p-3 rounded-xl bg-white/[0.04] ${sound.color}`}>
-                          <sound.icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-white/40 uppercase">
-                          {vol > 0 ? (
-                            <Volume2 className="w-3 h-3" />
-                          ) : (
-                            <VolumeX className="w-3 h-3" />
-                          )}
-                          {vol}%
-                        </div>
-                      </div>
-                      <div className="space-y-3 relative z-10">
-                        <h4 className="font-bold text-white">{sound.name}</h4>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={vol}
-                          onChange={(e) =>
-                            handleMixerVolumeChange(sound.id, parseInt(e.target.value))
-                          }
-                          className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-cyan-400 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-cyan-400/30"
-                        />
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-              <div className="glass-panel p-6 bg-cyan-500/[0.06] border-cyan-500/20 rounded-2xl flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400 shrink-0">
-                  <Volume2 className="w-6 h-6" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white">
-                    {activeSounds.length === 0 ? 'Getting Started' : 'Your Mix'}
-                  </h4>
-                  <p className="text-sm text-white/40">{mixerTipText}</p>
-                </div>
-              </div>
-            </div>
+            <MixerTab
+              mixerVolumes={mixer.mixerVolumes}
+              setVolume={mixer.setVolume}
+              mixerPlaying={mixer.mixerPlaying}
+              togglePlay={mixer.togglePlay}
+              stopAll={mixer.stopAll}
+              activeSoundIds={mixer.activeSoundIds}
+            />
           )}
 
-          {activeTab === 'wellbeing' && (
-            <div className="space-y-6">
-              <h3 className="font-bold text-xl flex items-center gap-2 text-white">
-                <Eye className="w-5 h-5 text-indigo-400" /> Digital Wellbeing
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {wellbeing.map((item) => (
-                  <div
-                    key={item._id}
-                    className="glass-panel p-5 space-y-3 border-white/[0.06] bg-white/[0.03] hover:border-indigo-400/30 transition-all group"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-indigo-400/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-                      {item.iconName === 'Moon' ? (
-                        <Moon className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </div>
-                    <h4 className="font-bold text-white">{item.title}</h4>
-                    <p className="text-sm text-white/50 leading-relaxed">{item.description}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="glass-panel p-6 bg-indigo-400/[0.04] border-indigo-400/15">
-                <h4 className="font-bold text-white mb-4">Screen Time Strategy</h4>
-                <ul className="space-y-3 text-sm text-white/50">
-                  <li className="flex items-center gap-3">
-                    <ChevronRight className="w-4 h-4 text-indigo-400 shrink-0" /> Charge phone
-                    outside bedroom
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <ChevronRight className="w-4 h-4 text-indigo-400 shrink-0" /> Use traditional
-                    alarm clock
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <ChevronRight className="w-4 h-4 text-indigo-400 shrink-0" /> Replace scrolling
-                    with 15m reading
-                  </li>
-                </ul>
-              </div>
-            </div>
-          )}
+          {activeTab === 'wellbeing' && <WellbeingTab wellbeing={wellbeing} />}
         </div>
 
-        <div className="space-y-6">
-          <div className="glass-panel p-6 bg-indigo-500/[0.04] border-indigo-500/15 space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-white">Daily Goal</h3>
-              <Award className="w-5 h-5 text-indigo-400" />
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <Zap className="w-4 h-4 text-white/40" />{' '}
-                <span className="text-white/40">Sleep consistency</span>
-                <span className="text-white font-bold">{sleepMetrics.consistency}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-indigo-400 rounded-full transition-all"
-                  style={{ width: `${sleepMetrics.consistency}%` }}
-                />
-              </div>
-            </div>
-            <div className="space-y-3 pt-4 border-t border-indigo-400/10">
-              <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest">
-                Sleep Tips
-              </h4>
-              {[
-                'Cool room (18°C)',
-                'No screens 60m before bed',
-                'Consistent wake times',
-                'No caffeine after 2PM',
-              ].map((tip, i) => (
-                <div key={i} className="flex gap-3 text-xs text-white/50">
-                  <div className="w-5 h-5 rounded-full bg-indigo-400/10 text-indigo-400 flex items-center justify-center text-[10px] font-bold shrink-0">
-                    {i + 1}
-                  </div>
-                  <p>{tip}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="glass-panel p-6 space-y-3">
-            <div className="flex items-center gap-3 text-xs font-bold text-white/40 uppercase tracking-widest">
-              <Activity className="w-4 h-4" /> Insights
-            </div>
-            <p className="text-xs text-white/50 leading-relaxed">
-              {store.sleepHistory.length === 0 ? (
-                'Log sleep to see patterns.'
-              ) : sleepMetrics.extraHours > 0 ? (
-                <>
-                  You got <span className="text-white font-bold">{sleepMetrics.extraHours}h</span>{' '}
-                  more sleep this week.
-                </>
-              ) : (
-                'Keep logging to build insights.'
-              )}
-            </p>
-          </div>
-        </div>
+        <Sidebar sleepMetrics={sleepMetrics} sleepInsights={sleepInsights} />
       </div>
     </main>
   );

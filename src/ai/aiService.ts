@@ -51,7 +51,7 @@ export async function agenticReply(
 
   const contextString = contextParts.join('\n');
 
-  const lang = getLanguageById('en');
+  const lang = getLanguageById(userContext?.language || 'en');
   const system = buildMultilingualSystemPrompt(lang, {
     safeMode: false,
     liteMode: false,

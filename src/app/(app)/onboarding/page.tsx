@@ -1,11 +1,11 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
 import {
   Sparkles,
   CheckCircle2,
@@ -218,6 +218,8 @@ export default function OnboardingPage() {
   const storedProgress = getStoredProgress();
   const [currentStep, setCurrentStep] = useState(storedProgress?.step ?? 0);
   const [generationPhase, setGenerationPhase] = useState(0);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState(false);
   const [formData, setFormData] = useState<OnboardingData>(
     storedProgress?.formData ?? {
       name: '',
@@ -414,6 +416,10 @@ export default function OnboardingPage() {
   };
 
   const completeOnboarding = async () => {
+    if (isCompleting) return;
+    setIsCompleting(true);
+    setCompletionError(false);
+
     const onboardingData = {
       name: formData.name,
       feeling: formData.feeling,
@@ -443,16 +449,30 @@ export default function OnboardingPage() {
     });
 
     store.setOnboarded(true);
+    store.dismissFtue();
     clearProgress();
 
     try {
-      await fetch('/api/auth/complete-onboarding', {
+      const res = await fetch('/api/auth/complete-onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ onboardingData, wellnessMetrics: metrics }),
       });
+
+      if (!res.ok) {
+        toast.error('Failed to complete onboarding. Please try again.');
+        setCompletionError(true);
+        setIsCompleting(false);
+        return;
+      }
+
       await update({ onboarded: true });
-    } catch {}
+      router.replace('/dashboard');
+    } catch {
+      toast.error('Failed to complete onboarding. Please try again.');
+      setCompletionError(true);
+      setIsCompleting(false);
+    }
   };
 
   const nextStep = () => {
@@ -483,23 +503,16 @@ export default function OnboardingPage() {
         setGenerationPhase(0);
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, steps.length]);
 
   useEffect(() => {
     if (generationPhase >= 5) {
       completeOnboardingRef.current();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationPhase]);
 
   return (
     <div className="min-h-screen bg-[#0A0D08] flex flex-col items-center justify-center p-4 md:p-6 relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#E2FF6F]/5 blur-[120px] rounded-full" />
-        <div className="absolute bottom-40 left-0 w-[500px] h-[500px] bg-[#E2FF6F]/5 blur-[120px] rounded-full" />
-      </div>
-
       <div className="max-w-xl w-full space-y-8 relative z-10">
         <div className="flex justify-between items-center gap-2">
           {steps.map((s, i) => (
@@ -507,496 +520,487 @@ export default function OnboardingPage() {
               key={s}
               className={cn(
                 'h-2 rounded-full transition-all duration-500 flex-1',
-                i <= currentStep
-                  ? 'bg-[#E2FF6F] shadow-[0_0_10px_rgba(226,255,111,0.5)]'
-                  : 'bg-white/10'
+                i <= currentStep ? 'bg-[#E2FF6F]' : 'bg-white/10'
               )}
             />
           ))}
         </div>
 
-        <AnimatePresence mode="wait">
-          {currentStep === 0 && (
-            <motion.div
-              key="step0"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
-            >
+        {currentStep === 0 && (
+          <div key="step0" className="surface-card p-8 md:p-10 space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2">Welcome to MindCare</h2>
+              <p className="text-white/40 font-medium">
+                Let&apos;s get to know you a little better
+              </p>
+            </div>
+
+            <div className="space-y-4">
               <div>
-                <h2 className="text-3xl font-bold text-white mb-2">Welcome to MindCare</h2>
-                <p className="text-white/40 font-medium">
-                  Let&apos;s get to know you a little better
-                </p>
+                <label className="text-sm text-white/60 font-medium mb-2 block">Your name</label>
+                <input
+                  type="text"
+                  placeholder="Enter your first name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full h-12 px-4 rounded-xl bg-black/30 border border-white/10 text-white placeholder:text-white/30 font-medium focus:outline-none focus:border-[#E2FF6F]/50 transition-all"
+                  maxLength={30}
+                />
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-white/60 font-medium mb-2 block">Your name</label>
-                  <input
-                    type="text"
-                    placeholder="Enter your first name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full h-12 px-4 rounded-xl bg-black/30 border border-white/10 text-white placeholder:text-white/30 font-medium focus:outline-none focus:border-[#E2FF6F]/50 transition-all"
-                    maxLength={30}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm text-white/60 font-medium mb-3 block">
-                    What&apos;s your biggest challenge right now?
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {challengeOptions.map((option) => (
-                      <button
-                        key={option.id}
-                        onClick={() => setFormData({ ...formData, biggestChallenge: option.id })}
-                        className={cn(
-                          'p-3 rounded-xl border text-left transition-all flex items-center gap-2',
-                          formData.biggestChallenge === option.id
-                            ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
-                            : 'bg-black/20 border-white/5 hover:bg-white/5'
-                        )}
-                      >
-                        <option.icon
-                          className={cn(
-                            'w-4 h-4 flex-shrink-0',
-                            formData.biggestChallenge === option.id
-                              ? 'text-[#E2FF6F]'
-                              : 'text-white/40'
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            'text-xs font-bold',
-                            formData.biggestChallenge === option.id
-                              ? 'text-[#E2FF6F]'
-                              : 'text-white/70'
-                          )}
-                        >
-                          {option.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                className="w-full h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
-                onClick={nextStep}
-                disabled={!formData.name.trim()}
-              >
-                Get Started
-              </Button>
-            </motion.div>
-          )}
-
-          {currentStep === 1 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
-            >
               <div>
-                <h2 className="text-3xl font-bold text-white mb-2">How have you been feeling?</h2>
-                <p className="text-white/40 font-medium">
-                  This shapes your personalized experience
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {feelingOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setFormData({ ...formData, feeling: option.id })}
-                    className={cn(
-                      'p-4 rounded-2xl border text-left transition-all',
-                      formData.feeling === option.id
-                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
-                        : 'bg-black/20 border-white/5 hover:bg-white/5'
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        'w-10 h-10 rounded-xl flex items-center justify-center mb-3',
-                        option.bgColor
-                      )}
-                    >
-                      <option.icon className={cn('w-5 h-5', option.color)} />
-                    </div>
-                    <p
-                      className={cn(
-                        'font-bold text-sm',
-                        formData.feeling === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
-                      )}
-                    >
-                      {option.label}
-                    </p>
-                    <p className="text-xs text-white/40 mt-1">{option.description}</p>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
-                  onClick={prevStep}
-                >
-                  Back
-                </Button>
-                <Button
-                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
-                  onClick={nextStep}
-                  disabled={!formData.feeling}
-                >
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
-            >
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-2">What matters most to you?</h2>
-                <p className="text-white/40 font-medium">Select up to 3 priorities</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {priorityOptions.map((option) => {
-                  const isSelected = formData.priorities.includes(option.id);
-                  const isDisabled = !isSelected && formData.priorities.length >= 3;
-
-                  return (
+                <label className="text-sm text-white/60 font-medium mb-3 block">
+                  What&apos;s your biggest challenge right now?
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {challengeOptions.map((option) => (
                     <button
                       key={option.id}
-                      onClick={() => {
-                        if (isSelected) {
-                          setFormData({
-                            ...formData,
-                            priorities: formData.priorities.filter((p) => p !== option.id),
-                          });
-                        } else if (formData.priorities.length < 3) {
-                          setFormData({
-                            ...formData,
-                            priorities: [...formData.priorities, option.id],
-                          });
-                        }
-                      }}
-                      disabled={isDisabled}
+                      onClick={() => setFormData({ ...formData, biggestChallenge: option.id })}
                       className={cn(
-                        'p-4 rounded-2xl border text-left transition-all flex items-center gap-3',
-                        isSelected
+                        'p-3 rounded-xl border text-left transition-all flex items-center gap-2',
+                        formData.biggestChallenge === option.id
                           ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
-                          : isDisabled
-                            ? 'opacity-30 cursor-not-allowed'
-                            : 'bg-black/20 border-white/5 hover:bg-white/5'
+                          : 'bg-black/20 border-white/5 hover:bg-white/5'
                       )}
                     >
-                      <div
+                      <option.icon
                         className={cn(
-                          'w-8 h-8 rounded-lg flex items-center justify-center',
-                          isSelected ? 'bg-[#E2FF6F]' : 'bg-white/10'
+                          'w-4 h-4 flex-shrink-0',
+                          formData.biggestChallenge === option.id
+                            ? 'text-[#E2FF6F]'
+                            : 'text-white/40'
                         )}
-                      >
-                        {isSelected ? (
-                          <CheckCircle2 className="w-4 h-4 text-black" />
-                        ) : (
-                          <option.icon className="w-4 h-4 text-white/40" />
-                        )}
-                      </div>
+                      />
                       <span
                         className={cn(
-                          'font-bold text-sm',
-                          isSelected ? 'text-[#E2FF6F]' : 'text-white/80'
+                          'text-xs font-bold',
+                          formData.biggestChallenge === option.id
+                            ? 'text-[#E2FF6F]'
+                            : 'text-white/70'
                         )}
                       >
                         {option.label}
                       </span>
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
+            </div>
 
-              <div className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
-                  onClick={prevStep}
-                >
-                  Back
-                </Button>
-                <Button
-                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
-                  onClick={nextStep}
-                  disabled={formData.priorities.length === 0}
-                >
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 3 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
+            <Button
+              className="w-full h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
+              onClick={nextStep}
+              disabled={!formData.name.trim()}
             >
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-2">
-                  What&apos;s your sleep schedule like?
-                </h2>
-                <p className="text-white/40 font-medium">
-                  This helps us tailor rest recommendations for you
-                </p>
-              </div>
+              Get Started
+            </Button>
+          </div>
+        )}
 
-              <div className="grid grid-cols-2 gap-3">
-                {sleepOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setFormData({ ...formData, sleepSchedule: option.id })}
+        {currentStep === 1 && (
+          <div key="step1" className="surface-card p-8 md:p-10 space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2">How have you been feeling?</h2>
+              <p className="text-white/40 font-medium">This shapes your personalized experience</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {feelingOptions.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setFormData({ ...formData, feeling: option.id })}
+                  className={cn(
+                    'p-4 rounded-2xl border text-left transition-all',
+                    formData.feeling === option.id
+                      ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                      : 'bg-black/20 border-white/5 hover:bg-white/5'
+                  )}
+                >
+                  <div
                     className={cn(
-                      'p-4 rounded-2xl border text-left transition-all flex flex-col gap-2',
-                      formData.sleepSchedule === option.id
-                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
-                        : 'bg-black/20 border-white/5 hover:bg-white/5'
+                      'w-10 h-10 rounded-xl flex items-center justify-center mb-3',
+                      option.bgColor
                     )}
                   >
-                    <option.icon
+                    <option.icon className={cn('w-5 h-5', option.color)} />
+                  </div>
+                  <p
+                    className={cn(
+                      'font-bold text-sm',
+                      formData.feeling === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
+                    )}
+                  >
+                    {option.label}
+                  </p>
+                  <p className="text-xs text-white/40 mt-1">{option.description}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                onClick={prevStep}
+              >
+                Back
+              </Button>
+              <Button
+                className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
+                onClick={nextStep}
+                disabled={!formData.feeling}
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div key="step2" className="surface-card p-8 md:p-10 space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2">What matters most to you?</h2>
+              <p className="text-white/40 font-medium">Select up to 3 priorities</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {priorityOptions.map((option) => {
+                const isSelected = formData.priorities.includes(option.id);
+                const isDisabled = !isSelected && formData.priorities.length >= 3;
+
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => {
+                      if (isSelected) {
+                        setFormData({
+                          ...formData,
+                          priorities: formData.priorities.filter((p) => p !== option.id),
+                        });
+                      } else if (formData.priorities.length < 3) {
+                        setFormData({
+                          ...formData,
+                          priorities: [...formData.priorities, option.id],
+                        });
+                      }
+                    }}
+                    disabled={isDisabled}
+                    className={cn(
+                      'p-4 rounded-2xl border text-left transition-all flex items-center gap-3',
+                      isSelected
+                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                        : isDisabled
+                          ? 'opacity-30 cursor-not-allowed'
+                          : 'bg-black/20 border-white/5 hover:bg-white/5'
+                    )}
+                  >
+                    <div
                       className={cn(
-                        'w-6 h-6',
-                        formData.sleepSchedule === option.id ? 'text-[#E2FF6F]' : 'text-white/40'
+                        'w-8 h-8 rounded-lg flex items-center justify-center',
+                        isSelected ? 'bg-[#E2FF6F]' : 'bg-white/10'
                       )}
-                    />
-                    <div>
-                      <p
-                        className={cn(
-                          'font-bold text-sm',
-                          formData.sleepSchedule === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
-                        )}
-                      >
-                        {option.label}
-                      </p>
-                      <p className="text-xs text-white/40 mt-0.5">{option.description}</p>
+                    >
+                      {isSelected ? (
+                        <CheckCircle2 className="w-4 h-4 text-black" />
+                      ) : (
+                        <option.icon className="w-4 h-4 text-white/40" />
+                      )}
                     </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
-                  onClick={prevStep}
-                >
-                  Back
-                </Button>
-                <Button
-                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
-                  onClick={nextStep}
-                >
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 4 && (
-            <motion.div
-              key="step4"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
-            >
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-2">What drives you?</h2>
-                <p className="text-white/40 font-medium">
-                  This helps us keep you motivated and engaged
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {motivationOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setFormData({ ...formData, motivation: option.id })}
-                    className={cn(
-                      'p-4 rounded-2xl border text-left transition-all flex flex-col gap-2',
-                      formData.motivation === option.id
-                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
-                        : 'bg-black/20 border-white/5 hover:bg-white/5'
-                    )}
-                  >
-                    <option.icon
+                    <span
                       className={cn(
-                        'w-6 h-6',
-                        formData.motivation === option.id ? 'text-[#E2FF6F]' : 'text-white/40'
+                        'font-bold text-sm',
+                        isSelected ? 'text-[#E2FF6F]' : 'text-white/80'
                       )}
-                    />
+                    >
+                      {option.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                onClick={prevStep}
+              >
+                Back
+              </Button>
+              <Button
+                className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056] disabled:opacity-50"
+                onClick={nextStep}
+                disabled={formData.priorities.length === 0}
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 3 && (
+          <div key="step3" className="surface-card p-8 md:p-10 space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2">
+                What&apos;s your sleep schedule like?
+              </h2>
+              <p className="text-white/40 font-medium">
+                This helps us tailor rest recommendations for you
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {sleepOptions.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setFormData({ ...formData, sleepSchedule: option.id })}
+                  className={cn(
+                    'p-4 rounded-2xl border text-left transition-all flex flex-col gap-2',
+                    formData.sleepSchedule === option.id
+                      ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                      : 'bg-black/20 border-white/5 hover:bg-white/5'
+                  )}
+                >
+                  <option.icon
+                    className={cn(
+                      'w-6 h-6',
+                      formData.sleepSchedule === option.id ? 'text-[#E2FF6F]' : 'text-white/40'
+                    )}
+                  />
+                  <div>
                     <p
                       className={cn(
                         'font-bold text-sm',
-                        formData.motivation === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
+                        formData.sleepSchedule === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
                       )}
                     >
                       {option.label}
                     </p>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
-                  onClick={prevStep}
-                >
-                  Back
-                </Button>
-                <Button
-                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
-                  onClick={nextStep}
-                >
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 5 && (
-            <motion.div
-              key="step5"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              className="glass-panel p-8 md:p-10 rounded-3xl bg-white/5 border border-white/5 shadow-2xl space-y-6"
-            >
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-2">
-                  How should your AI companion help?
-                </h2>
-                <p className="text-white/40 font-medium">
-                  Optional - you can always change this later
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {aiStyleOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setFormData({ ...formData, aiStyle: option.id })}
-                    className={cn(
-                      'w-full p-4 rounded-2xl border text-left transition-all',
-                      formData.aiStyle === option.id
-                        ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
-                        : 'bg-black/20 border-white/5 hover:bg-white/5'
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p
-                          className={cn(
-                            'font-bold',
-                            formData.aiStyle === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
-                          )}
-                        >
-                          {option.label}
-                        </p>
-                        <p className="text-xs text-white/40 mt-1">{option.description}</p>
-                      </div>
-                      {formData.aiStyle === option.id && (
-                        <CheckCircle2 className="w-5 h-5 text-[#E2FF6F]" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
-                  onClick={prevStep}
-                >
-                  Back
-                </Button>
-                <Button
-                  className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
-                  onClick={nextStep}
-                >
-                  Finish Setup
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 6 && (
-            <motion.div
-              key="step6"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="glass-panel p-10 rounded-3xl bg-[#E2FF6F]/5 border border-[#E2FF6F]/20 shadow-2xl text-center space-y-8"
-            >
-              <div className="w-20 h-20 bg-[#E2FF6F]/10 rounded-full flex items-center justify-center text-[#E2FF6F] mx-auto">
-                <CheckCircle2 className="w-10 h-10" />
-              </div>
-
-              <div>
-                <h2 className="text-3xl font-black text-white tracking-tight">
-                  Setting up your space
-                </h2>
-                <p className="text-white/50 mt-2">Personalizing your wellness experience...</p>
-              </div>
-
-              <div className="space-y-3 text-left max-w-xs mx-auto">
-                {[
-                  { p: 1, t: `Welcome, ${formData.name || 'friend'}!` },
-                  { p: 2, t: 'Creating your habits' },
-                  { p: 3, t: 'Setting up wellness metrics' },
-                  { p: 4, t: 'Configuring AI companion' },
-                  { p: 5, t: 'Preparing dashboard' },
-                ].map((item) => (
-                  <div
-                    key={item.p}
-                    className={cn(
-                      'flex items-center gap-3 transition-all duration-300',
-                      generationPhase >= item.p ? 'opacity-100' : 'opacity-30'
-                    )}
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-[#E2FF6F]" />
-                    <span className="text-sm font-medium text-white/80">{item.t}</span>
+                    <p className="text-xs text-white/40 mt-0.5">{option.description}</p>
                   </div>
-                ))}
-              </div>
+                </button>
+              ))}
+            </div>
 
-              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-[#E2FF6F]"
-                  initial={{ width: '0%' }}
-                  animate={{ width: `${(generationPhase / 5) * 100}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                onClick={prevStep}
+              >
+                Back
+              </Button>
+              <Button
+                className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
+                onClick={nextStep}
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 4 && (
+          <div key="step4" className="surface-card p-8 md:p-10 space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2">What drives you?</h2>
+              <p className="text-white/40 font-medium">
+                This helps us keep you motivated and engaged
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {motivationOptions.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setFormData({ ...formData, motivation: option.id })}
+                  className={cn(
+                    'p-4 rounded-2xl border text-left transition-all flex flex-col gap-2',
+                    formData.motivation === option.id
+                      ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                      : 'bg-black/20 border-white/5 hover:bg-white/5'
+                  )}
+                >
+                  <option.icon
+                    className={cn(
+                      'w-6 h-6',
+                      formData.motivation === option.id ? 'text-[#E2FF6F]' : 'text-white/40'
+                    )}
+                  />
+                  <p
+                    className={cn(
+                      'font-bold text-sm',
+                      formData.motivation === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
+                    )}
+                  >
+                    {option.label}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                onClick={prevStep}
+              >
+                Back
+              </Button>
+              <Button
+                className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
+                onClick={nextStep}
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 5 && (
+          <div key="step5" className="surface-card p-8 md:p-10 space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2">
+                How should your AI companion help?
+              </h2>
+              <p className="text-white/40 font-medium">
+                Optional - you can always change this later
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {aiStyleOptions.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setFormData({ ...formData, aiStyle: option.id })}
+                  className={cn(
+                    'w-full p-4 rounded-2xl border text-left transition-all',
+                    formData.aiStyle === option.id
+                      ? 'bg-[#E2FF6F]/10 border-[#E2FF6F]/50'
+                      : 'bg-black/20 border-white/5 hover:bg-white/5'
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p
+                        className={cn(
+                          'font-bold',
+                          formData.aiStyle === option.id ? 'text-[#E2FF6F]' : 'text-white/80'
+                        )}
+                      >
+                        {option.label}
+                      </p>
+                      <p className="text-xs text-white/40 mt-1">{option.description}</p>
+                    </div>
+                    {formData.aiStyle === option.id && (
+                      <CheckCircle2 className="w-5 h-5 text-[#E2FF6F]" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                className="flex-1 h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                onClick={prevStep}
+              >
+                Back
+              </Button>
+              <Button
+                className="flex-[2] h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
+                onClick={nextStep}
+              >
+                Finish Setup
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 6 && (
+          <div key="step6" className="surface-card p-10 text-center space-y-8 border-[#E2FF6F]/20">
+            {completionError ? (
+              <>
+                <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center text-red-400 mx-auto">
+                  <Activity className="w-10 h-10" />
+                </div>
+
+                <div>
+                  <h2 className="text-3xl font-black text-white tracking-tight">
+                    Something went wrong
+                  </h2>
+                  <p className="text-white/50 mt-2">
+                    We couldn&apos;t complete your setup. Your data has been saved locally.
+                  </p>
+                </div>
+
+                <Button
+                  className="w-full h-12 bg-[#E2FF6F] text-black font-bold rounded-2xl hover:bg-[#d4f056]"
+                  onClick={() => {
+                    setCompletionError(false);
+                    setIsCompleting(false);
+                    setGenerationPhase(0);
+                    completeOnboardingRef.current();
+                  }}
+                  disabled={isCompleting}
+                >
+                  {isCompleting ? 'Retrying...' : 'Try Again'}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="w-full h-12 text-white/40 font-bold bg-white/5 rounded-2xl hover:text-white"
+                  onClick={() => router.replace('/dashboard')}
+                >
+                  Go to Dashboard
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 bg-[#E2FF6F]/10 rounded-full flex items-center justify-center text-[#E2FF6F] mx-auto">
+                  <CheckCircle2 className="w-10 h-10" />
+                </div>
+
+                <div>
+                  <h2 className="text-3xl font-black text-white tracking-tight">
+                    Setting up your space
+                  </h2>
+                  <p className="text-white/50 mt-2">Personalizing your wellness experience...</p>
+                </div>
+
+                <div className="space-y-3 text-left max-w-xs mx-auto">
+                  {[
+                    { p: 1, t: `Welcome, ${formData.name || 'friend'}!` },
+                    { p: 2, t: 'Creating your habits' },
+                    { p: 3, t: 'Setting up wellness metrics' },
+                    { p: 4, t: 'Configuring AI companion' },
+                    { p: 5, t: 'Preparing dashboard' },
+                  ].map((item) => (
+                    <div
+                      key={item.p}
+                      className={cn(
+                        'flex items-center gap-3 transition-all duration-300',
+                        generationPhase >= item.p ? 'opacity-100' : 'opacity-30'
+                      )}
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-[#E2FF6F]" />
+                      <span className="text-sm font-medium text-white/80">{item.t}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#E2FF6F] transition-all duration-300"
+                    style={{ width: `${(generationPhase / 5) * 100}%` }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -2,6 +2,19 @@ import mongoose from 'mongoose';
 
 import { config } from '@/config/env';
 
+import './models/User';
+import './models/TherapistProfile';
+import './models/Booking';
+import './models/Review';
+import './models/AvailabilitySlot';
+import './models/SessionNote';
+import './models/FavoriteTherapist';
+import './models/ConsentRecord';
+import './models/AuditLog';
+import './models/TherapistDocument';
+import './models/AcademicCalendarEvent';
+import './models/Semester';
+
 let cached = (global as any).mongoose;
 
 if (!cached) {

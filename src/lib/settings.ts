@@ -1,5 +1,5 @@
 import { config } from '@/config/env';
-import type { ProviderId } from '@/lib/types';
+import type { ProviderId } from '@/types/user';
 
 export interface LlmSettings {
   provider: ProviderId;

@@ -24,7 +24,7 @@ export type NavItem = {
   name: string;
   href: string;
   icon: LucideIcon;
-  roles?: ('admin' | 'mentor')[];
+  roles?: ('admin' | 'therapist')[];
   className?: string;
   section?: 'primary' | 'wellness' | 'progress' | 'ai' | 'social' | 'tools' | 'more' | 'support';
 };
@@ -42,14 +42,14 @@ export const allNavItems: NavItem[] = [
   { name: 'Academic Calendar', href: '/academic-calendar', icon: CalendarDays, section: 'tools' },
   { name: 'Crisis Support', href: '/crisis', icon: ShieldAlert, section: 'support' },
   { name: 'Settings', href: '/settings', icon: Settings, section: 'more' },
+  { name: 'Admin', href: '/admin', icon: Settings, roles: ['admin'], section: 'more' },
   {
-    name: 'Mentor Hub',
-    href: '/mentor',
-    icon: Stethoscope,
-    roles: ['mentor', 'admin'],
+    name: 'Therapist Admin',
+    href: '/therapist-admin/dashboard',
+    icon: LayoutDashboard,
+    roles: ['therapist'],
     section: 'more',
   },
-  { name: 'Admin', href: '/admin', icon: Settings, roles: ['admin'], section: 'more' },
 ];
 
 export const mobilePrimaryItems: string[] = ['/dashboard', '/mood', '/chat', '/crisis'];
@@ -57,7 +57,7 @@ export const mobilePrimaryItems: string[] = ['/dashboard', '/mood', '/chat', '/c
 export function filterNavByRole(items: NavItem[], role: string): NavItem[] {
   return items.filter((item) => {
     if (!item.roles?.length) return true;
-    return item.roles.includes(role as 'admin' | 'mentor');
+    return item.roles.includes(role as 'admin' | 'therapist');
   });
 }
 

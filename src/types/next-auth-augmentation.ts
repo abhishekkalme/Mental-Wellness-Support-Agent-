@@ -1,6 +1,6 @@
 import type { DefaultSession } from 'next-auth';
 
-export type MindCareRole = 'user' | 'admin' | 'mentor';
+export type MindCareRole = 'user' | 'admin' | 'therapist';
 
 declare module 'next-auth' {
   interface Session {

@@ -2,16 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import {
-  Sparkles,
-  ArrowRight,
-  Menu,
-  X,
-  LogOut,
-  LayoutDashboard,
-  User,
-  Settings,
-} from 'lucide-react';
+import { Sparkles, ArrowRight, Menu, X, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from './ui/button';
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
@@ -32,14 +23,9 @@ export default function Navbar() {
   };
 
   return (
-    <motion.nav
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
-      className="fixed top-0 left-0 right-0 z-50 h-20 flex items-center justify-between px-6 md:px-12 bg-black/50 backdrop-blur-md border-b border-white/5"
-    >
-      <Link href="/" className="flex items-center gap-2 group">
-        <div className="w-10 h-10 bg-[#E2FF6F] rounded-xl flex items-center justify-center transition-transform group-hover:scale-110">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-20 flex items-center justify-between px-6 md:px-12 bg-black/50 backdrop-blur-md border-b border-white/5">
+      <Link href="/" className="flex items-center gap-2">
+        <div className="w-10 h-10 bg-[#E2FF6F] rounded-xl flex items-center justify-center">
           <Sparkles className="w-6 h-6 text-black" />
         </div>
         <span className="text-2xl font-bold tracking-tight text-white">MindCare</span>
@@ -67,7 +53,7 @@ export default function Navbar() {
         {isAuthenticated ? (
           <div className="hidden md:flex items-center gap-2">
             <Link href="/dashboard">
-              <Button className="bg-[#E2FF6F] text-black hover:bg-[#d4f056] font-bold rounded-full px-5 h-9 text-sm gap-2 transition-all">
+              <Button className="bg-[#E2FF6F] text-black hover:bg-[#d4f056] font-bold rounded-full px-5 h-9 text-sm gap-2">
                 <LayoutDashboard className="w-4 h-4" />
                 Dashboard
               </Button>
@@ -95,7 +81,7 @@ export default function Navbar() {
               </Button>
             </Link>
             <Link href="/signup">
-              <Button className="bg-[#E2FF6F] text-black hover:bg-[#d4f056] font-bold rounded-full px-5 h-9 gap-2 transition-all active:scale-95 text-sm">
+              <Button className="bg-[#E2FF6F] text-black hover:bg-[#d4f056] font-bold rounded-full px-5 h-9 gap-2 text-sm">
                 Get Started
                 <ArrowRight className="w-4 h-4" />
               </Button>
@@ -187,6 +173,6 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </nav>
   );
 }

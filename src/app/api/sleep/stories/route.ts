@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/mongoose';
 import SleepStory from '@/lib/db/models/SleepStory';
 import { z } from 'zod';
+import { auth } from '@/auth';
 
 const StorySchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -13,7 +14,17 @@ const StorySchema = z.object({
 
 const BulkStorySchema = z.array(StorySchema);
 
+async function requireAuth() {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  return null;
+}
+
 export async function GET() {
+  const authError = await requireAuth();
+  if (authError) return authError;
   try {
     await connectDB();
     const stories = await SleepStory.find({});
@@ -27,6 +38,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const authError = await requireAuth();
+  if (authError) return authError;
   try {
     await connectDB();
     const data = await req.json();

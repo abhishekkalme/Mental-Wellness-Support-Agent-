@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { connectDB } from '@/lib/db/mongoose';
 import User from '@/lib/db/models/User';
 import { hashPassword } from '@/lib/auth/emailPassword';
+import { authRateLimit } from '@/lib/rateLimit';
+import { getClientIdentifier } from '@/lib/rateLimit';
 
 const bodySchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
@@ -10,6 +12,15 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const ip = getClientIdentifier(req);
+  const { success, resetIn } = await authRateLimit(ip);
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait.' },
+      { status: 429, headers: { 'Retry-After': String(resetIn) } }
+    );
+  }
+
   try {
     const json = await req.json();
     const parsed = bodySchema.safeParse(json);

@@ -8,13 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Brain, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 
 export default function SignUpPage() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const router = useRouter();
@@ -45,7 +45,6 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
@@ -60,11 +59,12 @@ export default function SignUpPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(typeof data.error === 'string' ? data.error : 'Could not create account.');
+        toast.error(typeof data.error === 'string' ? data.error : 'Could not create account.');
         return;
       }
 
       if (data.verified === false) {
+        toast.success('Account created! Check your email to verify.');
         router.push(`/signin?registered=1&verify=1`);
         return;
       }
@@ -75,12 +75,14 @@ export default function SignUpPage() {
         redirect: false,
       });
       if (signed?.error) {
+        toast.success('Account created! Please sign in.');
         router.push('/signin?registered=1');
         return;
       }
+      toast.success('Welcome to MindCare!');
       await waitForSessionAndRedirect();
     } catch {
-      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ export default function SignUpPage() {
 
   const handleOAuth = (provider: 'google' | 'github') => {
     signIn(provider, { callbackUrl: '/onboarding' }).catch(() => {
-      setError(`Failed to sign up with ${provider}. Please try again.`);
+      toast.error(`Failed to sign up with ${provider}. Please try again.`);
     });
   };
 
@@ -170,11 +172,6 @@ export default function SignUpPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="w-full space-y-4 text-left">
-            {error && (
-              <p className="text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            )}
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium ml-1">
                 Full name

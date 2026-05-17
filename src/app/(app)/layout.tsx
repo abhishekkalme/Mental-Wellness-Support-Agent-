@@ -1,14 +1,24 @@
 'use client';
 
-import { DashboardSidebar } from '@/components/DashboardSidebar';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
-import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
-import { LoadingScreen } from '@/components/LoadingScreen';
+
+const DashboardSidebar = dynamic(
+  () => import('@/components/DashboardSidebar').then((m) => m.DashboardSidebar),
+  { ssr: false }
+);
+const MobileBottomNav = dynamic(
+  () => import('@/components/MobileBottomNav').then((m) => m.MobileBottomNav),
+  { ssr: false }
+);
+const LoadingScreen = dynamic(
+  () => import('@/components/LoadingScreen').then((m) => m.LoadingScreen),
+  { ssr: false }
+);
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -62,32 +72,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (isOnboarding) {
     return (
       <div className="min-h-screen bg-[#0A0C0B] relative overflow-hidden">
-        <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
-          <Image
-            src="/assets/images/forest-bg.png"
-            alt="Background"
-            fill
-            className="object-cover blur-[80px] scale-110"
-            loading="lazy"
-          />
-        </div>
         <div className="relative z-10">{children}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0C0B] relative overflow-hidden">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
-        <Image
-          src="/assets/images/forest-bg.png"
-          alt="Background"
-          fill
-          className="object-cover blur-[80px] scale-110"
-          loading="lazy"
-        />
-      </div>
-
+    <div className="min-h-screen bg-[#0A0C0B] relative">
       <div className="hidden md:block">
         <DashboardSidebar
           isExpanded={isSidebarExpanded}

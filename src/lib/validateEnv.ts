@@ -3,8 +3,6 @@ type EnvIssue = {
   message: string;
 };
 
-let _envChecked = false;
-
 export function validateEnv(): EnvIssue[] {
   const issues: EnvIssue[] = [];
 
@@ -40,59 +38,16 @@ export function validateEnv(): EnvIssue[] {
     });
   }
 
-  // Warn about missing PostHog analytics key (non-blocking)
   if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-    console.warn('⚠️  [NEXT_PUBLIC_POSTHOG_KEY] Not set. Analytics will be disabled.');
+    issues.push({
+      key: 'NEXT_PUBLIC_POSTHOG_KEY',
+      message: 'PostHog analytics key not set. Analytics will be disabled.',
+    });
   }
 
   return issues;
 }
 
-export function logEnvIssues(): void {
-  if (_envChecked) return;
-  _envChecked = true;
-  const issues = validateEnv();
-  if (issues.length > 0) {
-    console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.warn('⚠️  Environment Configuration Issues:');
-    issues.forEach(({ key, message }) => {
-      console.warn(`  • [${key}] ${message}`);
-    });
-    console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  } else {
-    console.log('✅ All required environment variables are configured.');
-  }
-
-  // Trace key AI variables (sanitized)
-  console.log('[Env] Environment variable audit:');
-  console.log(`  • GROQ_API_KEY: ${process.env.GROQ_API_KEY ? 'Present' : 'MISSING'}`);
-  console.log(`  • GEMINI_API_KEY: ${process.env.GEMINI_API_KEY ? 'Present' : 'MISSING'}`);
-  console.log(`  • MONGODB_URI: ${process.env.MONGODB_URI ? 'Present' : 'MISSING'}`);
-  console.log(`  • AUTH_SECRET: ${process.env.AUTH_SECRET ? 'Present' : 'MISSING'}`);
-  console.log(`  • AUTH_TRUST_HOST: ${process.env.AUTH_TRUST_HOST || 'Unset'}`);
-
-  const isProduction = process.env.NODE_ENV === 'production';
-  const hasTrustHost = process.env.AUTH_TRUST_HOST === 'true';
-  if (isProduction && !hasTrustHost) {
-    console.warn(
-      '⚠️  WARNING: AUTH_TRUST_HOST=true is required for NextAuth in production deployments. Set it in your deployment platform.'
-    );
-  }
-}
-
 export const isProduction = process.env.NODE_ENV === 'production';
 export const trustHost = process.env.AUTH_TRUST_HOST === 'true';
 export const needsTrustHost = isProduction && !trustHost;
-
-export function checkProductionReadiness(): void {
-  const issues = validateEnv();
-  if (issues.length > 0) {
-    const msg = issues.map((i) => `[${i.key}] ${i.message}`).join('; ');
-    console.error(`❌ CRITICAL: Production readiness failed: ${msg}`);
-    // We log but don't throw to prevent crashing the entire application initialization.
-    // Individual features will handle missing variables gracefully.
-  }
-  if (needsTrustHost) {
-    console.error('❌ CRITICAL: AUTH_TRUST_HOST=true is required for NextAuth in production.');
-  }
-}

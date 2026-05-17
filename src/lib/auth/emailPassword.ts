@@ -37,7 +37,7 @@ export async function authenticateEmailPassword(
     id: String(user._id),
     name: user.name,
     email: user.email ?? normalized,
-    roles: user.roles ?? ['user'],
+    roles: user.roles ? [...user.roles] : ['user'],
     onboarded: user.onboarded ?? false,
   };
 }

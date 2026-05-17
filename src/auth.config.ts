@@ -41,7 +41,7 @@ export const authConfig = {
         user.id = String(existingUser._id);
         user.username = existingUser.username;
         user.onboarded = existingUser.onboarded ?? false;
-        user.roles = existingUser.roles ?? ['user'];
+        user.roles = existingUser.roles ? [...existingUser.roles] : ['user'];
       }
       return true;
     },

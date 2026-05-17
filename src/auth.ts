@@ -3,7 +3,6 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 import { authConfig } from '@/auth.config';
-import type { MindCareRole } from '@/types/next-auth-augmentation';
 import { validateEnv } from '@/lib/validateEnv';
 
 validateEnv();
@@ -45,7 +44,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           username: (user as { username?: string }).username ?? '',
           email: user.email,
-          roles: user.roles as MindCareRole[],
+          roles: user.roles ? [...user.roles] : ['user'],
           onboarded: user.onboarded,
         };
       },

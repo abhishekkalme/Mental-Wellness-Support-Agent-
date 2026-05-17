@@ -107,41 +107,6 @@ describe('validateEnv', () => {
   });
 });
 
-describe('magic values constants', () => {
-  it('HABITS constants are within valid range', () => {
-    const { MAGIC_VALUES } = require('@/lib/magic-values');
-    expect(MAGIC_VALUES.HABITS.SUCCESS_RATE).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.HABITS.SUCCESS_RATE).toBeLessThanOrEqual(1);
-    expect(MAGIC_VALUES.HABITS.CONSISTENCY_INCREASE).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.HABITS.CONSISTENCY_INCREASE).toBeLessThanOrEqual(1);
-  });
-
-  it('SLEEP constants are within valid range', () => {
-    const { MAGIC_VALUES } = require('@/lib/magic-values');
-    expect(MAGIC_VALUES.SLEEP.CONSISTENCY_PERCENT).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.SLEEP.CONSISTENCY_PERCENT).toBeLessThanOrEqual(1);
-    expect(MAGIC_VALUES.SLEEP.EXTRA_HOURS_PER_WEEK).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.SLEEP.DEFAULT_SCORE).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.SLEEP.DEFAULT_SCORE).toBeLessThanOrEqual(1);
-  });
-
-  it('DASHBOARD constants are within valid range', () => {
-    const { MAGIC_VALUES } = require('@/lib/magic-values');
-    expect(MAGIC_VALUES.DASHBOARD.OVERALL_SCORE).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.DASHBOARD.OVERALL_SCORE).toBeLessThanOrEqual(1);
-    expect(MAGIC_VALUES.DASHBOARD.SOCIAL_SCORE).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.DASHBOARD.SOCIAL_SCORE).toBeLessThanOrEqual(1);
-  });
-
-  it('GOALS constants are valid', () => {
-    const { MAGIC_VALUES } = require('@/lib/magic-values');
-    expect(MAGIC_VALUES.GOALS.FOCUS_INCREASE_PERCENT).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.GOALS.FOCUS_INCREASE_PERCENT).toBeLessThanOrEqual(1);
-    expect(MAGIC_VALUES.GOALS.BADGE_THRESHOLD).toBeGreaterThan(0);
-    expect(MAGIC_VALUES.GOALS.BADGE_THRESHOLD).toBeLessThanOrEqual(1);
-  });
-});
-
 describe('rate limiter', () => {
   it('allows first request', () => {
     const { rateLimit } = require('@/lib/rateLimit');

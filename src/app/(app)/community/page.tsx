@@ -52,7 +52,7 @@ export interface PostAuthor {
   name: string;
   username: string;
   image?: string;
-  role: string;
+  roles: string[];
 }
 
 export interface Post {
@@ -184,7 +184,7 @@ function EmptyState({
 export default function CommunityPage() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
-  const userRole = session?.user?.role;
+  const userRoles = session?.user?.roles;
 
   const [activeTab, setActiveTab] = useState<'forYou' | 'latest' | 'trending' | 'saved'>('forYou');
   const [posts, setPosts] = useState<Post[]>([]);
@@ -745,7 +745,7 @@ export default function CommunityPage() {
                             <span className="text-sm font-bold text-white truncate">
                               {post.isAnonymous ? 'Anonymous' : post.author?.name || 'Unknown'}
                             </span>
-                            {post.author?.role === 'admin' && !post.isAnonymous && (
+                            {post.author?.roles?.includes('admin') && !post.isAnonymous && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20">
                                 Admin
                               </span>
@@ -904,7 +904,7 @@ export default function CommunityPage() {
           <PostDetailModal
             postId={selectedPostId}
             userId={userId}
-            userRole={userRole}
+            userRoles={userRoles}
             userName={session?.user?.name || ''}
             onClose={() => setSelectedPostId(null)}
             onDelete={(id) => {
@@ -1120,7 +1120,7 @@ function CreatePostModal({
 function PostDetailModal({
   postId,
   userId,
-  userRole,
+  userRoles,
   userName,
   onClose,
   onDelete,
@@ -1129,7 +1129,7 @@ function PostDetailModal({
 }: {
   postId: string;
   userId?: string;
-  userRole?: string;
+  userRoles?: string[];
   userName?: string;
   onClose: () => void;
   onDelete: (id: string) => void;
@@ -1367,7 +1367,7 @@ function PostDetailModal({
                           >
                             {replyTo === comment._id ? 'Cancel' : 'Reply'}
                           </button>
-                          {(userId === comment.author?._id || userRole === 'admin') && (
+                          {(userId === comment.author?._id || userRoles?.includes('admin')) && (
                             <button
                               onClick={() => handleDeleteComment(comment._id)}
                               className="text-[10px] text-white/30 hover:text-rose-400 transition-colors"
@@ -1400,7 +1400,7 @@ function PostDetailModal({
                             </span>
                           </div>
                           <p className="text-sm text-white/50 leading-relaxed">{reply.content}</p>
-                          {(userId === reply.author?._id || userRole === 'admin') && (
+                          {(userId === reply.author?._id || userRoles?.includes('admin')) && (
                             <button
                               onClick={() => handleDeleteComment(reply._id)}
                               className="text-[10px] text-white/30 hover:text-rose-400 transition-colors mt-0.5"

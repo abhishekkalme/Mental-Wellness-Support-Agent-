@@ -87,9 +87,9 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const role = session?.user?.role ?? 'user';
+  const roles = session?.user?.roles ?? ['user'];
 
-  const navItems = useMemo(() => filterNavByRole(allNavItems, role), [role]);
+  const navItems = useMemo(() => filterNavByRole(allNavItems, roles), [roles]);
   const sections = useMemo(() => getNavBySection(navItems), [navItems]);
 
   return (
@@ -177,7 +177,6 @@ export function DashboardSidebar({ isExpanded, onToggle }: DashboardSidebarProps
             )}
           </AnimatePresence>
         </Link>
-
 
         {session?.user && (
           <div className="pt-2 border-t border-white/5">

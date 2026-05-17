@@ -48,7 +48,7 @@ interface AdminUser {
   name: string;
   username: string;
   email?: string;
-  role: string;
+  roles: string[];
   onboarded: boolean;
   isPremium: boolean;
   createdAt: string;
@@ -71,7 +71,7 @@ interface AISettings {
 
 interface ReportedPost {
   _id: string;
-  author: { _id: string; name: string; username: string; image?: string; role: string } | null;
+  author: { _id: string; name: string; username: string; image?: string; roles: string[] } | null;
   title: string;
   content: string;
   type: string;
@@ -242,11 +242,15 @@ function OverviewTab() {
     );
   }
 
-  const roleColors: Record<string, string> = {
-    admin: 'bg-rose-500/10 text-rose-400',
-    therapist: 'bg-purple-500/10 text-purple-400',
-    user: 'bg-emerald-500/10 text-emerald-400',
-  };
+  function getRoleBadge(roles: string[]) {
+    if (roles.includes('admin')) return 'bg-rose-500/10 text-rose-400';
+    if (roles.includes('therapist')) return 'bg-purple-500/10 text-purple-400';
+    return 'bg-emerald-500/10 text-emerald-400';
+  }
+
+  function getRoleLabel(roles: string[]) {
+    return roles.join(', ');
+  }
 
   return (
     <div className="space-y-8">
@@ -330,10 +334,10 @@ function OverviewTab() {
                   <span
                     className={cn(
                       'text-[10px] font-bold uppercase px-2 py-0.5 rounded-md',
-                      roleColors[u.role] || 'bg-white/5 text-white/40'
+                      getRoleBadge(u.roles)
                     )}
                   >
-                    {u.role}
+                    {getRoleLabel(u.roles)}
                   </span>
                 </div>
               ))}
@@ -387,13 +391,19 @@ function UsersTab() {
     fetchUsers(1);
   }, [fetchUsers]);
 
-  const updateRole = async (userId: string, role: string) => {
+  const toggleRole = async (userId: string, role: 'user' | 'therapist' | 'admin') => {
     setSavingId(userId);
     try {
+      const user = users.find((u) => u._id === userId);
+      if (!user) return;
+      const next = user.roles.includes(role)
+        ? user.roles.filter((r) => r !== role)
+        : [...user.roles, role];
+      const roles = next.length === 0 ? ['user'] : next;
       await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ roles }),
       });
       fetchUsers(page);
     } catch {}
@@ -522,29 +532,27 @@ function UsersTab() {
                       {u.email || '—'}
                     </td>
                     <td className="p-4">
-                      <select
-                        className={cn(
-                          'text-[10px] font-bold px-2 py-1 rounded-md border appearance-none cursor-pointer',
-                          u.role === 'admin'
-                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                            : u.role === 'therapist'
-                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        )}
-                        value={u.role}
-                        disabled={savingId === u._id}
-                        onChange={(e) => updateRole(u._id, e.target.value)}
-                      >
-                        <option value="user" className="bg-[#0A0D08]">
-                          user
-                        </option>
-                        <option value="therapist" className="bg-[#0A0D08]">
-                          therapist
-                        </option>
-                        <option value="admin" className="bg-[#0A0D08]">
-                          admin
-                        </option>
-                      </select>
+                      <div className="flex items-center gap-1.5">
+                        {(['user', 'therapist', 'admin'] as const).map((r) => (
+                          <button
+                            key={r}
+                            onClick={() => toggleRole(u._id, r)}
+                            disabled={savingId === u._id}
+                            className={cn(
+                              'text-[9px] font-bold px-1.5 py-0.5 rounded-md border transition-all',
+                              u.roles.includes(r)
+                                ? r === 'admin'
+                                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                  : r === 'therapist'
+                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : 'bg-white/5 text-white/30 border-white/10 opacity-50'
+                            )}
+                          >
+                            {r}
+                          </button>
+                        ))}
+                      </div>
                     </td>
                     <td className="p-4 hidden sm:table-cell">
                       <div className="flex items-center gap-2">
@@ -612,9 +620,11 @@ function UsersTab() {
                         ) : (
                           <button
                             onClick={() => setConfirmDelete(u._id)}
-                            disabled={u.role === 'admin'}
+                            disabled={u.roles.includes('admin')}
                             className="p-1.5 rounded-lg hover:bg-rose-500/10 text-white/30 hover:text-rose-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            title={u.role === 'admin' ? 'Cannot delete admin' : 'Delete user'}
+                            title={
+                              u.roles.includes('admin') ? 'Cannot delete admin' : 'Delete user'
+                            }
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

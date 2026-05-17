@@ -30,10 +30,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const role = session?.user?.role ?? 'user';
+  const roles = session?.user?.roles ?? ['user'];
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
-  const navItems = filterNavByRole(allNavItems, role);
+  const navItems = filterNavByRole(allNavItems, roles);
   const primaryItems = navItems.filter((item) => mobilePrimaryItems.includes(item.href));
   const secondaryItems = navItems.filter((item) => !mobilePrimaryItems.includes(item.href));
 

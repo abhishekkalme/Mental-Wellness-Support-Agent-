@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       passwordHash,
       emailVerified: false,
       emailVerificationToken: verificationToken,
-      role: 'user',
+      roles: ['user'],
     });
 
     return NextResponse.json({

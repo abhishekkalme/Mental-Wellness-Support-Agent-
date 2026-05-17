@@ -16,7 +16,13 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 export async function authenticateEmailPassword(
   email: string,
   password: string
-): Promise<{ id: string; name: string; email: string; role: UserRole; onboarded: boolean } | null> {
+): Promise<{
+  id: string;
+  name: string;
+  email: string;
+  roles: UserRole[];
+  onboarded: boolean;
+} | null> {
   const normalized = email.trim().toLowerCase();
   if (!normalized || !password) return null;
 
@@ -31,7 +37,7 @@ export async function authenticateEmailPassword(
     id: String(user._id),
     name: user.name,
     email: user.email ?? normalized,
-    role: user.role ?? 'user',
+    roles: user.roles ?? ['user'],
     onboarded: user.onboarded ?? false,
   };
 }

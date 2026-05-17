@@ -45,7 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           username: (user as { username?: string }).username ?? '',
           email: user.email,
-          role: user.role as MindCareRole,
+          roles: user.roles as MindCareRole[],
           onboarded: user.onboarded,
         };
       },

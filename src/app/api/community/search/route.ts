@@ -33,7 +33,7 @@ export async function GET(req: Request) {
         moderationStatus: { $ne: 'removed' },
         $or: [{ title: regex }, { content: regex }, { tags: { $in: [regex] } }],
       })
-        .populate('author', 'name username image role')
+        .populate('author', 'name username image roles')
         .sort({ 'stats.likes': -1, createdAt: -1 })
         .limit(limit)
         .lean();
@@ -76,7 +76,7 @@ export async function GET(req: Request) {
       users = await User.find({
         $or: [{ name: regex }, { username: regex }],
       })
-        .select('name username image role bio')
+        .select('name username image roles bio')
         .limit(limit)
         .lean();
     }

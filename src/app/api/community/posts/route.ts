@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     if (tag) filter.tags = tag;
     if (authorId) filter.author = authorId;
 
-    let query = CommunityPost.find(filter).populate('author', 'name username image role');
+    let query = CommunityPost.find(filter).populate('author', 'name username image roles');
 
     if (cursor) {
       const cursorDoc = await CommunityPost.findById(cursor).select('createdAt');
@@ -161,7 +161,7 @@ export async function POST(req: Request) {
     }
 
     const populated = await CommunityPost.findById(post._id)
-      .populate('author', 'name username image role')
+      .populate('author', 'name username image roles')
       .lean();
 
     return NextResponse.json(

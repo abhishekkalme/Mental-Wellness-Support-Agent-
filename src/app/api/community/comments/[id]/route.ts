@@ -19,7 +19,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    if (comment.author.toString() !== session.user.id && session.user.role !== 'admin') {
+    if (comment.author.toString() !== session.user.id && !session.user.roles?.includes('admin')) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 

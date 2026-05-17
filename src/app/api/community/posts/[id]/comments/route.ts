@@ -34,7 +34,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       deletedAt: null,
       moderationStatus: { $ne: 'removed' },
     })
-      .populate('author', 'name username image role')
+      .populate('author', 'name username image roles')
       .sort({ createdAt: 'asc' })
       .lean();
 
@@ -46,7 +46,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       deletedAt: null,
       moderationStatus: { $ne: 'removed' },
     })
-      .populate('author', 'name username image role')
+      .populate('author', 'name username image roles')
       .sort({ createdAt: 'asc' })
       .lean();
 
@@ -152,7 +152,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const populated = await CommunityComment.findById(comment._id)
-      .populate('author', 'name username image role')
+      .populate('author', 'name username image roles')
       .lean();
 
     return NextResponse.json({ ...populated, isLiked: false, replies: [] }, { status: 201 });

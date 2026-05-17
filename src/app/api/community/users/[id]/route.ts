@@ -12,7 +12,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     await connectDB();
 
-    const user = await User.findById(id).select('name username image role bio createdAt').lean();
+    const user = await User.findById(id).select('name username image roles bio createdAt').lean();
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -23,7 +23,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       Follow.countDocuments({ following: id }),
       Follow.countDocuments({ follower: id }),
       CommunityPost.find({ author: id, deletedAt: null, moderationStatus: { $ne: 'removed' } })
-        .populate('author', 'name username image role')
+        .populate('author', 'name username image roles')
         .sort({ createdAt: -1 })
         .limit(10)
         .lean(),

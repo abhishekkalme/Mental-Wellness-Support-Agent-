@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       filter.$or = [{ author: { $in: followingIds } }, { type: 'support' }, { type: 'discussion' }];
     }
 
-    let query = CommunityPost.find(filter).populate('author', 'name username image role');
+    let query = CommunityPost.find(filter).populate('author', 'name username image roles');
 
     if (cursor) {
       const cursorDoc = await CommunityPost.findById(cursor).select('createdAt');

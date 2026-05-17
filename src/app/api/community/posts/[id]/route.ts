@@ -29,7 +29,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       deletedAt: null,
       moderationStatus: { $ne: 'removed' },
     })
-      .populate('author', 'name username image role')
+      .populate('author', 'name username image roles')
       .lean();
 
     if (!post) {
@@ -57,7 +57,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       deletedAt: null,
       moderationStatus: { $ne: 'removed' },
     })
-      .populate('author', 'name username image role')
+      .populate('author', 'name username image roles')
       .sort({ createdAt: 'asc' })
       .lean();
 
@@ -68,7 +68,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       deletedAt: null,
       moderationStatus: { $ne: 'removed' },
     })
-      .populate('author', 'name username image role')
+      .populate('author', 'name username image roles')
       .sort({ createdAt: 'asc' })
       .lean();
 
@@ -110,7 +110,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (post.author.toString() !== session.user.id && session.user.role !== 'admin') {
+    if (post.author.toString() !== session.user.id && !session.user.roles?.includes('admin')) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
@@ -135,7 +135,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (parsed.data.type !== undefined) update.type = parsed.data.type;
 
     const updated = await CommunityPost.findByIdAndUpdate(id, update, { new: true })
-      .populate('author', 'name username image role')
+      .populate('author', 'name username image roles')
       .lean();
 
     return NextResponse.json(updated);
@@ -162,7 +162,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (post.author.toString() !== session.user.id && session.user.role !== 'admin') {
+    if (post.author.toString() !== session.user.id && !session.user.roles?.includes('admin')) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
